@@ -7,7 +7,29 @@ package tarumtresort.adt;
 /**
  *
  * @author Brian
+ * @param <T>
  */
-public interface LinkedListInterface {
-    
+public interface LinkedListInterface<T extends Comparable<T>> {
+
+    void addFront(T element);
+
+    void addBack(T element);
+
+    void addSorted(T element);
+
+    T removeFront();
+
+    T removeBack();
+
+    T getFirst();
+
+    T getLast();
+
+    T get(int index);
+
+    int size();
+
+    boolean isEmpty();
+
+    void clear();
 }
