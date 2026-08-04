@@ -11,22 +11,28 @@ import java.time.LocalDateTime;
  * @author Wen Ling
  */
 public class Inquiry {
+
     private String inquiryID;
-    private String inquiryType; // enum
+    private InquiryType inquiryType;
     private LocalDateTime inquiryDateTime;
-    private int inquiryPriority; // enum
+    private InquiryPriority inquiryPriority;
     private String description;
-    private String status; // enum: PENDING, IN PROGRESS, DONE
+    private InquiryStatus status;
     private String reservationID;
     private String staffID;
 
-    public Inquiry(String inquiryID,String inquiryType,LocalDateTime inquiryDateTime,
-        int inquiryPriority,String description,String status,String reservationID,String staffID
+    public Inquiry() {
+
+    }
+
+    public Inquiry(String inquiryID, InquiryType inquiryType, LocalDateTime inquiryDateTime,
+                    InquiryPriority inquiryPriority, String description,
+                    InquiryStatus status, String reservationID, String staffID
     ) {
         this.inquiryID = inquiryID;
         this.inquiryType = inquiryType;
         this.inquiryDateTime = inquiryDateTime;
-        this.inquiryPriority = inquiryPriority;
+        this.inquiryPriority = inquiryType.getPriority();
         this.description = description;
         this.status = status;
         this.reservationID = reservationID;
@@ -37,15 +43,20 @@ public class Inquiry {
         return inquiryID;
     }
 
-    public String inquiryType() {
+    public InquiryType getInquiryType() {
         return inquiryType;
+    }
+
+    public void setInquiryType(InquiryType inquiryType) {
+        this.inquiryType = inquiryType;
+        this.inquiryPriority = inquiryType.getPriority();
     }
 
     public LocalDateTime getInquiryDateTime() {
         return inquiryDateTime;
     }
 
-    public int getInquiryPriority() {
+    public InquiryPriority getInquiryPriority() {
         return inquiryPriority;
     }
 
@@ -53,40 +64,38 @@ public class Inquiry {
         return description;
     }
 
-    public String getStatus() {
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public InquiryStatus getStatus() {
         return status;
     }
 
-    public String getStaffID() {
-        return staffID;
+    public void setStatus(InquiryStatus status) {
+        this.status = status;
     }
 
     public String getReservationID() {
         return reservationID;
     }
 
-    public void setInquiryPriority(int inquiryPriority) {
-        this.inquiryPriority = inquiryPriority;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
+    public String getStaffID() {
+        return staffID;
     }
 
     public void setStaffID(String staffID) {
         this.staffID = staffID;
     }
 
+    /*TO DO : public int compareTo() {} */
+
     @Override
     public String toString() {
         return "Inquiry ID: " + inquiryID
-                + "\nDate Time: " + inquiryDateTime
-                + "\nPriority: " + inquiryPriority
-                + "\nType: " + inquiryType
+                + "\nInquiry Type: " + inquiryType
+                + "\nInquiry Date Time: " + inquiryDateTime
+                + "\nInquiry Priority: " + inquiryPriority
                 + "\nDescription: " + description
                 + "\nStatus: " + status
                 + "\nReservation ID: " + reservationID

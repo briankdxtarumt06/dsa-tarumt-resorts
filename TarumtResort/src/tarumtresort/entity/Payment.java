@@ -12,14 +12,14 @@ public class Payment {
     private double serviceCharge;
     private double tax;
     private double totalAmount;
-    private String paymentMethod;
-    private String paymentStatus;
-    private LocalDateTime paymentTimeDate;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
+    private LocalDateTime paymentDateTime;
     private String reservationID;
 
     public Payment (String paymentID, double roomCharge, double serviceCharge,
-                    double tax, double totalAmount, String paymentMehod,
-                    String paymentStatus, LocalDateTime paymenDateTime, String reservationID
+                    double tax, double totalAmount, PaymentMethod paymentMehod,
+                    PaymentStatus paymentStatus, LocalDateTime paymenDateTime, String reservationID
     ) {
         this.paymentID = paymentID;
         this.roomCharge = roomCharge;
@@ -28,85 +28,80 @@ public class Payment {
         this.totalAmount = totalAmount;
         this.paymentMethod = paymentMehod;
         this.paymentStatus = paymentStatus;
-        this.paymentTimeDate = paymenDateTime;
+        this.paymentDateTime = paymenDateTime;
         this.reservationID = reservationID;
-
-        calculateTotalAmount();
-    }
-
-    private void calculateTotalAmount() {
-        this.totalAmount = roomCharge + serviceCharge + tax;
     }
 
     public String getPaymentID() {
         return paymentID;
     }
 
+    public void setPaymentID(String paymentID) {
+        this.paymentID = paymentID;
+    }
 
     public double getRoomCharge() {
         return roomCharge;
     }
 
+    public void setRoomCharge(double roomCharge) {
+        this.roomCharge = roomCharge;
+    }
 
     public double getServiceCharge() {
         return serviceCharge;
     }
 
+    public void setServiceCharge(double serviceCharge) {
+        this.serviceCharge = serviceCharge;
+    }
 
     public double getTax() {
         return tax;
     }
 
+    public void setTax(double tax) {
+        this.tax = tax;
+    }
 
     public double getTotalAmount() {
         return totalAmount;
     }
 
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
 
-    public String getPaymentMethod() {
+    public PaymentMethod getPaymentMethod() {
         return paymentMethod;
     }
 
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
 
-    public String getPaymentStatus() {
+    public PaymentStatus getPaymentStatus() {
         return paymentStatus;
     }
 
-
-    public LocalDateTime getPaymentTimeDate() {
-        return paymentTimeDate;
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 
+    public LocalDateTime getPaymentDateTime() {
+        return paymentDateTime;
+    }
+
+    public void setPaymentDateTime(LocalDateTime paymentDateTime) {
+        this.paymentDateTime = paymentDateTime;
+    }
 
     public String getReservationID() {
         return reservationID;
     }
 
-    public void setPaymentStatus(String paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
-
-
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-
-    public void setRoomCharge(double roomCharge) {
-        this.roomCharge = roomCharge;
-        calculateTotalAmount();
-    }
-
-
-    public void setServiceCharge(double serviceCharge) {
-        this.serviceCharge = serviceCharge;
-        calculateTotalAmount();
-    }
-
-
-    public void setTax(double tax) {
-        this.tax = tax;
-        calculateTotalAmount();
+    public void setReservationID(String reservationID) {
+        this.reservationID = reservationID;
     }
 
     @Override
@@ -114,12 +109,12 @@ public class Payment {
 
         return "Payment ID: " + paymentID
                 + "\nReservation ID: " + reservationID
-                + "\nRoom Charge: RM" + roomCharge
-                + "\nService Charge: RM" + serviceCharge
-                + "\nTax: RM" + tax
-                + "\nTotal Amount: RM" + totalAmount
+                + "\nRoom Charge: RM " + String.format("%.2f", roomCharge)
+                + "\nService Charge: RM " + String.format("%.2f", serviceCharge)
+                + "\nTax: RM " + String.format("%.2f", tax)
+                + "\nTotal Amount: RM " + String.format("%.2f", totalAmount)
                 + "\nPayment Method: " + paymentMethod
                 + "\nPayment Status: " + paymentStatus
-                + "\nPayment Date: " + paymentTimeDate;
+                + "\nPayment Date Time: " + paymentDateTime;
     }
 }
