@@ -1,13 +1,13 @@
 package tarumtresort.entity;
 
+import tarumtresort.entity.enums.*;
+
 public class PriorityReservation {
 
     private String reservationId;
     private PriorityLevel priorityLevel;
     private String overriddenBy;
     private String overrideReason;
-
-    
 
     public PriorityReservation() {
     }
@@ -56,37 +56,5 @@ public class PriorityReservation {
     public String toString() {
         return "PriorityReservation [reservationId=" + reservationId + ", priorityLevel=" + priorityLevel
                 + ", overriddenBy=" + overriddenBy + ", overrideReason=" + overrideReason + "]";
-    }
-
-}
-
-enum PriorityLevel {
-    PENALTY(0),
-    STANDARD(10),
-    ELITE(20),
-    DIAMOND(30),
-    PLATINUM(40),
-    VIP_OVERRIDE(50),
-    EMERGENCY(60);
-
-    private final int rank;
-
-    PriorityLevel(int rank) {
-        this.rank = rank;
-    }
-
-    public int getRank() {
-        return rank;
-    }
-
-    public static PriorityLevel fromTier(String tier) {
-        if (tier == null)
-            return STANDARD;
-        return switch (tier.toUpperCase()) {
-            case "PLATINUM" -> PLATINUM;
-            case "DIAMOND" -> DIAMOND;
-            case "ELITE" -> ELITE;
-            default -> STANDARD;
-        };
     }
 }
