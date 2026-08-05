@@ -19,13 +19,12 @@ public enum PriorityLevel {
         return rank;
     }
 
-    public static PriorityLevel fromTier(String tier) {
+    public static PriorityLevel convertTierToPriority(Tier tier) {
         if (tier == null)
             return STANDARD;
-        return switch (tier.toUpperCase()) {
-            case "PLATINUM" -> PLATINUM;
-            case "DIAMOND" -> DIAMOND;
-            case "ELITE" -> ELITE;
+        return switch (tier) {
+            case PLATINUM -> PLATINUM;
+            case DIAMOND -> DIAMOND;
             default -> STANDARD;
         };
     }
