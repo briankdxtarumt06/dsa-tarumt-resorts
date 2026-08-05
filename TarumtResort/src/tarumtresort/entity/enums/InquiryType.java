@@ -1,4 +1,4 @@
-package tarumtresort.entity;
+package tarumtresort.entity.enums;
 
 public enum InquiryType {
     BILLING(InquiryPriority.HIGH),

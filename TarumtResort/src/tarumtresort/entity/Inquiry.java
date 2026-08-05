@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package tarumtresort.entity;
+import tarumtresort.entity.enums.*;
 
 import java.time.LocalDateTime;
 

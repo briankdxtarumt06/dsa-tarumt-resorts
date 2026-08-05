@@ -1,5 +1,6 @@
 package tarumtresort.entity;
 
+import tarumtresort.entity.enums.*;
 
 public class Room {
     private String roomId;
