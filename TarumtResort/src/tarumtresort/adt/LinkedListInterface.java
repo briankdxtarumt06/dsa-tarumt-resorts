@@ -8,6 +8,6 @@ package tarumtresort.adt;
  *
  * @author Brian
  */
-public interface LinkedListInterface {
+public interface LinkedListInterface<T> {
     
 }
