@@ -83,7 +83,11 @@ public class PointTransaction implements Comparable<PointTransaction> {
 
     @Override
     public int compareTo(PointTransaction other) {
-        return this.expiryDate.compareTo(other.expiryDate);
+        int byDate = this.expiryDate.compareTo(other.expiryDate);
+        if (byDate != 0) {
+            return byDate;
+        }
+        return this.transactionId.compareTo(other.transactionId); 
     }
 
     @Override
