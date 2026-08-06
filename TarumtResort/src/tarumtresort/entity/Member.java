@@ -1,6 +1,7 @@
 package tarumtresort.entity;
 
 import java.time.LocalDateTime;
+import tarumtresort.entity.enums.*;
 
 public class Member {
     private String memberId;
