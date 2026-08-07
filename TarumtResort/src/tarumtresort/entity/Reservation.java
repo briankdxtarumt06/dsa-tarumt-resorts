@@ -1,6 +1,6 @@
 package tarumtresort.entity;
 
-public class Reservation {
+public class Reservation implements Comparable<Reservation>{
     private String reservationId;
     private String confirmationNumber;
     private String guestId;
@@ -8,16 +8,12 @@ public class Reservation {
     private RoomType roomTypeRequested;
     private int numberOfGuests;
     private int numberOfNights;
-    private String reservationType;
-    private String status;
+    private ReservationType reservationType;
+    private ReservationStatus status;
     private ReservationTimestamps timestamps;
 
     //constructors
-    public Reservation(String reservationId, String confirmationNumber,
-                       String guestId, String roomId,
-                       RoomType roomTypeRequested, int numberOfGuests,
-                       int numberOfNights, String reservationType,
-                       String status, ReservationTimestamps timestamps) {
+    public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId, RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType, ReservationStatus status, ReservationTimestamps timestamps) {
         this.reservationId = reservationId;
         this.confirmationNumber = confirmationNumber;
         this.guestId = guestId;
@@ -38,8 +34,8 @@ public class Reservation {
     public void setRoomTypeRequested(RoomType roomTypeRequested) { this.roomTypeRequested = roomTypeRequested; }
     public void setNumberOfGuests(int numberOfGuests) { this.numberOfGuests = numberOfGuests; }
     public void setNumberOfNights(int numberOfNights) { this.numberOfNights = numberOfNights; }
-    public void setReservationType(String reservationType) { this.reservationType = reservationType; }
-    public void setStatus(String status) { this.status = status; }
+    public void setReservationType(ReservationType reservationType) { this.reservationType = reservationType; }
+    public void setStatus(ReservationStatus status) { this.status = status; }
     public void setTimestamps(ReservationTimestamps timestamps) { this.timestamps = timestamps; }
 
     //getters
@@ -50,8 +46,8 @@ public class Reservation {
     public RoomType getRoomTypeRequested() { return roomTypeRequested; }
     public int getNumberOfGuests() { return numberOfGuests; }
     public int getNumberOfNights() { return numberOfNights; }
-    public String getReservationType() { return reservationType; }
-    public String getStatus() { return status; }
+    public ReservationType getReservationType() { return reservationType; }
+    public ReservationStatus getStatus() { return status; }
     public ReservationTimestamps getTimestamps() { return timestamps; }
 
     // toString
@@ -69,5 +65,17 @@ public class Reservation {
                 ", status='" + status + '\'' +
                 ", timestamps=" + timestamps +
                 '}';
+    }
+
+    @Override 
+    public int compareTo(Reservation other){ // compare the reservaiton type over the arrival time of the quest
+
+        //compare the reservation type (advance booking > walk in)
+        if (this.reservationType != other.reservationType) {
+            return this.reservationType == ReservationType.ADVANCE_BOOKING ? -1 : 1;
+        }
+
+         return this.timestamps.getRegistrationTimestamp()
+           .compareTo(other.timestamps.getRegistrationTimestamp());
     }
 }

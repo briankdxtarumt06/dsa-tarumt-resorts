@@ -1,6 +1,6 @@
 package tarumtresort.entity;
 
-public class Guest {
+public class Guest implements Comparable<Guest>{
     private String guestId;
     private String name;
     private String icOrPassport;
@@ -18,16 +18,21 @@ public class Guest {
         this.address = address;
     }
 
+
+    // constructor (no arguments)
+    public Guest() {
+    }
+
     //setters 
     public void setGuestId(String guestId){ this.guestId = guestId; }
     public void setName (String name){ this.name = name; }
     public void setIcOrPassport (String icOrPassport){ this.icOrPassport = icOrPassport; }
     public void setContactNumber (String contactNumber){ this.contactNumber = contactNumber; }
     public void setNationality (String nationality){ this.nationality = nationality; }
-    public void setAdress (String address){ this.address = address; }
+    public void setAddress (String address){ this.address = address; }
 
     //getters 
-    public String getIC(){ return guestId; }
+    public String getGuestId(){ return guestId; }
     public String getName(){ return name;}
     public String getIcOrPassport(){ return icOrPassport; }
     public String getContactNumber(){ return contactNumber; }
@@ -46,4 +51,8 @@ public class Guest {
                 '}';
     }
 
+    @Override
+    public int compareTo(Guest other) {
+        return this.guestId.compareTo(other.guestId);
+    }
 }

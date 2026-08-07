@@ -1,6 +1,6 @@
 package tarumtresort.entity;
 
-public enum ReservationStatus {
+public enum ReservationStatus{
     WAITING,
     ASSIGNED,
     CHECKED_IN,

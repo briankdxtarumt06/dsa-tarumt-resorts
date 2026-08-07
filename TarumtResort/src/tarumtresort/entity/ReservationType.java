@@ -1,6 +1,6 @@
 package tarumtresort.entity;
 
-public enum ReservationType {
+public enum ReservationType{
     WALK_IN,
     ADVANCE_BOOKING
 }
