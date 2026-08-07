@@ -6,7 +6,7 @@ package tarumtresort.entity;
 import tarumtresort.entity.enums.*;
 import java.time.LocalDateTime;
 
-public class Payment {
+public class Payment implements Comparable<Payment> {
     private String paymentID;
     private double roomCharge;
     private double serviceCharge;
@@ -102,6 +102,11 @@ public class Payment {
 
     public void setReservationID(String reservationID) {
         this.reservationID = reservationID;
+    }
+
+    @Override
+    public int compareTo(Payment other) {
+        return this.reservationID.compareTo(other.reservationID);
     }
 
     @Override
