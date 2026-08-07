@@ -10,95 +10,70 @@ import java.time.LocalDateTime;
  *
  * @author Wen Ling
  */
-public class Inquiry {
-
-    private String inquiryID;
+public class Inquiry implements Comparable<Inquiry> {
+    private String inquiryId;
+    private String confirmationNumber;
+    private String guestId;
     private InquiryType inquiryType;
-    private LocalDateTime inquiryDateTime;
-    private InquiryPriority inquiryPriority;
     private String description;
     private InquiryStatus status;
-    private String reservationID;
-    private String staffID;
+    private LocalDateTime createdTime;
+    private LocalDateTime resolvedTime;
+    private String assignedStaffId;
 
-    public Inquiry() {
-
-    }
-
-    public Inquiry(String inquiryID, InquiryType inquiryType, LocalDateTime inquiryDateTime,
-                    InquiryPriority inquiryPriority, String description,
-                    InquiryStatus status, String reservationID, String staffID
-    ) {
-        this.inquiryID = inquiryID;
+    public Inquiry(String inquiryId, String confirmationNumber, String guestId,
+                    InquiryType inquiryType, String description) {
+        this.inquiryId = inquiryId;
+        this.confirmationNumber = confirmationNumber;
+        this.guestId = guestId;
         this.inquiryType = inquiryType;
-        this.inquiryDateTime = inquiryDateTime;
-        this.inquiryPriority = inquiryType.getPriority();
         this.description = description;
-        this.status = status;
-        this.reservationID = reservationID;
-        this.staffID = staffID;
+        this.status = InquiryStatus.PENDING;
+        this.createdTime = LocalDateTime.now();
+        this.resolvedTime = null;
+        this.assignedStaffId = null;
     }
 
-    public String getInquiryID() {
-        return inquiryID;
-    }
+    // getters
+    public String getInquiryId() { return inquiryId; }
+    public String getConfirmationNumber() { return confirmationNumber; }
+    public String getGuestId() { return guestId; }
+    public InquiryType getQueryType() { return inquiryType; }
+    public String getDescription() { return description; }
+    public InquiryStatus getStatus() { return status; }
+    public LocalDateTime getCreatedTime() { return createdTime; }
+    public LocalDateTime getResolvedTime() { return resolvedTime; }
+    public String getAssignedStaffId() { return assignedStaffId; }
 
-    public InquiryType getInquiryType() {
-        return inquiryType;
-    }
+    // setters
+    public void setDescription(String description) { this.description = description; }
+    public void setStatus(InquiryStatus status) { this.status = status; }
+    public void setResolvedTime(LocalDateTime resolvedTime) { this.resolvedTime = resolvedTime; }
+    public void setAssignedStaffId(String assignedStaffId) { this.assignedStaffId = assignedStaffId; }
 
-    public void setInquiryType(InquiryType inquiryType) {
-        this.inquiryType = inquiryType;
-        this.inquiryPriority = inquiryType.getPriority();
+    @Override
+    public int compareTo(Inquiry other) {
+        int cmp = Integer.compare(
+            this.inquiryType.getPriority().getLevel(),
+            other.inquiryType.getPriority().getLevel()
+        );
+        if (cmp == 0) {
+            cmp = this.createdTime.compareTo(other.createdTime);
+        }
+        return cmp;
     }
-
-    public LocalDateTime getInquiryDateTime() {
-        return inquiryDateTime;
-    }
-
-    public InquiryPriority getInquiryPriority() {
-        return inquiryPriority;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public InquiryStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(InquiryStatus status) {
-        this.status = status;
-    }
-
-    public String getReservationID() {
-        return reservationID;
-    }
-
-    public String getStaffID() {
-        return staffID;
-    }
-
-    public void setStaffID(String staffID) {
-        this.staffID = staffID;
-    }
-
-    /*TO DO : public int compareTo() {} */
 
     @Override
     public String toString() {
-        return "Inquiry ID: " + inquiryID
-                + "\nInquiry Type: " + inquiryType
-                + "\nInquiry Date Time: " + inquiryDateTime
-                + "\nInquiry Priority: " + inquiryPriority
-                + "\nDescription: " + description
-                + "\nStatus: " + status
-                + "\nReservation ID: " + reservationID
-                + "\nStaff ID: " + staffID;
+        return "Inquiry{" +
+                "inquiryId='" + inquiryId + '\'' +
+                ", confirmationNumber='" + confirmationNumber + '\'' +
+                ", inquiryType=" + inquiryType +
+                ", description='" + description + '\'' +
+                ", priority=" + inquiryType.getPriority() +
+                ", status=" + status +
+                ", createdTime=" + createdTime +
+                ", assignedStaffId='" + assignedStaffId + '\'' +
+                '}';
     }
 }

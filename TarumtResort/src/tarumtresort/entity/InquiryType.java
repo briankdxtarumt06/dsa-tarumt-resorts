@@ -2,8 +2,8 @@ package tarumtresort.entity;
 
 public enum InquiryType {
     BILLING(InquiryPriority.HIGH),
+    HOUSEKEEPING(InquiryPriority.HIGH),
     MAINTENANCE(InquiryPriority.HIGH),
-    HOUSEKEEPING(InquiryPriority.MEDIUM),
     ROOM_AVAILABILITY(InquiryPriority.MEDIUM),
     GUEST_IDENTIFICATION(InquiryPriority.LOW);
 
