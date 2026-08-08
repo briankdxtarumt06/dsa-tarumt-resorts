@@ -1,15 +1,17 @@
 package tarumtresort.entity;
 
+import java.time.LocalDateTime;
+
 public class RedemptionRecord {
     private String redemptionId;
-    private String redeemedDate;
+    private LocalDateTime redeemedDate;
     private String memberId;
     private String rewardId;
 
     public RedemptionRecord() {
     }
 
-    public RedemptionRecord(String redemptionId, String redeemedDate, String memberId, String rewardId) {
+    public RedemptionRecord(String redemptionId, LocalDateTime redeemedDate, String memberId, String rewardId) {
         this.redemptionId = redemptionId;
         this.redeemedDate = redeemedDate;
         this.memberId = memberId;
@@ -24,11 +26,11 @@ public class RedemptionRecord {
         this.redemptionId = redemptionId;
     }
 
-    public String getRedeemedDate() {
+    public LocalDateTime getRedeemedDate() {
         return redeemedDate;
     }
 
-    public void setRedeemedDate(String redeemedDate) {
+    public void setRedeemedDate(LocalDateTime redeemedDate) {
         this.redeemedDate = redeemedDate;
     }
 
