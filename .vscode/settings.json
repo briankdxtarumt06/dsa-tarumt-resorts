@@ -1,0 +1,7 @@
+{
+    "java.project.sourcePaths": ["TarumtResort/src"],
+    "java.project.outputPath": "TarumtResort/build/classes",
+    "java.project.referencedLibraries": [
+        "TarumtResort/lib/**/*.jar"
+    ]
+}

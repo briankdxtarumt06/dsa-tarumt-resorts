@@ -2,7 +2,7 @@ package tarumtresort.entity;
 
 import tarumtresort.entity.enums.*;
 
-public class PriorityReservation {
+public class PriorityReservation implements Comparable<PriorityReservation> {
 
     private String reservationId;
     private PriorityLevel priorityLevel;
@@ -50,6 +50,10 @@ public class PriorityReservation {
 
     public void setOverrideReason(String overrideReason) {
         this.overrideReason = overrideReason;
+    }
+
+    public int compareTo(PriorityReservation other) {
+        return this.priorityLevel.compareTo(other.priorityLevel);
     }
 
     @Override
