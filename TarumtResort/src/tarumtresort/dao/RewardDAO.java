@@ -9,7 +9,6 @@ import tarumtresort.utility.JsonFileHandler;
 public class RewardDAO {
     private final String FILE_NAME = "data/rewards.json";
 
-    /** Saves the given reward list to file. */
     public void SaveToFile(LinkedListInterface<Reward> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
