@@ -29,6 +29,10 @@ public interface LinkedListInterface<T extends Comparable<T>> {
 
     T get(int index);
 
+    void addAtIndex(int index, T element);
+
+    void set(int index, T element);
+
     boolean removeElement(T element);
 
     T removeIndex(int index);
@@ -50,6 +54,8 @@ public interface LinkedListInterface<T extends Comparable<T>> {
     // HELPER
 
     boolean contains(T element);
+
+    int indexOf(T element);
 
     int size();
 
