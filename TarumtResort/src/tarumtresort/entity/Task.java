@@ -4,6 +4,7 @@ package tarumtresort.entity;
 import java.time.LocalDateTime;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.enums.TaskPriority;
 
 /**
  *
