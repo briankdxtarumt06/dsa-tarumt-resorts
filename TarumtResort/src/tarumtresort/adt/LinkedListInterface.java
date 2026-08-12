@@ -11,6 +11,8 @@ package tarumtresort.adt;
  */
 public interface LinkedListInterface<T extends Comparable<T>> {
 
+    // LIST
+
     void addFront(T element);
 
     void addBack(T element);
@@ -26,6 +28,28 @@ public interface LinkedListInterface<T extends Comparable<T>> {
     T getLast();
 
     T get(int index);
+
+    boolean removeElement(T element);
+
+    T removeIndex(int index);
+
+    // QUEUE
+
+    void enqueue(T element);
+
+    T dequeue();
+
+    // STACK
+
+    void push(T element);
+
+    T pop();
+
+    T peek();
+
+    // HELPER
+
+    boolean contains(T element);
 
     int size();
 

@@ -17,6 +17,8 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
     private Node<T> tail;
     private int size;
 
+    // LIST
+
     @Override
     public void addFront(T element) {
         Node<T> newNode = new Node<>(element);
@@ -78,7 +80,7 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
             head.setPrev(null);
         }
         size--;
-        
+
         return data;
     }
 
@@ -95,7 +97,7 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
             tail.setNext(null);
         }
         size--;
-        
+
         return data;
     }
 
@@ -126,8 +128,129 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
                 current = current.getPrev();
             }
         }
-        
+
         return current.getData();
+    }
+
+    @Override
+    public boolean removeElement(T element) {
+        if (isEmpty()) {
+            return false;
+        }
+        Node<T> current = head;
+        while (current != null) {
+            if (element == null ? current.getData() == null : element.equals(current.getData())) {
+                removeNode(current);
+                return true;
+            }
+            current = current.getNext();
+        }
+        return false;
+    }
+
+    @Override
+    public T removeIndex(int index) {
+        if (index < 0 || index >= size) {
+            return null;
+        }
+        Node<T> current;
+        if (index < size / 2) {
+            current = head;
+            for (int i = 0; i < index; i++) {
+                current = current.getNext();
+            }
+        } else {
+            current = tail;
+            for (int i = size - 1; i > index; i--) {
+                current = current.getPrev();
+            }
+        }
+        return removeNode(current);
+    }
+
+    // private helper method to remove node from list
+    private T removeNode(Node<T> node) {
+        if (size == 1) {
+            head = tail = null;
+        } else if (node == head) {
+            head = head.getNext();
+            head.setPrev(null);
+        } else if (node == tail) {
+            tail = tail.getPrev();
+            tail.setNext(null);
+        } else {
+            node.getPrev().setNext(node.getNext());
+            node.getNext().setPrev(node.getPrev());
+        }
+        size--;
+
+        return node.getData();
+    }
+
+    // LIST END
+
+    // QUEUE - sorted when enqueue
+
+    @Override
+    public void enqueue(T element) {
+        addSorted(element);
+    }
+
+    @Override
+    public T dequeue() {
+        return removeFront();
+    }
+
+    // QUEUE END
+
+    // STACK - unsorted when push
+
+    @Override
+    public void push(T element) {
+        addFront(element);
+    }
+
+    @Override
+    public T pop() {
+        return removeFront();
+    }
+
+    @Override
+    public T peek() {
+        return getFirst();
+    }
+
+    // STACK END
+
+    // HELPER
+
+    @Override
+    public boolean contains(T element) {
+        Node<T> current = head;
+        while (current != null) {
+            if (element == null ? current.getData() == null : element.equals(current.getData())) {
+                return true;
+            }
+            current = current.getNext();
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        if (isEmpty()) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder("[");
+        Node<T> current = head;
+        while (current != null) {
+            sb.append(current.getData());
+            if (current.getNext() != null) {
+                sb.append(", ");
+            }
+            current = current.getNext();
+        }
+        return sb.append("]").toString();
     }
 
     @Override
@@ -145,4 +268,6 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
         head = tail = null;
         size = 0;
     }
+
+    // HELPER END
 }
