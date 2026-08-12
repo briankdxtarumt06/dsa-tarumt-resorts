@@ -12,7 +12,6 @@ import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 
 public class JsonFileHandler {
-
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private JsonFileHandler() { 

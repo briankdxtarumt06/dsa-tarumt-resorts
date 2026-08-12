@@ -7,7 +7,6 @@ import tarumtresort.utility.JsonFileHandler;
 
 public class MemberDAO {
     private final String FILE_NAME = "data/members.json";
-
     private final LinkedList<Member> members = new LinkedList<>();
 
     public void Add(Member member) {

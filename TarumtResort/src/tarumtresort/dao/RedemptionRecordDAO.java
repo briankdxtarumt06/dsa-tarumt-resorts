@@ -7,47 +7,7 @@ import tarumtresort.utility.JsonFileHandler;
 
 public class RedemptionRecordDAO {
     private final String FILE_NAME = "data/redemptions.json";
-
     private final LinkedList<RedemptionRecord> redemptions = new LinkedList<>();
-
-    public void Add(RedemptionRecord record) {
-        redemptions.addSorted(record);
-    }
-
-    public void Remove(String redemptionId) {
-        LinkedList<RedemptionRecord> kept = new LinkedList<>();
-        for (int i = 0; i < redemptions.size(); i++) {
-            RedemptionRecord r = redemptions.get(i);
-            if (!r.getRedemptionId().equals(redemptionId)) {
-                kept.addBack(r);
-            }
-        }
-        redemptions.clear();
-        for (int i = 0; i < kept.size(); i++) {
-            redemptions.addBack(kept.get(i));
-        }
-    }
-
-    public RedemptionRecord FindById(String redemptionId) {
-        for (int i = 0; i < redemptions.size(); i++) {
-            if (redemptions.get(i).getRedemptionId().equals(redemptionId)) {
-                return redemptions.get(i);
-            }
-        }
-        return null;
-    }
-
-    public LinkedList<RedemptionRecord> GetAll() {
-        return redemptions;
-    }
-
-    public int Size() {
-        return redemptions.size();
-    }
-
-    public boolean IsEmpty() {
-        return redemptions.isEmpty();
-    }
 
     public void LoadFromFile() {
         redemptions.clear();

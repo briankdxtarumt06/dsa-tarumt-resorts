@@ -7,47 +7,7 @@ import tarumtresort.utility.JsonFileHandler;
 
 public class NotificationDAO {
     private final String FILE_NAME = "data/notifications.json";
-
     private final LinkedList<Notification> notifications = new LinkedList<>();
-
-    public void Add(Notification notification) {
-        notifications.addSorted(notification);
-    }
-
-    public void Remove(String notificationId) {
-        LinkedList<Notification> kept = new LinkedList<>();
-        for (int i = 0; i < notifications.size(); i++) {
-            Notification n = notifications.get(i);
-            if (!n.getNotificationId().equals(notificationId)) {
-                kept.addBack(n);
-            }
-        }
-        notifications.clear();
-        for (int i = 0; i < kept.size(); i++) {
-            notifications.addBack(kept.get(i));
-        }
-    }
-
-    public Notification FindById(String notificationId) {
-        for (int i = 0; i < notifications.size(); i++) {
-            if (notifications.get(i).getNotificationId().equals(notificationId)) {
-                return notifications.get(i);
-            }
-        }
-        return null;
-    }
-
-    public LinkedList<Notification> GetAll() {
-        return notifications;
-    }
-
-    public int Size() {
-        return notifications.size();
-    }
-
-    public boolean IsEmpty() {
-        return notifications.isEmpty();
-    }
 
     public void LoadFromFile() {
         notifications.clear();
