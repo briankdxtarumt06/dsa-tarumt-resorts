@@ -157,39 +157,6 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
 
     // LIST END
 
-    // QUEUE - sorted when enqueue
-
-    @Override
-    public void enqueue(T element) {
-        addSorted(element);
-    }
-
-    @Override
-    public T dequeue() {
-        return removeFront();
-    }
-
-    // QUEUE END
-
-    // STACK - unsorted when push
-
-    @Override
-    public void push(T element) {
-        addFront(element);
-    }
-
-    @Override
-    public T pop() {
-        return removeFront();
-    }
-
-    @Override
-    public T peek() {
-        return getFirst();
-    }
-
-    // STACK END
-
     // HELPER
 
     @Override

@@ -37,20 +37,6 @@ public interface LinkedListInterface<T extends Comparable<T>> {
 
     T removeIndex(int index);
 
-    // QUEUE
-
-    void enqueue(T element);
-
-    T dequeue();
-
-    // STACK
-
-    void push(T element);
-
-    T pop();
-
-    T peek();
-
     // HELPER
 
     boolean contains(T element);
