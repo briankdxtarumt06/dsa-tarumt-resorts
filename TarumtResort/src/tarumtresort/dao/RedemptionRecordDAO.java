@@ -9,7 +9,7 @@ public class RedemptionRecordDAO {
     private final String FILE_NAME = "data/redemptions.json";
     private final LinkedList<RedemptionRecord> redemptions = new LinkedList<>();
 
-    public void LoadFromFile() {
+    public LinkedList<RedemptionRecord> LoadFromFile() {
         redemptions.clear();
         try {
             LinkedList<RedemptionRecord> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), RedemptionRecord.class);
@@ -19,6 +19,7 @@ public class RedemptionRecordDAO {
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return redemptions;
     }
 
     public void SaveToFile() {

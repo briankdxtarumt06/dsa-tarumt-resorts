@@ -9,7 +9,7 @@ public class PointTransactionDAO {
     private final String FILE_NAME = "data/pointtransactions.json";
     private final LinkedList<PointTransaction> transactions = new LinkedList<>();
 
-    public void LoadFromFile() {
+    public LinkedList<PointTransaction> LoadFromFile() {
         transactions.clear();
         try {
             LinkedList<PointTransaction> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), PointTransaction.class);
@@ -19,6 +19,7 @@ public class PointTransactionDAO {
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return transactions;
     }
 
     public void SaveToFile() {

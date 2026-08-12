@@ -9,7 +9,7 @@ public class NotificationDAO {
     private final String FILE_NAME = "data/notifications.json";
     private final LinkedList<Notification> notifications = new LinkedList<>();
 
-    public void LoadFromFile() {
+    public LinkedList<Notification> LoadFromFile() {
         notifications.clear();
         try {
             LinkedList<Notification> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Notification.class);
@@ -19,6 +19,7 @@ public class NotificationDAO {
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return notifications;
     }
 
     public void SaveToFile() {

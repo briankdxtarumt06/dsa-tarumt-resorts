@@ -48,7 +48,7 @@ public class MemberDAO {
         return members.isEmpty();
     }
 
-    public void LoadFromFile() {
+    public LinkedList<Member> LoadFromFile() {
         members.clear();
         try {
             LinkedList<Member> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Member.class);
@@ -58,6 +58,7 @@ public class MemberDAO {
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return members;
     }
 
     public void SaveToFile() {

@@ -9,7 +9,7 @@ public class RewardDAO {
     private final String FILE_NAME = "data/rewards.json";
     private final LinkedList<Reward> rewards = new LinkedList<>();
 
-    public void LoadFromFile() {
+    public LinkedList<Reward> LoadFromFile() {
         rewards.clear();
         try {
             LinkedList<Reward> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Reward.class);
@@ -19,6 +19,7 @@ public class RewardDAO {
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return rewards;
     }
 
     public void SaveToFile() {
