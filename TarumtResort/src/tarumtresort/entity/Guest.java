@@ -1,6 +1,6 @@
 package tarumtresort.entity;
 
-public class Guest {
+public class Guest implements Comparable<Guest>{
     private String guestId;
     private String name;
     private String icOrPassport;
@@ -73,5 +73,10 @@ public class Guest {
         return "Guest{" + "guestId=" + guestId + ", name=" + name
                 + ", icOrPassport=" + icOrPassport + ", contactNumber=" + contactNumber
                 + ", nationality=" + nationality + ", address=" + address + '}';
+    }
+
+    @Override
+    public int compareTo(Guest other) {
+        return this.guestId.compareTo(other.guestId);
     }
 }
