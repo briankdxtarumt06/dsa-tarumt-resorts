@@ -2,7 +2,7 @@ package tarumtresort.entity;
 
 import java.time.LocalDateTime;
 
-public class Notification {
+public class Notification implements Comparable<Notification> {
     private String notificationId;
     private String type;
     private String message;
@@ -69,6 +69,15 @@ public class Notification {
 
     public void setGuestId(String guestId) {
         this.guestId = guestId;
+    }
+
+    @Override
+    public int compareTo(Notification other) {
+        int byDate = this.date.compareTo(other.date);
+        if (byDate != 0) {
+            return byDate;
+        }
+        return this.notificationId.compareTo(other.notificationId);
     }
 
     @Override

@@ -2,7 +2,7 @@ package tarumtresort.entity;
 
 import java.time.LocalDateTime;
 
-public class RedemptionRecord {
+public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private String redemptionId;
     private LocalDateTime redeemedDate;
     private String memberId;
@@ -48,6 +48,15 @@ public class RedemptionRecord {
 
     public void setRewardId(String rewardId) {
         this.rewardId = rewardId;
+    }
+
+    @Override
+    public int compareTo(RedemptionRecord other) {
+        int byDate = this.redeemedDate.compareTo(other.redeemedDate);
+        if (byDate != 0) {
+            return byDate;
+        }
+        return this.redemptionId.compareTo(other.redemptionId);
     }
 
     @Override

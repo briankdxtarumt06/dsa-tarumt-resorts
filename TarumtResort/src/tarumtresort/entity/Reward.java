@@ -1,6 +1,6 @@
 package tarumtresort.entity;
 
-public class Reward {
+public class Reward implements Comparable<Reward> {
     private String rewardId;
     private String name;
     private String description;
@@ -46,6 +46,15 @@ public class Reward {
 
     public void setPointCost(int pointCost) {
         this.pointCost = pointCost;
+    }
+
+    @Override
+    public int compareTo(Reward other) {
+        int byCost = Integer.compare(this.pointCost, other.pointCost);
+        if (byCost != 0) {
+            return byCost;
+        }
+        return this.rewardId.compareTo(other.rewardId);
     }
 
     @Override

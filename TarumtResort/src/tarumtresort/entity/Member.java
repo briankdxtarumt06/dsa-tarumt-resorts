@@ -3,7 +3,7 @@ package tarumtresort.entity;
 import java.time.LocalDateTime;
 import tarumtresort.entity.enums.*;
 
-public class Member {
+public class Member implements Comparable<Member> {
     private String memberId;
     private int points;
     private Tier tier;
@@ -59,6 +59,11 @@ public class Member {
 
     public void setGuestId(String guestId) {
         this.guestId = guestId;
+    }
+
+    @Override
+    public int compareTo(Member other) {
+        return this.memberId.compareTo(other.memberId);
     }
 
     @Override
