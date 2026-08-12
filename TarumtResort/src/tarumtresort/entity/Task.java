@@ -17,17 +17,19 @@ public class Task implements Comparable<Task> {
     private LinkedListInterface<String> taskStatus;
     private TaskPriority taskPriority;
     private LocalDateTime startDateTime;
+    private String roomId;
 
     public Task() {
     }
 
-    public Task(String taskId, String taskName, String taskType, LinkedListInterface<String> taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime) {
+    public Task(String taskId, String taskName, String taskType, LinkedListInterface<String> taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime, String roomId) {
         this.taskId = taskId;
         this.taskName = taskName;
         this.taskType = taskType;
         this.taskStatus = taskStatus;
         this.taskPriority = taskPriority;
         this.startDateTime = startDateTime;
+        this.roomId = roomId;
     }
 
     public String getTaskId() {
@@ -105,6 +107,14 @@ public class Task implements Comparable<Task> {
 
     public void setStartDateTime(LocalDateTime startDateTime) {
         this.startDateTime = startDateTime;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
     @Override

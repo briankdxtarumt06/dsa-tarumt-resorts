@@ -85,7 +85,9 @@ public class TaskManagementController {
 
     private void addTask() {
         String[] details = ui.inputTaskDetails();
-        String taskId = createTask(details[0], details[1], TaskPriority.fromString(details[2]), ui.parseDateTime(details[3]));
+        // FUTURE INTEGRATION: accept room ID input here once RoomDAO exists;
+        // rooms are currently linked to tasks via the Housekeeping module.
+        String taskId = createTask(details[0], details[1], TaskPriority.fromString(details[2]), ui.parseDateTime(details[3]), null);
         if (taskId == null) {
             ui.printDuplicateName();
         } else {
@@ -184,7 +186,7 @@ public class TaskManagementController {
         return data;
     }
 
-    public String createTask(String taskName, String taskType, TaskPriority taskPriority, LocalDateTime startDateTime) {
+    public String createTask(String taskName, String taskType, TaskPriority taskPriority, LocalDateTime startDateTime, String roomId) {
 
         for (int i = 0; i < taskList.size(); i++) {
             if (taskList.get(i).getTaskName().equalsIgnoreCase(taskName)) {
@@ -200,7 +202,8 @@ public class TaskManagementController {
                 taskType,
                 null,
                 taskPriority,
-                startDateTime
+                startDateTime,
+                roomId
         );
 
         task.addTaskStatus("Pending");
@@ -246,6 +249,56 @@ public class TaskManagementController {
             if (task.getTaskId().equals(taskId)) {
 
                 task.addTaskStatus(status);
+
+                // every task status change is recorded as a TaskAssignmentChange
+                // history record (separate entity) via the housekeeping module
+                HousekeepingController.appendTaskStatusChange(task, status, LocalDateTime.now());
+
+                // FUTURE INTEGRATION: trigger a Notification for any staff
+                // currently assigned to this task.
+
+                taskDAO.saveTaskList(taskList);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // update task start date & time (used by Housekeeping timetable)
+    public boolean updateTaskStartDateTime(String taskId, LocalDateTime startDateTime) {
+
+        for (int i = 0; i < taskList.size(); i++) {
+
+            Task task = taskList.get(i);
+
+            if (task.getTaskId().equals(taskId)) {
+
+                task.setStartDateTime(startDateTime);
+
+                taskDAO.saveTaskList(taskList);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // update task room link (used by Housekeeping module)
+    public boolean updateTaskRoomId(String taskId, String roomId) {
+
+        for (int i = 0; i < taskList.size(); i++) {
+
+            Task task = taskList.get(i);
+
+            if (task.getTaskId().equals(taskId)) {
+
+                // FUTURE INTEGRATION: validate roomId against RoomDAO /
+                // Reservation module once room persistence is available.
+                task.setRoomId(roomId);
+
                 taskDAO.saveTaskList(taskList);
 
                 return true;
@@ -282,6 +335,10 @@ public class TaskManagementController {
             if (task.getTaskId().equals(taskId)) {
 
                 task.addTaskStatus("Cancelled"); // soft delete
+
+                // soft delete is also a status change, keep the change history trail
+                HousekeepingController.appendTaskStatusChange(task, "Cancelled", LocalDateTime.now());
+
                 taskDAO.saveTaskList(taskList);
 
                 return true;
@@ -370,7 +427,7 @@ public class TaskManagementController {
             }
         }
 
-        return String.format("TSK%03d", max + 1);
+        return String.format("TSK%012d", max + 1);
     }
 
     public boolean taskExists(String taskId) {
