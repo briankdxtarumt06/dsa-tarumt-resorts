@@ -68,16 +68,19 @@ public class PointsManagementUI {
                     viewHistory();
                     break;
                 case 6:
-                    generateAlerts();
+                    viewTierProgress();
                     break;
                 case 7:
-                    viewNotifications();
+                    generateAlerts();
                     break;
                 case 8:
+                    viewNotifications();
+                    break;
+                case 9:
                     System.out.println("Returning to main menu...");
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter 1 - 8.");
+                    System.out.println("Invalid choice. Please enter 1 - 9.");
             }
         } while (choice != 6);
     }
@@ -92,9 +95,10 @@ public class PointsManagementUI {
         System.out.println(" 3. Redeem Reward (oldest points first)");
         System.out.println(" 4. Run Expiry Check (auto removal)");
         System.out.println(" 5. View Transaction History");
-        System.out.println(" 6. Generate Expiry Alerts (7 days)");
-        System.out.println(" 7. View Notifications");
-        System.out.println(" 8. Exit");
+        System.out.println(" 6. Member Tier Progression");
+        System.out.println(" 7. Generate Expiry Alerts (7 days)");
+        System.out.println(" 8. View Notifications");
+        System.out.println(" 9. Exit");
         System.out.println("----------------------------------------");
     }
 
@@ -283,4 +287,12 @@ public class PointsManagementUI {
         }
     }
 
+    private void viewTierProgress() {
+        String memberId = selectMember();
+        if (memberId == null) {
+            return;
+        }
+        System.out.println(controller.getTierProgress(memberId));
+    }
 }
+

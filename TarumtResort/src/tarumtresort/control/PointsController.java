@@ -13,6 +13,7 @@ import tarumtresort.entity.Notification;
 import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
+import tarumtresort.entity.enums.Tier;
 
 public class PointsController {
     private final MemberDAO memberDAO;
@@ -122,6 +123,7 @@ public class PointsController {
                 amount, expiry, amount, memberId);
         pointTransactions.addSorted(t);
         recomputeBalance(member);
+        recomputeTier(member);
         persist();
         return amount + " pts earned by " + memberId + " (expires " + expiry.toLocalDate() + "). New balance: "
                 + member.getPoints();
@@ -344,6 +346,77 @@ public class PointsController {
         } catch (RuntimeException e) {
             return String.format("NT%04d", notifications.size() + 1);
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Tier progression (based on cumulative points ever earned)
+    // ---------------------------------------------------------------
+
+    /** Minimum cumulative earned points required for each tier. */
+    private static final int[] TIER_THRESHOLDS = {0, 1000, 3000, 6000};
+
+    /** Returns the tier for a cumulative earned total. */
+    private Tier tierFor(int cumulativeEarned) {
+        if (cumulativeEarned >= TIER_THRESHOLDS[3]) {
+            return Tier.DIAMOND;
+        }
+        if (cumulativeEarned >= TIER_THRESHOLDS[2]) {
+            return Tier.PLATINUM;
+        }
+        if (cumulativeEarned >= TIER_THRESHOLDS[1]) {
+            return Tier.GOLD;
+        }
+        return Tier.SILVER;
+    }
+
+    /**
+     * Cumulative points the member has ever EARNED (sum of positive
+     * pointChange). This never decreases when points are redeemed or expire,
+     * so a member cannot drop a tier for using rewards.
+     */
+    public int getCumulativeEarned(String memberId) {
+        int total = 0;
+        LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
+        for (int i = 0; i < txs.size(); i++) {
+            int change = txs.get(i).getPointChange();
+            if (change > 0) {
+                total += change;
+            }
+        }
+        return total;
+    }
+
+    /** Recomputes and sets a member's tier from their cumulative earned points. */
+    public void recomputeTier(Member member) {
+        Tier current = tierFor(getCumulativeEarned(member.getMemberId()));
+        if (member.getTier() != current) {
+            member.setTier(current);
+        }
+    }
+
+    /**
+     * Human-readable tier progression detail: current tier, cumulative earned,
+     * and progress toward the next tier.
+     */
+    public String getTierProgress(String memberId) {
+        Member member = findMember(memberId);
+        if (member == null) {
+            return "Member not found: " + memberId;
+        }
+        int cumulative = getCumulativeEarned(memberId);
+        Tier current = tierFor(cumulative);
+        int currentIdx = current.ordinal();
+        String line = "Member " + memberId + " - Tier: " + current
+                + " (cumulative earned " + cumulative + " pts)";
+        if (currentIdx < TIER_THRESHOLDS.length - 1) {
+            int nextThreshold = TIER_THRESHOLDS[currentIdx + 1];
+            int needed = nextThreshold - cumulative;
+            line += "\n  Earn " + needed + " more pts to reach " + Tier.values()[currentIdx + 1]
+                    + " (needs " + nextThreshold + " cumulative pts).";
+        } else {
+            line += "\n  You have reached the highest tier!";
+        }
+        return line;
     }
 }
 
