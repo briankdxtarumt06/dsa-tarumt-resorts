@@ -32,6 +32,49 @@ public class StaffManagementController {
         staffList = staffDAO.retrieveStaffList();
     }
 
+    // staff management
+    public void runStaffManagement() {
+
+        int choice;
+
+        do {
+            choice = ui.getMenuChoice();
+
+            switch (choice) {
+                case 1:
+                    addStaff();
+                    break;
+                case 2:
+                    ui.listAllStaffs(staffListToTable(getAllStaffs()));
+                    break;
+                case 3:
+                    searchStaff();
+                    break;
+                case 4:
+                    updateStaff();
+                    break;
+                case 5:
+                    resignStaff();
+                    break;
+                case 6:
+                    filterStaffByDepartment();
+                    break;
+                case 7:
+                    filterStaffByAvailability();
+                    break;
+                case 0:
+                    ui.printExitMessage();
+                    break;
+                default:
+                    ui.printInvalidChoice();
+            }
+
+            if (choice != 0) {
+                ui.pressEnterToContinue();
+            }
+        } while (choice != 0);
+    }
+
     public String createStaff(String staffName, String department, String staffRole, String availabilityStatus) {
 
         // staff name cannot be duplicated
@@ -190,49 +233,6 @@ public class StaffManagementController {
 
     private boolean staffExistsByName(String staffName) {
         return getStaffByName(staffName) != null;
-    }
-
-    // staff management
-    public void runStaffManagement() {
-
-        int choice;
-
-        do {
-            choice = ui.getMenuChoice();
-
-            switch (choice) {
-                case 1:
-                    addStaff();
-                    break;
-                case 2:
-                    ui.listAllStaffs(staffListToTable(getAllStaffs()));
-                    break;
-                case 3:
-                    searchStaff();
-                    break;
-                case 4:
-                    updateStaff();
-                    break;
-                case 5:
-                    resignStaff();
-                    break;
-                case 6:
-                    filterStaffByDepartment();
-                    break;
-                case 7:
-                    filterStaffByAvailability();
-                    break;
-                case 0:
-                    ui.printExitMessage();
-                    break;
-                default:
-                    ui.printInvalidChoice();
-            }
-
-            if (choice != 0) {
-                ui.pressEnterToContinue();
-            }
-        } while (choice != 0);
     }
 
     private void addStaff() {

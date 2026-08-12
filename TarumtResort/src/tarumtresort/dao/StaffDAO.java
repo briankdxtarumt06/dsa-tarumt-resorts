@@ -13,7 +13,7 @@ import tarumtresort.utility.JsonFileHandler;
  */
 public class StaffDAO {
 
-    private static final Path FILE = Path.of("src", "tarumtresort", "data", "staff.json");
+    private static final Path FILE = Path.of("data/staff.json");
 
     public void saveStaffList(LinkedListInterface<Staff> staffList) {
         try {

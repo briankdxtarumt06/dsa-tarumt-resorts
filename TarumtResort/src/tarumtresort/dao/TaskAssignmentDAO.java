@@ -13,7 +13,7 @@ import tarumtresort.utility.JsonFileHandler;
  */
 public class TaskAssignmentDAO {
 
-    private static final Path FILE = Path.of("src", "tarumtresort", "data", "taskassignment.json");
+    private static final Path FILE = Path.of("data/taskassignment.json");
 
     public void saveTaskAssignmentList(LinkedListInterface<TaskAssignment> taskAssignmentList) {
         try {
