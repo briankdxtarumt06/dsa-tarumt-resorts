@@ -4,7 +4,7 @@ package tarumtresort.entity;
  *
  * @author Brian
  */
-public class Staff {
+public class Staff implements Comparable<Staff> {
     private String staffId;
     private String staffName;
     private String department;
@@ -13,10 +13,11 @@ public class Staff {
     
     public Staff(){ }
 
-    public Staff(String staffName, String department, String staffRole, String availabilityStatus) {
+    public Staff(String staffId, String staffName, String department, String staffRole, String availabilityStatus) {
+        this.staffId = staffId;
         this.staffName = staffName;
-        this.department = department;
-        this.staffRole = staffRole;
+        this.department = department; // Finance, Housekeeping, Maintenance, Front Office
+        this.staffRole = staffRole; // Manager, Supervisor, Cleaner, Technician, Receptionist, Admin
         this.availabilityStatus = availabilityStatus;
     }
 
@@ -68,5 +69,23 @@ public class Staff {
                ",\nstaffRole=" + staffRole + 
                ",\navailabilityStatus=" + availabilityStatus;
     }
-    
+
+    @Override
+    public int compareTo(Staff other) {
+        // null checks to avoid NullPointerException
+        if (other == null) {
+            return 1;
+        }
+        if (this.staffId == null && other.staffId == null) {
+            return 0;
+        }
+        if (this.staffId == null) {
+            return 1;
+        }
+        if (other.staffId == null) {
+            return -1;
+        }
+        
+        return this.staffId.compareToIgnoreCase(other.staffId);
+    }
 }

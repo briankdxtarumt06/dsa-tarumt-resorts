@@ -7,18 +7,19 @@ import java.time.LocalDateTime;
  *
  * @author Brian
  */
-public class TaskAssignment {
+public class TaskAssignment implements Comparable<TaskAssignment> {
     private String taskAssignmentId;
     private String status;
-    private LocalDateTime timestamp;
+    private LocalDateTime dateTimeAssigned;
     private Staff assingedStaff;
     private Task assignedTask;
 
     public TaskAssignment() { }
 
-    public TaskAssignment(String status, LocalDateTime timestamp, Staff assingedStaff, Task assignedTask) {
+    public TaskAssignment(String taskAssignmentId, String status, LocalDateTime dateTimeAssigned, Staff assingedStaff, Task assignedTask) {
+        this.taskAssignmentId = taskAssignmentId;
         this.status = status;
-        this.timestamp = timestamp;
+        this.dateTimeAssigned = dateTimeAssigned;
         this.assingedStaff = assingedStaff;
         this.assignedTask = assignedTask;
     }
@@ -39,12 +40,12 @@ public class TaskAssignment {
         this.status = status;
     }
 
-    public LocalDateTime getTimestamp() {
-        return timestamp;
+    public LocalDateTime getDateTimeAssigned() {
+        return dateTimeAssigned;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
+    public void setDateTimeAssigned(LocalDateTime dateTimeAssigned) {
+        this.dateTimeAssigned = dateTimeAssigned;
     }
 
     public Staff getAssingedStaff() {
@@ -63,13 +64,31 @@ public class TaskAssignment {
         this.assignedTask = assignedTask;
     }
 
-    @Override
+@Override
     public String toString() {
         return "Task Assignment Details:" + 
                "\nstatus=" + status +
-               ",\ntimestamp=" + timestamp + 
+               ",\ndateTimeAssigned=" + dateTimeAssigned + 
                ",\nassingedStaff=" + assingedStaff + 
                ",\nassignedTask=" + assignedTask;
     }
-    
+
+    @Override
+    public int compareTo(TaskAssignment other) {
+        // null checks to avoid NullPointerException
+        if (other == null) {
+            return 1;
+        }
+        if (this.dateTimeAssigned == null && other.dateTimeAssigned == null) {
+            return 0;
+        }
+        if (this.dateTimeAssigned == null) {
+            return 1;
+        }
+        if (other.dateTimeAssigned == null) {
+            return -1;
+        }
+        
+        return this.dateTimeAssigned.compareTo(other.dateTimeAssigned);
+    }
 }

@@ -2,24 +2,26 @@ package tarumtresort.entity;
 
 //imports
 import java.time.LocalDateTime;
+import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 
 /**
  *
  * @author Brian
  */
-public class Task {
+public class Task implements Comparable<Task> {
     private String taskId;
     private String taskName;
     private String taskType;
     private LinkedListInterface<String> taskStatus;
-    private String taskPriority; //TODO: change to enum 1 - High, 2 - Medium, 3 - Low, etc
+    private TaskPriority taskPriority;
     private LocalDateTime startDateTime;
 
     public Task() {
     }
 
-    public Task(String taskName, String taskType, LinkedListInterface<String> taskStatus, String taskPriority, LocalDateTime startDateTime) {
+    public Task(String taskId, String taskName, String taskType, LinkedListInterface<String> taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime) {
+        this.taskId = taskId;
         this.taskName = taskName;
         this.taskType = taskType;
         this.taskStatus = taskStatus;
@@ -60,19 +62,40 @@ public class Task {
     }
 
     public void addTaskStatus(String taskStatus) {
-        //TODO: add status using stack push logic
+        // add status using stack push logic
+        if (this.taskStatus == null) {
+            this.taskStatus = new LinkedList<>();
+        }
+        this.taskStatus.addBack(taskStatus);
     }
 
-    public void rollBackTaskStatus() {
-        //TODO: roll back status using stack pop logic
+    public String rollBackTaskStatus() {
+        // roll back status using stack pop logic
+        if (taskStatus == null || taskStatus.isEmpty()) {
+            return null;
+        }
+
+        return taskStatus.removeBack();
     }
 
-    public String getTaskPriority() {
+    public String peekTaskStatus() {
+        if (taskStatus == null || taskStatus.isEmpty()) {
+            return null;
+        }
+
+        return taskStatus.getLast();
+    }
+
+    public TaskPriority getTaskPriority() {
         return taskPriority;
     }
 
-    public void setTaskPriority(String taskPriority) {
+    public void setTaskPriority(TaskPriority taskPriority) {
         this.taskPriority = taskPriority;
+    }
+
+    public void setTaskPriority(String taskPriority) {
+        this.taskPriority = TaskPriority.fromString(taskPriority);
     }
 
     public LocalDateTime getStartDateTime() {
@@ -92,5 +115,30 @@ public class Task {
                ",\ntaskPriority=" + taskPriority +
                ",\nstartDateTime=" + startDateTime;
     }
-    
+
+    @Override
+    public int compareTo(Task other) {
+        // null checks to avoid NullPointerException
+        if (other == null) {
+            return 1;
+        }
+        // compare by task priority first, then by start date time
+        int priorityCompare = Integer.compare(
+                this.taskPriority == null ? TaskPriority.UNKNOWN.getRank() : this.taskPriority.getRank(),
+                other.taskPriority == null ? TaskPriority.UNKNOWN.getRank() : other.taskPriority.getRank());
+        if (priorityCompare != 0) {
+            return priorityCompare;
+        }
+        if (this.startDateTime == null && other.startDateTime == null) {
+            return 0;
+        }
+        if (this.startDateTime == null) {
+            return 1;
+        }
+        if (other.startDateTime == null) {
+            return -1;
+        }
+
+        return this.startDateTime.compareTo(other.startDateTime);
+    }
 }
