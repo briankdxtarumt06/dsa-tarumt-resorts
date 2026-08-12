@@ -1,7 +1,11 @@
 package tarumtresort.entity;
 
-public enum RoomType{
-    STANDARD,
-    DELUXE,
+public enum RoomType {
+    STANDARD_SINGLE,
+    STANDARD_DOUBLE,
+    STANDARD_TRIPLE,
+    DELUXE_SINGLE,
+    DELUXE_DOUBLE,
+    DELUXE_TRIPLE,
     SUITE
 }

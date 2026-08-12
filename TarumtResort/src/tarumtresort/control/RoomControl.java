@@ -8,7 +8,9 @@ import tarumtresort.entity.RoomStatus;
 import tarumtresort.entity.RoomType;
 
 public class RoomControl {
-    private RoomDAO roomDAO = new RoomDAO();
+    private static final RoomDAO roomDAO = new RoomDAO();
+    
+    // list declared
     private LinkedListInterface<Room> roomList = new LinkedList<>();
 
     // Constructor
@@ -56,7 +58,7 @@ public class RoomControl {
 
                 room.setRoomStatus(roomStatus);
 
-                roomDAO.saveRoomList(roomList);
+                // roomDAO.saveRoomList(roomList);
 
                 return true;
             }
@@ -102,9 +104,9 @@ public class RoomControl {
     }
 
     // get rooms by room type
-    public LinkedList<Room> getRoomsByType(RoomType roomType) {
+    public LinkedListInterface<Room> getRoomsByType(RoomType roomType) {
 
-        LinkedList<Room> roomTypeList = new LinkedList<>();
+        LinkedListInterface<Room> roomTypeList = new LinkedList<>();
 
         for (int i = 0; i < roomList.size(); i++) {
 
@@ -119,8 +121,42 @@ public class RoomControl {
     }
 
     // get all the rooms
-    public LinkedList<Room> getAllRooms() {
+    public LinkedListInterface<Room> getAllRooms() {
         return roomList;
     }
 
+    public boolean roomExists(String roomId) {
+        return getRoomById(roomId) != null;
+    }
+
+    public boolean isRoomAvailable(String roomId) {
+        Room room = getRoomById(roomId);
+        return room != null && room.getRoomStatus() == RoomStatus.AVAILABLE;
+    }
+
+    public RoomStatus getRoomStatus(String roomId) {
+        Room room = getRoomById(roomId);
+        if (room == null) {
+            return null;
+        }
+        return room.getRoomStatus();
+    }
+
+    public RoomType getRoomType(String roomId) {
+        Room room = getRoomById(roomId);
+        if (room == null) {
+            return null;
+        }
+        return room.getRoomType();
+    }
+
+    public double getRoomPrice(String roomId) {
+        Room room = getRoomById(roomId);
+
+        if (room == null) {
+            return -1;
+        }
+
+        return room.getPricePerNight();
+    }
 }

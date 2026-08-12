@@ -9,6 +9,7 @@ import tarumtresort.entity.Room;
 import tarumtresort.entity.RoomStatus;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.boundary.ReservationUI;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -26,10 +27,32 @@ public class ReservationControl {
      // dao 
     private static final ReservationDAO reservationDAO = new ReservationDAO();
    
+    // UI
+    private ReservationUI reservationUI = new ReservationUI();
+;
     //Constructor 
     public ReservationControl(){
         guestQueue = reservationDAO.retrieveGuestQueue();
         assignedList = reservationDAO.retrieveAssignedList();
+    }
+
+    public void runReservationModule() {
+        int choice = 0;
+        do {
+            choice = reservationUI.getMenuChoice();
+            switch (choice) {
+                case 0: break;
+                case 1: registerGuest(); break;
+                case 2: assignRoom(); break;
+                case 3: checkIn(); break;
+                case 4: checkOut(); break;
+                case 5: viewQueue(); break;
+                case 6: checkQueuePosition(); break;
+                case 7: cancelReservation(); break;
+                case 8: generateReport(); break;
+                default: break;
+            }
+        } while (choice != 0);
     }
 
     public boolean registerGuest (String guestId, RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType, LocalDate expectedCheckInDate){
@@ -357,4 +380,126 @@ public class ReservationControl {
 
         return reservationList;
     }
+
+    public void registerGuest() {
+        Reservation newReservation = reservationUI.inputReservationDetails(
+            generateReservationId(),
+            generateConfirmationNumber()
+        );
+        guestQueue.addSorted(newReservation);
+        reservationDAO.saveGuestQueue(guestQueue);
+        reservationUI.printReservationDetails(newReservation);
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void assignRoom() {
+        Room availableRoom = roomControl.getAvailableRoom(reservationUI.inputRoomType());
+        if (availableRoom == null) {
+            reservationUI.printRoomNotAvailable();
+        } else {
+            Reservation assigned = assignRoom(availableRoom);
+            if (assigned == null) {
+                reservationUI.printNotFound();
+            } else {
+                reservationUI.printReservationDetails(assigned);
+                reservationUI.printSuccess();
+            }
+        }
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void checkIn() {
+        String confirmationNumber = reservationUI.inputConfirmationNumber();
+        boolean success = checkIn(confirmationNumber);
+        if (!success) {
+            reservationUI.printCannotCheckIn();
+        } else {
+            reservationUI.printSuccess();
+        }
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void checkOut() {
+        String confirmationNumber = reservationUI.inputConfirmationNumber();
+        boolean success = checkOut(confirmationNumber);
+        if (!success) {
+            reservationUI.printNotFound();
+        } else {
+            reservationUI.printSuccess();
+        }
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void viewQueue() {
+        int choice = reservationUI.getViewQueueMenuChoice();
+        switch (choice) {
+            case 0: break;
+            case 1:
+                // view all
+                String[][] allData = buildQueueTableData(guestQueue);
+                reservationUI.listAllReservations(allData);
+                break;
+            case 2:
+                // view by room type
+                RoomType roomType = reservationUI.inputRoomType();
+                String[][] filteredData = buildQueueTableData(getRoomTypeReservations(roomType));
+                reservationUI.listAllReservations(filteredData);
+                break;
+        }
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void checkQueuePosition() {
+        String confirmationNumber = reservationUI.inputConfirmationNumber();
+        int position = getQueuePosition(confirmationNumber);
+        reservationUI.printQueuePosition(confirmationNumber, position);
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void cancelReservation() {
+        String confirmationNumber = reservationUI.inputConfirmationNumber();
+        if (reservationUI.inputConfirmation("Are you sure you want to cancel?")) {
+            boolean success = cancelReservation(confirmationNumber);
+            if (!success) {
+                reservationUI.printNotFound();
+            } else {
+                reservationUI.printCancelled();
+            }
+        }
+        reservationUI.pressEnterToContinue();
+    }
+
+    public void generateReport() {
+        int choice = reservationUI.getReportMenuChoice();
+        switch (choice) {
+            case 0: break;
+            // case 1: generateReport1(); break;
+            // case 2: generateReport2(); break;
+        }
+        reservationUI.pressEnterToContinue();
+    }
+
+    // helper — build table data from queue
+    private String[][] buildQueueTableData(LinkedListInterface<Reservation> list) {
+        String[][] data = new String[list.size() + 1][6];
+        data[0] = new String[]{"Confirmation No.", "Guest ID", "Room Type", "Type", "Status", "Check-In Date"};
+        for (int i = 0; i < list.size(); i++) {
+            Reservation r = list.get(i);
+            data[i + 1] = new String[]{
+                r.getConfirmationNumber(),
+                r.getGuestId(),
+                r.getRoomTypeRequested().toString(),
+                r.getReservationType().toString(),
+                r.getStatus().toString(),
+                r.getTimestamps().getExpectedCheckInDate().toString()
+            };
+        }
+        return data;
+    }
+
+    public static void main(String[] args) {
+        ReservationControl reservationControl = new ReservationControl();
+        reservationControl.runReservationModule();
+    }
+
 }
