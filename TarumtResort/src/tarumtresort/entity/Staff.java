@@ -5,6 +5,7 @@ package tarumtresort.entity;
  * @author Brian
  */
 public class Staff {
+    private String staffId;
     private String staffName;
     private String department;
     private String staffRole;
@@ -17,6 +18,14 @@ public class Staff {
         this.department = department;
         this.staffRole = staffRole;
         this.availabilityStatus = availabilityStatus;
+    }
+
+    public String getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
     }
 
     public String getStaffName() {

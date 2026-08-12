@@ -9,7 +9,7 @@ import tarumtresort.adt.LinkedListInterface;
  * @author Brian
  */
 public class Task {
-
+    private String taskId;
     private String taskName;
     private String taskType;
     private LinkedListInterface<String> taskStatus;
@@ -25,6 +25,14 @@ public class Task {
         this.taskStatus = taskStatus;
         this.taskPriority = taskPriority;
         this.startDateTime = startDateTime;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
     }
 
     public String getTaskName() {

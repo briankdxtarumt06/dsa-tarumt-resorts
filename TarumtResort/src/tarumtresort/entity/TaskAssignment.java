@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
  * @author Brian
  */
 public class TaskAssignment {
+    private String taskAssignmentId;
     private String status;
     private LocalDateTime timestamp;
     private Staff assingedStaff;
@@ -20,6 +21,14 @@ public class TaskAssignment {
         this.timestamp = timestamp;
         this.assingedStaff = assingedStaff;
         this.assignedTask = assignedTask;
+    }
+
+    public String getTaskAssignmentId() {
+        return taskAssignmentId;
+    }
+
+    public void setTaskAssignmentId(String taskAssignmentId) {
+        this.taskAssignmentId = taskAssignmentId;
     }
 
     public String getStatus() {
