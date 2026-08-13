@@ -8,8 +8,10 @@ public class Guest implements Comparable<Guest>{
     private String nationality;
     private String address;
 
-    //Constructor 
-    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality, String address){
+    public Guest() {
+    }
+
+    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality, String address) {
         this.guestId = guestId;
         this.name = name;
         this.icOrPassport = icOrPassport;
@@ -41,14 +43,9 @@ public class Guest implements Comparable<Guest>{
 
     @Override
     public String toString() {
-        return "Guest{" +
-                "guestId='" + guestId + '\'' +
-                ", name='" + name + '\'' +
-                ", icOrPassport='" + icOrPassport + '\'' +
-                ", contactNumber='" + contactNumber + '\'' +
-                ", nationality='" + nationality + '\'' +
-                ", address='" + address + '\'' +
-                '}';
+        return "Guest{" + "guestId=" + guestId + ", name=" + name
+                + ", icOrPassport=" + icOrPassport + ", contactNumber=" + contactNumber
+                + ", nationality=" + nationality + ", address=" + address + '}';
     }
 
     @Override
