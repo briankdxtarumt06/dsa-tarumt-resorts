@@ -2,7 +2,7 @@ package tarumtresort.entity;
 
 import tarumtresort.entity.enums.*;
 
-public class Room {
+public class Room implements Comparable<Room> {
     private String roomId;
     private String roomNumber;
     private RoomType roomType;
@@ -42,5 +42,24 @@ public class Room {
                 ", roomStatus=" + roomStatus +
                 ", pricePerNight=" + pricePerNight +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Room other) {
+        // null checks to avoid NullPointerException
+        if (other == null) {
+            return 1;
+        }
+        if (this.roomId == null && other.roomId == null) {
+            return 0;
+        }
+        if (this.roomId == null) {
+            return 1;
+        }
+        if (other.roomId == null) {
+            return -1;
+        }
+
+        return this.roomId.compareToIgnoreCase(other.roomId);
     }
 }

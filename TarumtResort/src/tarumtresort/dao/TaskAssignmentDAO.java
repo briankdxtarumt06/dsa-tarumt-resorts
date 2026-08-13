@@ -31,4 +31,14 @@ public class TaskAssignmentDAO {
             return new LinkedList<>();
         }
     }
+
+    public TaskAssignment getTaskAssignmentById(String taskAssignmentId) {
+        LinkedListInterface<TaskAssignment> assignmentList = retrieveTaskAssignmentList();
+        for (int i = 0; i < assignmentList.size(); i++) {
+            if (assignmentList.get(i).getTaskAssignmentId().equals(taskAssignmentId)) {
+                return assignmentList.get(i);
+            }
+        }
+        return null;
+    }
 }

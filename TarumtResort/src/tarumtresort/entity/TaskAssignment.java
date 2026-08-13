@@ -11,17 +11,17 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
     private String taskAssignmentId;
     private String status;
     private LocalDateTime dateTimeAssigned;
-    private Staff assingedStaff;
-    private Task assignedTask;
+    private String assignedStaffId;
+    private String assignedTaskId;
 
     public TaskAssignment() { }
 
-    public TaskAssignment(String taskAssignmentId, String status, LocalDateTime dateTimeAssigned, Staff assingedStaff, Task assignedTask) {
+    public TaskAssignment(String taskAssignmentId, String status, LocalDateTime dateTimeAssigned, String assignedStaffId, String assignedTaskId) {
         this.taskAssignmentId = taskAssignmentId;
         this.status = status;
         this.dateTimeAssigned = dateTimeAssigned;
-        this.assingedStaff = assingedStaff;
-        this.assignedTask = assignedTask;
+        this.assignedStaffId = assignedStaffId;
+        this.assignedTaskId = assignedTaskId;
     }
 
     public String getTaskAssignmentId() {
@@ -48,20 +48,20 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         this.dateTimeAssigned = dateTimeAssigned;
     }
 
-    public Staff getAssingedStaff() {
-        return assingedStaff;
+    public String getAssignedStaffId() {
+        return assignedStaffId;
     }
 
-    public void setAssingedStaff(Staff assingedStaff) {
-        this.assingedStaff = assingedStaff;
+    public void setAssignedStaffId(String assignedStaffId) {
+        this.assignedStaffId = assignedStaffId;
     }
 
-    public Task getAssignedTask() {
-        return assignedTask;
+    public String getAssignedTaskId() {
+        return assignedTaskId;
     }
 
-    public void setAssignedTask(Task assignedTask) {
-        this.assignedTask = assignedTask;
+    public void setAssignedTaskId(String assignedTaskId) {
+        this.assignedTaskId = assignedTaskId;
     }
 
 @Override
@@ -69,8 +69,8 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         return "Task Assignment Details:" + 
                "\nstatus=" + status +
                ",\ndateTimeAssigned=" + dateTimeAssigned + 
-               ",\nassingedStaff=" + assingedStaff + 
-               ",\nassignedTask=" + assignedTask;
+               ",\nassignedStaffId=" + assignedStaffId + 
+               ",\nassignedTaskId=" + assignedTaskId;
     }
 
     @Override

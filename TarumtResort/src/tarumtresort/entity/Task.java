@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.TaskPriority;
+import tarumtresort.entity.enums.TaskStatus;
 
 /**
  *
@@ -14,15 +15,16 @@ public class Task implements Comparable<Task> {
     private String taskId;
     private String taskName;
     private String taskType;
-    private LinkedListInterface<String> taskStatus;
+    private TaskStatus taskStatus;
     private TaskPriority taskPriority;
     private LocalDateTime startDateTime;
     private String roomId;
+    private LinkedListInterface<TaskAssignment> taskAssignments;
 
     public Task() {
     }
 
-    public Task(String taskId, String taskName, String taskType, LinkedListInterface<String> taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime, String roomId) {
+    public Task(String taskId, String taskName, String taskType, TaskStatus taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime, String roomId) {
         this.taskId = taskId;
         this.taskName = taskName;
         this.taskType = taskType;
@@ -56,37 +58,12 @@ public class Task implements Comparable<Task> {
         this.taskType = taskType;
     }
 
-    public LinkedListInterface<String> getTaskStatus() {
+    public TaskStatus getTaskStatus() {
         return taskStatus;
     }
 
-    public void setTaskStatus(LinkedListInterface<String> taskStatus) {
+    public void setTaskStatus(TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
-    }
-
-    public void addTaskStatus(String taskStatus) {
-        // add status using stack push logic
-        if (this.taskStatus == null) {
-            this.taskStatus = new LinkedList<>();
-        }
-        this.taskStatus.addBack(taskStatus);
-    }
-
-    public String rollBackTaskStatus() {
-        // roll back status using stack pop logic
-        if (taskStatus == null || taskStatus.isEmpty()) {
-            return null;
-        }
-
-        return taskStatus.removeBack();
-    }
-
-    public String peekTaskStatus() {
-        if (taskStatus == null || taskStatus.isEmpty()) {
-            return null;
-        }
-
-        return taskStatus.getLast();
     }
 
     public TaskPriority getTaskPriority() {
@@ -115,6 +92,37 @@ public class Task implements Comparable<Task> {
 
     public void setRoomId(String roomId) {
         this.roomId = roomId;
+    }
+
+    public LinkedListInterface<TaskAssignment> getTaskAssignments() {
+        if (taskAssignments == null) {
+            taskAssignments = new LinkedList<>();
+        }
+        return taskAssignments;
+    }
+
+    public void setTaskAssignments(LinkedListInterface<TaskAssignment> taskAssignments) {
+        this.taskAssignments = taskAssignments;
+    }
+
+    public void addTaskAssignment(TaskAssignment taskAssignment) {
+        if (taskAssignment == null || taskAssignment.getTaskAssignmentId() == null) {
+            return;
+        }
+        if (taskAssignments == null) {
+            taskAssignments = new LinkedList<>();
+        }
+        if (taskAssignments.contains(taskAssignment)) {
+            return; // duplicate assignment id
+        }
+        taskAssignments.addBack(taskAssignment);
+    }
+
+    public boolean removeTaskAssignment(TaskAssignment taskAssignment) {
+        if (taskAssignment == null || taskAssignment.getTaskAssignmentId() == null) {
+            return false;
+        }
+        return taskAssignments != null && taskAssignments.removeElement(taskAssignment);
     }
 
     @Override

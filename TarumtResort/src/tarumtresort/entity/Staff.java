@@ -1,5 +1,8 @@
 package tarumtresort.entity;
 
+import tarumtresort.adt.LinkedList;
+import tarumtresort.adt.LinkedListInterface;
+
 /**
  *
  * @author Brian
@@ -10,6 +13,7 @@ public class Staff implements Comparable<Staff> {
     private String department;
     private String staffRole;
     private String availabilityStatus;
+    private LinkedListInterface<TaskAssignment> taskAssignments;
     
     public Staff(){ }
 
@@ -59,6 +63,37 @@ public class Staff implements Comparable<Staff> {
 
     public void setAvailabilityStatus(String availabilityStatus) {
         this.availabilityStatus = availabilityStatus;
+    }
+
+    public LinkedListInterface<TaskAssignment> getTaskAssignments() {
+        if (taskAssignments == null) {
+            taskAssignments = new LinkedList<>();
+        }
+        return taskAssignments;
+    }
+
+    public void setTaskAssignments(LinkedListInterface<TaskAssignment> taskAssignments) {
+        this.taskAssignments = taskAssignments;
+    }
+
+    public void addTaskAssignment(TaskAssignment taskAssignment) {
+        if (taskAssignment == null || taskAssignment.getTaskAssignmentId() == null) {
+            return;
+        }
+        if (taskAssignments == null) {
+            taskAssignments = new LinkedList<>();
+        }
+        if (taskAssignments.contains(taskAssignment)) {
+            return; // duplicate assignment id
+        }
+        taskAssignments.addBack(taskAssignment);
+    }
+
+    public boolean removeTaskAssignment(TaskAssignment taskAssignment) {
+        if (taskAssignment == null || taskAssignment.getTaskAssignmentId() == null) {
+            return false;
+        }
+        return taskAssignments != null && taskAssignments.removeElement(taskAssignment);
     }
 
     @Override

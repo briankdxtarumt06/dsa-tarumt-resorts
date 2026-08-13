@@ -11,25 +11,28 @@ import java.time.LocalDateTime;
  * Every task status change and every worker assignment status change is
  * recorded here (status + staff involved + date & time), separate from the
  * TaskAssignment records which only hold the current assignment state.
+ *
+ * Staff and task are linked by id only (no duplicate data); the calling
+ * module resolves the ids to full entities when it needs the details.
  */
 public class TaskAssignmentChange implements Comparable<TaskAssignmentChange> {
     private String changeId;
     private String taskAssignmentId;
     private String status;
     private LocalDateTime changedAt;
-    private Staff staff;
-    private Task task;
+    private String staffId;
+    private String taskId;
 
     public TaskAssignmentChange() { }
 
     public TaskAssignmentChange(String changeId, String taskAssignmentId, String status,
-                                LocalDateTime changedAt, Staff staff, Task task) {
+                                LocalDateTime changedAt, String staffId, String taskId) {
         this.changeId = changeId;
         this.taskAssignmentId = taskAssignmentId;
         this.status = status;
         this.changedAt = changedAt;
-        this.staff = staff;
-        this.task = task;
+        this.staffId = staffId;
+        this.taskId = taskId;
     }
 
     public String getChangeId() {
@@ -64,20 +67,20 @@ public class TaskAssignmentChange implements Comparable<TaskAssignmentChange> {
         this.changedAt = changedAt;
     }
 
-    public Staff getStaff() {
-        return staff;
+    public String getStaffId() {
+        return staffId;
     }
 
-    public void setStaff(Staff staff) {
-        this.staff = staff;
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
     }
 
-    public Task getTask() {
-        return task;
+    public String getTaskId() {
+        return taskId;
     }
 
-    public void setTask(Task task) {
-        this.task = task;
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
     }
 
     @Override
@@ -87,8 +90,8 @@ public class TaskAssignmentChange implements Comparable<TaskAssignmentChange> {
                ",\ntaskAssignmentId=" + taskAssignmentId +
                ",\nstatus=" + status +
                ",\nchangedAt=" + changedAt +
-               ",\nstaff=" + staff +
-               ",\ntask=" + task;
+               ",\nstaffId=" + staffId +
+               ",\ntaskId=" + taskId;
     }
 
     @Override

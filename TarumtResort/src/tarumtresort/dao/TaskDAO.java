@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Task;
+import tarumtresort.entity.TaskAssignment;
 import tarumtresort.utility.JsonFileHandler;
 
 /**
@@ -15,9 +16,14 @@ public class TaskDAO {
 
     private static final Path FILE = Path.of("data/task.json");
 
+    private static final TaskAssignmentDAO TASK_ASSIGNMENT_DAO = new TaskAssignmentDAO();
+
     public void saveTaskList(LinkedListInterface<Task> taskList) {
         try {
-            JsonFileHandler.saveList(taskList, FILE);
+            JsonFileHandler.saveListWithNestedIds(
+                    taskList, FILE, "taskAssignments",
+                    Task::getTaskAssignments,
+                    TaskAssignment::getTaskAssignmentId);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -25,10 +31,23 @@ public class TaskDAO {
 
     public LinkedList<Task> retrieveTaskList() {
         try {
-            return JsonFileHandler.loadList(FILE, Task.class);
+            return JsonFileHandler.loadListWithNestedIds(
+                    FILE, Task.class, "taskAssignments",
+                    TASK_ASSIGNMENT_DAO::getTaskAssignmentById,
+                    Task::setTaskAssignments);
         } catch (IOException e) {
             e.printStackTrace();
             return new LinkedList<>();
         }
+    }
+
+    public Task getTaskById(String taskId) {
+        LinkedListInterface<Task> taskList = retrieveTaskList();
+        for (int i = 0; i < taskList.size(); i++) {
+            if (taskList.get(i).getTaskId().equals(taskId)) {
+                return taskList.get(i);
+            }
+        }
+        return null;
     }
 }

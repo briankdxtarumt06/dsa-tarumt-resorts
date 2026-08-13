@@ -1,7 +1,7 @@
 package tarumtresort.entity.enums;
 
 public enum RoomType {
-    STAANDARD,
+    STANDARD,
     DELUXE,
     SUITE
 }
