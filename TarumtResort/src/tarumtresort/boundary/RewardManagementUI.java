@@ -4,6 +4,7 @@ import java.util.Scanner;
 import tarumtresort.control.RewardController;
 import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Reward;
+import tarumtresort.utility.ConsoleUtil;
 
 public class RewardManagementUI {
     private final Scanner scanner;
@@ -48,6 +49,7 @@ public class RewardManagementUI {
     }
 
     private void printMenu() {
+        ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
         System.out.println("   REWARD MANAGEMENT");
@@ -134,6 +136,7 @@ public class RewardManagementUI {
             System.out.printf("%-10s | %-22s | %10d | %s%n",
                     r.getRewardId(), truncate(r.getName(), 22), r.getPointCost(), r.getDescription());
         }
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 
     private String selectReward(String prompt) {

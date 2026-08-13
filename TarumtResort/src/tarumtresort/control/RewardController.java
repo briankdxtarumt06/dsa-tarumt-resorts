@@ -11,7 +11,7 @@ public class RewardController {
 
     public RewardController(RewardDAO rewardDAO) {
         this.rewardDAO = rewardDAO;
-        rewardDAO.LoadFromFile(rewards);
+        rewardDAO.loadFromFile(rewards);
     }
 
     public LinkedListInterface<Reward> getRewards() {
@@ -97,6 +97,6 @@ public class RewardController {
     }
 
     private void persist() {
-        rewardDAO.SaveToFile(rewards);
+        rewardDAO.saveToFile(rewards);
     }
 }

@@ -10,7 +10,7 @@ public class NotificationDAO {
     private final String FILE_NAME = "data/notifications.json";
 
     /** Saves the given notification list to file. */
-    public void SaveToFile(LinkedListInterface<Notification> list) {
+    public void saveToFile(LinkedListInterface<Notification> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -18,7 +18,7 @@ public class NotificationDAO {
         }
     }
 
-    public void LoadFromFile(LinkedListInterface<Notification> list) {
+    public void loadFromFile(LinkedListInterface<Notification> list) {
         list.clear();
         try {
             LinkedList<Notification> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Notification.class);

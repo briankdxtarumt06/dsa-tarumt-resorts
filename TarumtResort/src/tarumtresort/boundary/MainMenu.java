@@ -1,6 +1,7 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+import tarumtresort.utility.ConsoleUtil;
 
 public class MainMenu {
 
@@ -17,28 +18,33 @@ public class MainMenu {
             choice = readInt("Enter your choice");
             switch (choice) {
                 case 1:
-                    new RewardManagementUI(scanner).run();
+                    new MemberManagementUI(scanner).run();
                     break;
                 case 2:
-                    new PointsManagementUI(scanner).run();
+                    new RewardManagementUI(scanner).run();
                     break;
                 case 3:
+                    new PointsManagementUI(scanner).run();
+                    break;
+                case 4:
                     System.out.println("Thank you for using TARUMT Resort System. Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter 1 - 3.");
+                    System.out.println("Invalid choice. Please enter 1 - 4.");
             }
-        } while (choice != 3);
+        } while (choice != 4);
     }
 
     private void printMenu() {
+        ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
         System.out.println("   TARUMT RESORT MANAGEMENT SYSTEM");
         System.out.println("========================================");
-        System.out.println(" 1. Reward Management");
-        System.out.println(" 2. Points & Redemption Management");
-        System.out.println(" 3. Exit");
+        System.out.println(" 1. Member Management");
+        System.out.println(" 2. Reward Management");
+        System.out.println(" 3. Points & Redemption Management");
+        System.out.println(" 4. Exit");
         System.out.println("----------------------------------------");
     }
 

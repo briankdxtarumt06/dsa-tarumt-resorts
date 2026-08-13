@@ -9,7 +9,7 @@ import tarumtresort.utility.JsonFileHandler;
 public class RewardDAO {
     private final String FILE_NAME = "data/rewards.json";
 
-    public void SaveToFile(LinkedListInterface<Reward> list) {
+    public void saveToFile(LinkedListInterface<Reward> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -17,7 +17,7 @@ public class RewardDAO {
         }
     }
 
-    public void LoadFromFile(LinkedListInterface<Reward> list) {
+    public void loadFromFile(LinkedListInterface<Reward> list) {
         list.clear();
         try {
             LinkedList<Reward> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Reward.class);

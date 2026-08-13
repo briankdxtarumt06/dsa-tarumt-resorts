@@ -10,7 +10,7 @@ public class RedemptionRecordDAO {
     private final String FILE_NAME = "data/redemptions.json";
 
     /** Saves the given redemption list to file. */
-    public void SaveToFile(LinkedListInterface<RedemptionRecord> list) {
+    public void saveToFile(LinkedListInterface<RedemptionRecord> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -18,7 +18,7 @@ public class RedemptionRecordDAO {
         }
     }
 
-    public void LoadFromFile(LinkedListInterface<RedemptionRecord> list) {
+    public void loadFromFile(LinkedListInterface<RedemptionRecord> list) {
         list.clear();
         try {
             LinkedList<RedemptionRecord> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), RedemptionRecord.class);

@@ -10,7 +10,7 @@ public class PointTransactionDAO {
     private final String FILE_NAME = "data/pointtransactions.json";
 
     /** Saves the given transaction list to file. */
-    public void SaveToFile(LinkedListInterface<PointTransaction> list) {
+    public void saveToFile(LinkedListInterface<PointTransaction> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -18,7 +18,7 @@ public class PointTransactionDAO {
         }
     }
 
-    public void LoadFromFile(LinkedListInterface<PointTransaction> list) {
+    public void loadFromFile(LinkedListInterface<PointTransaction> list) {
         list.clear();
         try {
             LinkedList<PointTransaction> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), PointTransaction.class);

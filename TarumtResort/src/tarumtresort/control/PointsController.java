@@ -36,11 +36,27 @@ public class PointsController {
         this.rewardDAO = rewardDAO;
         this.redemptionRecordDAO = redemptionRecordDAO;
         this.notificationDAO = notificationDAO;
-        memberDAO.LoadFromFile(members);
-        pointTransactionDAO.LoadFromFile(pointTransactions);
-        redemptionRecordDAO.LoadFromFile(redemptions);
-        rewardDAO.LoadFromFile(rewards);
-        notificationDAO.LoadFromFile(notifications);
+        memberDAO.loadFromFile(members);
+        pointTransactionDAO.loadFromFile(pointTransactions);
+        redemptionRecordDAO.loadFromFile(redemptions);
+        rewardDAO.loadFromFile(rewards);
+        notificationDAO.loadFromFile(notifications);
+        reconcileTiersOnLoad();
+    }
+
+    private void reconcileTiersOnLoad() {
+        boolean changed = false;
+        for (int i = 0; i < members.size(); i++) {
+            Member m = members.get(i);
+            Tier correct = tierFor(getCumulativeEarned(m.getMemberId()));
+            if (m.getTier() != correct) {
+                m.setTier(correct);
+                changed = true;
+            }
+        }
+        if (changed) {
+            memberDAO.saveToFile(members);
+        }
     }
 
     public LinkedListInterface<Member> getMembers() {
@@ -123,13 +139,13 @@ public class PointsController {
                 amount, expiry, amount, memberId);
         pointTransactions.addSorted(t);
         recomputeBalance(member);
-        recomputeTier(member);
+        recomputeTier(member, date);
         persist();
         return amount + " pts earned by " + memberId + " (expires " + expiry.toLocalDate() + "). New balance: "
                 + member.getPoints();
     }
 
-    public String redeemPoints(String memberId, String rewardId, LocalDateTime now) {
+    public String requestRedemption(String memberId, String rewardId, LocalDateTime now) {
         Member member = findMember(memberId);
         if (member == null) {
             return "Member not found: " + memberId;
@@ -138,17 +154,45 @@ public class PointsController {
         if (reward == null) {
             return "Reward not found: " + rewardId;
         }
-
-        expirePoints(memberId, now); 
+        expirePoints(memberId, now);
         int cost = reward.getPointCost();
         if (member.getPoints() < cost) {
             return "Insufficient points: " + memberId + " needs " + cost + " pts but only has "
                     + member.getPoints() + ".";
         }
+        redemptions.addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId));
+        persist();
+        return "Redemption requested: " + reward.getName() + " (" + cost + " pts) for " + memberId
+                + " - pending approval.";
+    }
+
+    public String approveRedemption(String redemptionId, LocalDateTime now) {
+        RedemptionRecord record = findRedemption(redemptionId);
+        if (record == null) {
+            return "Redemption request not found: " + redemptionId;
+        }
+        if (!"PENDING".equals(record.getStatus())) {
+            return "Request " + redemptionId + " is already " + record.getStatus() + ".";
+        }
+        Member member = findMember(record.getMemberId());
+        if (member == null) {
+            return "Member not found: " + record.getMemberId();
+        }
+        Reward reward = findReward(record.getRewardId());
+        if (reward == null) {
+            return "Reward not found: " + record.getRewardId();
+        }
+
+        expirePoints(member.getMemberId(), now);
+        int cost = reward.getPointCost();
+        if (member.getPoints() < cost) {
+            return "Cannot approve " + redemptionId + ": " + member.getMemberId()
+                    + " no longer has enough points (" + member.getPoints() + "/" + cost + ").";
+        }
 
         int remainingCost = cost;
         StringBuilder breakdown = new StringBuilder();
-        LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
+        LinkedListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
         for (int i = 0; i < txs.size() && remainingCost > 0; i++) {
             PointTransaction t = txs.get(i);
             int used = Math.min(t.getRemainingPoints(), remainingCost);
@@ -161,10 +205,51 @@ public class PointsController {
         }
 
         recomputeBalance(member);
-        redemptions.addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId));
+        record.setStatus("APPROVED");
+        notifyMember(member, "REDEMPTION_APPROVED",
+                "Your redemption request " + redemptionId + " (" + reward.getName() + ") has been approved.", now);
         persist();
-        return "Redeemed \"" + reward.getName() + "\" for " + cost + " pts:\n" + breakdown
-                + "New balance for " + memberId + ": " + member.getPoints();
+        return "Approved " + redemptionId + " (" + reward.getName() + "):\n" + breakdown
+                + "New balance for " + member.getMemberId() + ": " + member.getPoints();
+    }
+
+    public String rejectRedemption(String redemptionId, LocalDateTime now) {
+        RedemptionRecord record = findRedemption(redemptionId);
+        if (record == null) {
+            return "Redemption request not found: " + redemptionId;
+        }
+        if (!"PENDING".equals(record.getStatus())) {
+            return "Request " + redemptionId + " is already " + record.getStatus() + ".";
+        }
+        record.setStatus("REJECTED");
+        Member member = findMember(record.getMemberId());
+        if (member != null) {
+            Reward reward = findReward(record.getRewardId());
+            String rewardName = reward == null ? record.getRewardId() : reward.getName();
+            notifyMember(member, "REDEMPTION_REJECTED",
+                    "Your redemption request " + redemptionId + " (" + rewardName + ") has been rejected.", now);
+        }
+        persist();
+        return "Rejected redemption request " + redemptionId + ".";
+    }
+
+    public LinkedListInterface<RedemptionRecord> getPendingRedemptions() {
+        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
+        for (int i = 0; i < redemptions.size(); i++) {
+            if ("PENDING".equals(redemptions.get(i).getStatus())) {
+                result.addBack(redemptions.get(i));
+            }
+        }
+        return result;
+    }
+
+    private RedemptionRecord findRedemption(String redemptionId) {
+        for (int i = 0; i < redemptions.size(); i++) {
+            if (redemptions.get(i).getRedemptionId().equals(redemptionId)) {
+                return redemptions.get(i);
+            }
+        }
+        return null;
     }
 
     public int getAvailableBalance(String memberId, LocalDateTime now) {
@@ -195,9 +280,9 @@ public class PointsController {
     }
 
     private void persist() {
-        pointTransactionDAO.SaveToFile(pointTransactions);
-        redemptionRecordDAO.SaveToFile(redemptions);
-        memberDAO.SaveToFile(members);
+        pointTransactionDAO.saveToFile(pointTransactions);
+        redemptionRecordDAO.saveToFile(redemptions);
+        memberDAO.saveToFile(members);
     }
 
     private String nextTransactionId() {
@@ -250,18 +335,8 @@ public class PointsController {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Expiry alerts (notifications)
-    // ---------------------------------------------------------------
-
-    /** Number of days before expiry that an alert is generated. */
     private static final int ALERT_DAYS_BEFORE_EXPIRY = 7;
 
-    /**
-     * Scans every transaction and creates a POINT_EXPIRY notification for
-     * points expiring within ALERT_DAYS_BEFORE_EXPIRY days. Already-notified
-     * transactions are skipped, so repeated calls never duplicate alerts.
-     */
     public String generateExpiryAlerts(LocalDateTime now) {
         int created = 0;
         StringBuilder summary = new StringBuilder();
@@ -290,7 +365,7 @@ public class PointsController {
             summary.append("  - ").append(message).append("\n");
         }
         if (created > 0) {
-            notificationDAO.SaveToFile(notifications);
+            notificationDAO.saveToFile(notifications);
             return created + " expiry alert(s) generated:\n" + summary;
         }
         return "No new expiry alerts to generate.";
@@ -307,7 +382,6 @@ public class PointsController {
         return false;
     }
 
-    /** @return a member's notifications (via their guest id), newest first. */
     public LinkedListInterface<Notification> getNotifications(String guestId) {
         LinkedListInterface<Notification> result = new LinkedList<>();
         for (int i = 0; i < notifications.size(); i++) {
@@ -323,7 +397,7 @@ public class PointsController {
             Notification n = notifications.get(i);
             if (n.getNotificationId().equals(notificationId)) {
                 n.setRead(true);
-                notificationDAO.SaveToFile(notifications);
+                notificationDAO.saveToFile(notifications);
                 return "Notification " + notificationId + " marked as read.";
             }
         }
@@ -348,14 +422,8 @@ public class PointsController {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Tier progression (based on cumulative points ever earned)
-    // ---------------------------------------------------------------
-
-    /** Minimum cumulative earned points required for each tier. */
     private static final int[] TIER_THRESHOLDS = {0, 1000, 3000, 6000};
 
-    /** Returns the tier for a cumulative earned total. */
     private Tier tierFor(int cumulativeEarned) {
         if (cumulativeEarned >= TIER_THRESHOLDS[3]) {
             return Tier.DIAMOND;
@@ -369,11 +437,6 @@ public class PointsController {
         return Tier.SILVER;
     }
 
-    /**
-     * Cumulative points the member has ever EARNED (sum of positive
-     * pointChange). This never decreases when points are redeemed or expire,
-     * so a member cannot drop a tier for using rewards.
-     */
     public int getCumulativeEarned(String memberId) {
         int total = 0;
         LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
@@ -386,18 +449,21 @@ public class PointsController {
         return total;
     }
 
-    /** Recomputes and sets a member's tier from their cumulative earned points. */
-    public void recomputeTier(Member member) {
+    public boolean recomputeTier(Member member, LocalDateTime now) {
         Tier current = tierFor(getCumulativeEarned(member.getMemberId()));
         if (member.getTier() != current) {
             member.setTier(current);
+            if (member.getGuestId() != null) {
+                String message = "Congratulations! You have been upgraded to " + current + "!";
+                notifications.addSorted(new Notification(nextNotificationId(), "TIER_UPGRADE",
+                        message, now, false, member.getGuestId()));
+                notificationDAO.saveToFile(notifications);
+            }
+            return true;
         }
+        return false;
     }
 
-    /**
-     * Human-readable tier progression detail: current tier, cumulative earned,
-     * and progress toward the next tier.
-     */
     public String getTierProgress(String memberId) {
         Member member = findMember(memberId);
         if (member == null) {
@@ -418,5 +484,14 @@ public class PointsController {
         }
         return line;
     }
-}
 
+    /** Creates and persists a notification for a member (via their guest id). */
+    private void notifyMember(Member member, String type, String message, LocalDateTime now) {
+        if (member == null || member.getGuestId() == null) {
+            return;
+        }
+        notifications.addSorted(new Notification(nextNotificationId(), type, message, now, false, member.getGuestId()));
+        notificationDAO.saveToFile(notifications);
+    }
+
+}

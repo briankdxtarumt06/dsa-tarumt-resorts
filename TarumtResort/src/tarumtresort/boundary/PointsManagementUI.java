@@ -13,7 +13,9 @@ import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Notification;
 import tarumtresort.entity.PointTransaction;
+import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
+import tarumtresort.utility.ConsoleUtil;
 
 public class PointsManagementUI {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -42,10 +44,6 @@ public class PointsManagementUI {
         }
     }
 
-    public static void main(String[] args) {
-        new PointsManagementUI().run();
-    }
-
     public void run() {
         int choice;
         do {
@@ -59,7 +57,7 @@ public class PointsManagementUI {
                     earnPoints();
                     break;
                 case 3:
-                    redeemReward();
+                    requestRedemption();
                     break;
                 case 4:
                     runExpiryCheck();
@@ -77,28 +75,33 @@ public class PointsManagementUI {
                     viewNotifications();
                     break;
                 case 9:
+                    processRedemptionRequests();
+                    break;
+                case 10:
                     System.out.println("Returning to main menu...");
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter 1 - 9.");
+                    System.out.println("Invalid choice. Please enter 1 - 10.");
             }
-        } while (choice != 6);
+        } while (choice != 10);
     }
 
     private void printMenu() {
+        ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
         System.out.println("   POINTS & REDEMPTION MANAGEMENT");
         System.out.println("========================================");
         System.out.println(" 1. View Member Points Balance");
         System.out.println(" 2. Earn Points");
-        System.out.println(" 3. Redeem Reward (oldest points first)");
+        System.out.println(" 3. Request Reward Redemption");
         System.out.println(" 4. Run Expiry Check (auto removal)");
         System.out.println(" 5. View Transaction History");
         System.out.println(" 6. Member Tier Progression");
         System.out.println(" 7. Generate Expiry Alerts (7 days)");
         System.out.println(" 8. View Notifications");
-        System.out.println(" 9. Exit");
+        System.out.println(" 9. Process Redemption Requests");
+        System.out.println("10. Exit");
         System.out.println("----------------------------------------");
     }
 
@@ -128,7 +131,7 @@ public class PointsManagementUI {
         System.out.println(controller.earnPoints(memberId, amount, description, LocalDateTime.now()));
     }
 
-    private void redeemReward() {
+    private void requestRedemption() {
         String memberId = selectMember();
         if (memberId == null) {
             return;
@@ -137,7 +140,7 @@ public class PointsManagementUI {
         if (rewardId == null) {
             return;
         }
-        System.out.println(controller.redeemPoints(memberId, rewardId, LocalDateTime.now()));
+        System.out.println(controller.requestRedemption(memberId, rewardId, LocalDateTime.now()));
     }
 
     private void runExpiryCheck() {
@@ -172,6 +175,7 @@ public class PointsManagementUI {
                     t.getExpiryDate().format(DATE_FMT),
                     statusOf(t));
         }
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 
     private String statusOf(PointTransaction t) {
@@ -253,6 +257,7 @@ public class PointsManagementUI {
 
     private void generateAlerts() {
         System.out.println(controller.generateExpiryAlerts(LocalDateTime.now()));
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 
     private void viewNotifications() {
@@ -285,6 +290,7 @@ public class PointsManagementUI {
             }
             System.out.println("All notifications marked as read.");
         }
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 
     private void viewTierProgress() {
@@ -293,6 +299,37 @@ public class PointsManagementUI {
             return;
         }
         System.out.println(controller.getTierProgress(memberId));
+        ConsoleUtil.pressEnterToContinue(scanner);
+    }
+
+    private void processRedemptionRequests() {
+        if (controller.getPendingRedemptions().isEmpty()) {
+            System.out.println("No pending redemption requests.");
+            return;
+        }
+        System.out.println();
+        for (int i = 0; i < controller.getPendingRedemptions().size(); i++) {
+            RedemptionRecord r = controller.getPendingRedemptions().get(i);
+            System.out.printf(" %d. %s - member %s, reward %s (%s)%n",
+                    i + 1, r.getRedemptionId(), r.getMemberId(), r.getRewardId(),
+                    r.getRedeemedDate().format(DATE_FMT));
+        }
+        int index = readInt("Select a request to process") - 1;
+        if (index < 0 || index >= controller.getPendingRedemptions().size()) {
+            System.out.println("Invalid selection.");
+            return;
+        }
+        RedemptionRecord chosen = controller.getPendingRedemptions().get(index);
+        System.out.print("Approve or reject? (a/r): ");
+        String answer = scanner.nextLine().trim();
+        if (answer.equalsIgnoreCase("a")) {
+            System.out.println(controller.approveRedemption(chosen.getRedemptionId(), LocalDateTime.now()));
+        } else if (answer.equalsIgnoreCase("r")) {
+            System.out.println(controller.rejectRedemption(chosen.getRedemptionId(), LocalDateTime.now()));
+        } else {
+            System.out.println("Invalid choice; request left pending.");
+        }
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 }
 

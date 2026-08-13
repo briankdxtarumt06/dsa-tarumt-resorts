@@ -3,13 +3,18 @@ package tarumtresort.dao;
 import java.nio.file.Path;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.entity.Member;
+import tarumtresort.entity.Promotion;
 import tarumtresort.utility.JsonFileHandler;
 
-public class MemberDAO {
-    private final String FILE_NAME = "data/members.json";
+/**
+ * Stateless data access for Promotion records. Methods take or return the
+ * LinkedListInterface of entities - the DAO holds no list of its own.
+ */
+public class PromotionDAO {
+    private final String FILE_NAME = "data/promotions.json";
 
-    public void saveToFile(LinkedListInterface<Member> list) {
+    /** Saves the given promotion list to file. */
+    public void saveToFile(LinkedListInterface<Promotion> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -17,10 +22,11 @@ public class MemberDAO {
         }
     }
 
-    public void loadFromFile(LinkedListInterface<Member> list) {
+    /** Loads promotions from file into the given list, preserving file order. */
+    public void loadFromFile(LinkedListInterface<Promotion> list) {
         list.clear();
         try {
-            LinkedList<Member> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Member.class);
+            LinkedList<Promotion> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Promotion.class);
             for (int i = 0; i < loaded.size(); i++) {
                 list.addBack(loaded.get(i));
             }
