@@ -534,7 +534,7 @@ public class HousekeepingController {
             return null;
         }
 
-        String taskId = createTask("Clean " + roomId + " on " + requestedStart, taskType, priority, requestedStart, roomId);
+        String taskId = createTask("Clean " + roomId, taskType, priority, requestedStart, roomId);
 
         return taskId == null ? null : getTaskById(taskId);
     }
@@ -912,7 +912,7 @@ public class HousekeepingController {
         }
 
         // auto create the cleaning task for the room
-        String taskId = createTask("Clean " + roomId + " after " + checkoutTime.toString(), "Housekeeping", TaskPriority.MEDIUM, checkoutTime, roomId);
+        String taskId = createTask("Clean " + roomId, "Housekeeping", TaskPriority.MEDIUM, checkoutTime, roomId);
 
         if (taskId == null) {
             return null; // a cleaning task for this room already exists

@@ -42,7 +42,7 @@ public class HousekeepingUI {
         System.out.println("========================================");
         System.out.println("  1. Staff Management");
         System.out.println("  2. Task Management");
-        System.out.println("  3. Assignments & Scheduling");
+        System.out.println("  3. Task Assignment Management");
         System.out.println("  4. Reports");
         System.out.println("  0. Exit");
         System.out.println("========================================");
