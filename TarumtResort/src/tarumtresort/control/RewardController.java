@@ -6,22 +6,21 @@ import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Reward;
 
 public class RewardController {
-    private final RewardDAO rewardDAO;
-    private final LinkedListInterface<Reward> rewards = new LinkedList<>();
+    private LinkedListInterface<Reward> rewardList = new LinkedList<>();
+    private RewardDAO rewardDAO = new RewardDAO();
 
-    public RewardController(RewardDAO rewardDAO) {
-        this.rewardDAO = rewardDAO;
-        rewardDAO.loadFromFile(rewards);
+    public RewardController() {
+        rewardList = rewardDAO.retrieveFromFile();
     }
 
     public LinkedListInterface<Reward> getRewards() {
-        return rewards;
+        return rewardList;
     }
 
     public Reward findReward(String rewardId) {
-        for (int i = 0; i < rewards.size(); i++) {
-            if (rewards.get(i).getRewardId().equals(rewardId)) {
-                return rewards.get(i);
+        for (int i = 0; i < rewardList.size(); i++) {
+            if (rewardList.get(i).getRewardId().equals(rewardId)) {
+                return rewardList.get(i);
             }
         }
         return null;
@@ -34,7 +33,7 @@ public class RewardController {
         if (findReward(reward.getRewardId()) != null) {
             return "Reward id already exists: " + reward.getRewardId();
         }
-        rewards.addSorted(reward);
+        rewardList.addSorted(reward);
         persist();
         return "Reward added: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
     }
@@ -45,14 +44,14 @@ public class RewardController {
             return "Reward not found: " + rewardId;
         }
         LinkedListInterface<Reward> kept = new LinkedList<>();
-        for (int i = 0; i < rewards.size(); i++) {
-            if (!rewards.get(i).getRewardId().equals(rewardId)) {
-                kept.addBack(rewards.get(i));
+        for (int i = 0; i < rewardList.size(); i++) {
+            if (!rewardList.get(i).getRewardId().equals(rewardId)) {
+                kept.addBack(rewardList.get(i));
             }
         }
-        rewards.clear();
+        rewardList.clear();
         for (int i = 0; i < kept.size(); i++) {
-            rewards.addBack(kept.get(i));
+            rewardList.addBack(kept.get(i));
         }
         persist();
         return "Reward removed: " + reward.getName() + " (" + rewardId + ").";
@@ -67,12 +66,12 @@ public class RewardController {
         reward.setDescription(description);
         reward.setPointCost(pointCost);
         LinkedListInterface<Reward> reordered = new LinkedList<>();
-        for (int i = 0; i < rewards.size(); i++) {
-            reordered.addSorted(rewards.get(i));
+        for (int i = 0; i < rewardList.size(); i++) {
+            reordered.addSorted(rewardList.get(i));
         }
-        rewards.clear();
+        rewardList.clear();
         for (int i = 0; i < reordered.size(); i++) {
-            rewards.addBack(reordered.get(i));
+            rewardList.addBack(reordered.get(i));
         }
         persist();
         return "Reward updated: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
@@ -81,8 +80,8 @@ public class RewardController {
     public String nextRewardId() {
         try {
             int max = 0;
-            for (int i = 0; i < rewards.size(); i++) {
-                String rid = rewards.get(i).getRewardId();
+            for (int i = 0; i < rewardList.size(); i++) {
+                String rid = rewardList.get(i).getRewardId();
                 if (rid != null && rid.matches("R\\d+")) {
                     int n = Integer.parseInt(rid.substring(1));
                     if (n > max) {
@@ -92,11 +91,11 @@ public class RewardController {
             }
             return String.format("R%03d", max + 1);
         } catch (RuntimeException e) {
-            return String.format("R%03d", rewards.size() + 1);
+            return String.format("R%03d", rewardList.size() + 1);
         }
     }
 
     private void persist() {
-        rewardDAO.saveToFile(rewards);
+        rewardDAO.saveToFile(rewardList);
     }
 }

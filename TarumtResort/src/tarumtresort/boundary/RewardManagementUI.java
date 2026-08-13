@@ -16,8 +16,7 @@ public class RewardManagementUI {
 
     public RewardManagementUI(Scanner scanner) {
         this.scanner = scanner;
-        RewardDAO rewardDAO = new RewardDAO();
-        this.controller = new RewardController(rewardDAO);
+        this.controller = new RewardController();
     }
 
 

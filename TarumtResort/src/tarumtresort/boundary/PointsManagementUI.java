@@ -29,13 +29,7 @@ public class PointsManagementUI {
 
     public PointsManagementUI(Scanner scanner) {
         this.scanner = scanner;
-        MemberDAO memberDAO = new MemberDAO();
-        PointTransactionDAO pointTransactionDAO = new PointTransactionDAO();
-        RewardDAO rewardDAO = new RewardDAO();
-        RedemptionRecordDAO redemptionRecordDAO = new RedemptionRecordDAO();
-        NotificationDAO notificationDAO = new NotificationDAO();
-        this.controller = new PointsController(memberDAO, pointTransactionDAO,
-                rewardDAO, redemptionRecordDAO, notificationDAO);
+        this.controller = new PointsController();
         String alert = controller.generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
             System.out.println(alert);

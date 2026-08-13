@@ -22,8 +22,7 @@ public class MemberManagementUI {
 
     public MemberManagementUI(Scanner scanner) {
         this.scanner = scanner;
-        MemberDAO memberDAO = new MemberDAO();
-        this.controller = new MemberController(memberDAO);
+        this.controller = new MemberController();
     }
 
     public void run() {

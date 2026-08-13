@@ -17,15 +17,16 @@ public class NotificationDAO {
         }
     }
 
-    public void loadFromFile(LinkedListInterface<Notification> list) {
-        list.clear();
+    public LinkedList<Notification> retrieveFromFile() {
+        LinkedList<Notification> result = new LinkedList<>();
         try {
             LinkedList<Notification> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Notification.class);
             for (int i = 0; i < loaded.size(); i++) {
-                list.addBack(loaded.get(i));
+                result.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return result;
     }
 }

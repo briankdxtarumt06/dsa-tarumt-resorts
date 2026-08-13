@@ -7,22 +7,21 @@ import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 
 public class MemberController {
-    private final MemberDAO memberDAO;
-    private final LinkedListInterface<Member> members = new LinkedList<>();
+    private LinkedListInterface<Member> memberList = new LinkedList<>();
+    private MemberDAO memberDAO = new MemberDAO();
 
-    public MemberController(MemberDAO memberDAO) {
-        this.memberDAO = memberDAO;
-        memberDAO.loadFromFile(members);
+    public MemberController() {
+        memberList = memberDAO.retrieveFromFile();
     }
 
     public LinkedListInterface<Member> getMembers() {
-        return members;
+        return memberList;
     }
 
     public Member findMember(String memberId) {
-        for (int i = 0; i < members.size(); i++) {
-            if (members.get(i).getMemberId().equals(memberId)) {
-                return members.get(i);
+        for (int i = 0; i < memberList.size(); i++) {
+            if (memberList.get(i).getMemberId().equals(memberId)) {
+                return memberList.get(i);
             }
         }
         return null;
@@ -35,7 +34,7 @@ public class MemberController {
         if (findMember(member.getMemberId()) != null) {
             return "Member id already exists: " + member.getMemberId();
         }
-        members.addSorted(member);
+        memberList.addSorted(member);
         persist();
         return "Member added: " + member.getMemberId() + " (Tier: " + member.getTier() + ").";
     }
@@ -46,14 +45,14 @@ public class MemberController {
             return "Member not found: " + memberId;
         }
         LinkedListInterface<Member> kept = new LinkedList<>();
-        for (int i = 0; i < members.size(); i++) {
-            if (!members.get(i).getMemberId().equals(memberId)) {
-                kept.addBack(members.get(i));
+        for (int i = 0; i < memberList.size(); i++) {
+            if (!memberList.get(i).getMemberId().equals(memberId)) {
+                kept.addBack(memberList.get(i));
             }
         }
-        members.clear();
+        memberList.clear();
         for (int i = 0; i < kept.size(); i++) {
-            members.addBack(kept.get(i));
+            memberList.addBack(kept.get(i));
         }
         persist();
         return "Member removed: " + memberId + ".";
@@ -72,8 +71,8 @@ public class MemberController {
     public String nextMemberId() {
         try {
             int max = 0;
-            for (int i = 0; i < members.size(); i++) {
-                String mid = members.get(i).getMemberId();
+            for (int i = 0; i < memberList.size(); i++) {
+                String mid = memberList.get(i).getMemberId();
                 if (mid != null && mid.matches("M\\d+")) {
                     int n = Integer.parseInt(mid.substring(1));
                     if (n > max) {
@@ -83,11 +82,11 @@ public class MemberController {
             }
             return String.format("M%03d", max + 1);
         } catch (RuntimeException e) {
-            return String.format("M%03d", members.size() + 1);
+            return String.format("M%03d", memberList.size() + 1);
         }
     }
 
     private void persist() {
-        memberDAO.saveToFile(members);
+        memberDAO.saveToFile(memberList);
     }
 }

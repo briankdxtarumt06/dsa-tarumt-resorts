@@ -16,38 +16,31 @@ import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
 
 public class PointsController {
-    private final MemberDAO memberDAO;
-    private final PointTransactionDAO pointTransactionDAO;
-    private final RewardDAO rewardDAO;
-    private final RedemptionRecordDAO redemptionRecordDAO;
-    private final NotificationDAO notificationDAO;
+    private LinkedListInterface<Member> memberList = new LinkedList<>();
+    private LinkedListInterface<PointTransaction> pointTransactionList = new LinkedList<>();
+    private LinkedListInterface<RedemptionRecord> redemptionList = new LinkedList<>();
+    private LinkedListInterface<Reward> rewardList = new LinkedList<>();
+    private LinkedListInterface<Notification> notificationList = new LinkedList<>();
 
-    private final LinkedListInterface<Member> members = new LinkedList<>();
-    private final LinkedListInterface<PointTransaction> pointTransactions = new LinkedList<>();
-    private final LinkedListInterface<RedemptionRecord> redemptions = new LinkedList<>();
-    private final LinkedListInterface<Reward> rewards = new LinkedList<>();
-    private final LinkedListInterface<Notification> notifications = new LinkedList<>();
+    private MemberDAO memberDAO = new MemberDAO();
+    private PointTransactionDAO pointTransactionDAO = new PointTransactionDAO();
+    private RewardDAO rewardDAO = new RewardDAO();
+    private RedemptionRecordDAO redemptionRecordDAO = new RedemptionRecordDAO();
+    private NotificationDAO notificationDAO = new NotificationDAO();
 
-    public PointsController(MemberDAO memberDAO, PointTransactionDAO pointTransactionDAO,
-            RewardDAO rewardDAO, RedemptionRecordDAO redemptionRecordDAO,
-            NotificationDAO notificationDAO) {
-        this.memberDAO = memberDAO;
-        this.pointTransactionDAO = pointTransactionDAO;
-        this.rewardDAO = rewardDAO;
-        this.redemptionRecordDAO = redemptionRecordDAO;
-        this.notificationDAO = notificationDAO;
-        memberDAO.loadFromFile(members);
-        pointTransactionDAO.loadFromFile(pointTransactions);
-        redemptionRecordDAO.loadFromFile(redemptions);
-        rewardDAO.loadFromFile(rewards);
-        notificationDAO.loadFromFile(notifications);
+    public PointsController() {
+        memberList = memberDAO.retrieveFromFile();
+        pointTransactionList = pointTransactionDAO.retrieveFromFile();
+        redemptionList = redemptionRecordDAO.retrieveFromFile();
+        rewardList = rewardDAO.retrieveFromFile();
+        notificationList = notificationDAO.retrieveFromFile();
         reconcileTiersOnLoad();
     }
 
     private void reconcileTiersOnLoad() {
         boolean changed = false;
-        for (int i = 0; i < members.size(); i++) {
-            Member m = members.get(i);
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
             Tier correct = tierFor(getCumulativeEarned(m.getMemberId()));
             if (m.getTier() != correct) {
                 m.setTier(correct);
@@ -55,30 +48,30 @@ public class PointsController {
             }
         }
         if (changed) {
-            memberDAO.saveToFile(members);
+            memberDAO.saveToFile(memberList);
         }
     }
 
     public LinkedListInterface<Member> getMembers() {
-        return members;
+        return memberList;
     }
 
     public LinkedListInterface<PointTransaction> getPointTransactions() {
-        return pointTransactions;
+        return pointTransactionList;
     }
 
     public LinkedListInterface<RedemptionRecord> getRedemptions() {
-        return redemptions;
+        return redemptionList;
     }
 
     public LinkedListInterface<Reward> getRewards() {
-        return rewards;
+        return rewardList;
     }
 
     public Member findMember(String memberId) {
-        for (int i = 0; i < members.size(); i++) {
-            if (members.get(i).getMemberId().equals(memberId)) {
-                return members.get(i);
+        for (int i = 0; i < memberList.size(); i++) {
+            if (memberList.get(i).getMemberId().equals(memberId)) {
+                return memberList.get(i);
             }
         }
         return null;
@@ -86,8 +79,8 @@ public class PointsController {
 
     public LinkedListInterface<PointTransaction> getTransactions(String memberId) {
         LinkedListInterface<PointTransaction> result = new LinkedList<>();
-        for (int i = 0; i < pointTransactions.size(); i++) {
-            PointTransaction t = pointTransactions.get(i);
+        for (int i = 0; i < pointTransactionList.size(); i++) {
+            PointTransaction t = pointTransactionList.get(i);
             if (t.getMemberId().equals(memberId)) {
                 result.addBack(t);
             }
@@ -137,7 +130,7 @@ public class PointsController {
         PointTransaction t = new PointTransaction(nextTransactionId(), date,
                 description == null || description.isBlank() ? "Points earned" : description,
                 amount, expiry, amount, memberId);
-        pointTransactions.addSorted(t);
+        pointTransactionList.addSorted(t);
         recomputeBalance(member);
         recomputeTier(member, date);
         persist();
@@ -160,7 +153,7 @@ public class PointsController {
             return "Insufficient points: " + memberId + " needs " + cost + " pts but only has "
                     + member.getPoints() + ".";
         }
-        redemptions.addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId));
+        redemptionList.addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId));
         persist();
         return "Redemption requested: " + reward.getName() + " (" + cost + " pts) for " + memberId
                 + " - pending approval.";
@@ -235,18 +228,18 @@ public class PointsController {
 
     public LinkedListInterface<RedemptionRecord> getPendingRedemptions() {
         LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
-        for (int i = 0; i < redemptions.size(); i++) {
-            if ("PENDING".equals(redemptions.get(i).getStatus())) {
-                result.addBack(redemptions.get(i));
+        for (int i = 0; i < redemptionList.size(); i++) {
+            if ("PENDING".equals(redemptionList.get(i).getStatus())) {
+                result.addBack(redemptionList.get(i));
             }
         }
         return result;
     }
 
     private RedemptionRecord findRedemption(String redemptionId) {
-        for (int i = 0; i < redemptions.size(); i++) {
-            if (redemptions.get(i).getRedemptionId().equals(redemptionId)) {
-                return redemptions.get(i);
+        for (int i = 0; i < redemptionList.size(); i++) {
+            if (redemptionList.get(i).getRedemptionId().equals(redemptionId)) {
+                return redemptionList.get(i);
             }
         }
         return null;
@@ -271,25 +264,25 @@ public class PointsController {
     }
 
     private Reward findReward(String rewardId) {
-        for (int i = 0; i < rewards.size(); i++) {
-            if (rewards.get(i).getRewardId().equals(rewardId)) {
-                return rewards.get(i);
+        for (int i = 0; i < rewardList.size(); i++) {
+            if (rewardList.get(i).getRewardId().equals(rewardId)) {
+                return rewardList.get(i);
             }
         }
         return null;
     }
 
     private void persist() {
-        pointTransactionDAO.saveToFile(pointTransactions);
-        redemptionRecordDAO.saveToFile(redemptions);
-        memberDAO.saveToFile(members);
+        pointTransactionDAO.saveToFile(pointTransactionList);
+        redemptionRecordDAO.saveToFile(redemptionList);
+        memberDAO.saveToFile(memberList);
     }
 
     private String nextTransactionId() {
         try {
             int max = 0;
-            for (int i = 0; i < pointTransactions.size(); i++) {
-                String tid = pointTransactions.get(i).getTransactionId();
+            for (int i = 0; i < pointTransactionList.size(); i++) {
+                String tid = pointTransactionList.get(i).getTransactionId();
                 if (tid != null && tid.matches("PT\\d+")) {
                     int n = Integer.parseInt(tid.substring(2));
                     if (n > max) {
@@ -309,9 +302,9 @@ public class PointsController {
     }
 
     private PointTransaction findTransaction(String transactionId) {
-        for (int i = 0; i < pointTransactions.size(); i++) {
-            if (pointTransactions.get(i).getTransactionId().equals(transactionId)) {
-                return pointTransactions.get(i);
+        for (int i = 0; i < pointTransactionList.size(); i++) {
+            if (pointTransactionList.get(i).getTransactionId().equals(transactionId)) {
+                return pointTransactionList.get(i);
             }
         }
         return null;
@@ -320,8 +313,8 @@ public class PointsController {
     private String nextRedemptionId() {
         try {
             int max = 0;
-            for (int i = 0; i < redemptions.size(); i++) {
-                String rid = redemptions.get(i).getRedemptionId();
+            for (int i = 0; i < redemptionList.size(); i++) {
+                String rid = redemptionList.get(i).getRedemptionId();
                 if (rid != null && rid.matches("RR\\d+")) {
                     int n = Integer.parseInt(rid.substring(2));
                     if (n > max) {
@@ -340,8 +333,8 @@ public class PointsController {
     public String generateExpiryAlerts(LocalDateTime now) {
         int created = 0;
         StringBuilder summary = new StringBuilder();
-        for (int i = 0; i < pointTransactions.size(); i++) {
-            PointTransaction t = pointTransactions.get(i);
+        for (int i = 0; i < pointTransactionList.size(); i++) {
+            PointTransaction t = pointTransactionList.get(i);
             if (t.isExpired(now) || t.getRemainingPoints() <= 0) {
                 continue;
             }
@@ -359,21 +352,21 @@ public class PointsController {
             if (hasNotification(member.getGuestId(), message)) {
                 continue; // already alerted
             }
-            notifications.addSorted(new Notification(nextNotificationId(), "POINT_EXPIRY",
+            notificationList.addSorted(new Notification(nextNotificationId(), "POINT_EXPIRY",
                     message, now, false, member.getGuestId()));
             created++;
             summary.append("  - ").append(message).append("\n");
         }
         if (created > 0) {
-            notificationDAO.saveToFile(notifications);
+            notificationDAO.saveToFile(notificationList);
             return created + " expiry alert(s) generated:\n" + summary;
         }
         return "No new expiry alerts to generate.";
     }
 
     private boolean hasNotification(String guestId, String message) {
-        for (int i = 0; i < notifications.size(); i++) {
-            Notification n = notifications.get(i);
+        for (int i = 0; i < notificationList.size(); i++) {
+            Notification n = notificationList.get(i);
             if (n.getGuestId() != null && n.getGuestId().equals(guestId)
                     && n.getMessage().equals(message)) {
                 return true;
@@ -384,20 +377,20 @@ public class PointsController {
 
     public LinkedListInterface<Notification> getNotifications(String guestId) {
         LinkedListInterface<Notification> result = new LinkedList<>();
-        for (int i = 0; i < notifications.size(); i++) {
-            if (guestId != null && guestId.equals(notifications.get(i).getGuestId())) {
-                result.addBack(notifications.get(i));
+        for (int i = 0; i < notificationList.size(); i++) {
+            if (guestId != null && guestId.equals(notificationList.get(i).getGuestId())) {
+                result.addBack(notificationList.get(i));
             }
         }
         return result;
     }
 
     public String markNotificationRead(String notificationId) {
-        for (int i = 0; i < notifications.size(); i++) {
-            Notification n = notifications.get(i);
+        for (int i = 0; i < notificationList.size(); i++) {
+            Notification n = notificationList.get(i);
             if (n.getNotificationId().equals(notificationId)) {
                 n.setRead(true);
-                notificationDAO.saveToFile(notifications);
+                notificationDAO.saveToFile(notificationList);
                 return "Notification " + notificationId + " marked as read.";
             }
         }
@@ -407,8 +400,8 @@ public class PointsController {
     private String nextNotificationId() {
         try {
             int max = 0;
-            for (int i = 0; i < notifications.size(); i++) {
-                String nid = notifications.get(i).getNotificationId();
+            for (int i = 0; i < notificationList.size(); i++) {
+                String nid = notificationList.get(i).getNotificationId();
                 if (nid != null && nid.matches("NT\\d+")) {
                     int n = Integer.parseInt(nid.substring(2));
                     if (n > max) {
@@ -418,7 +411,7 @@ public class PointsController {
             }
             return String.format("NT%04d", max + 1);
         } catch (RuntimeException e) {
-            return String.format("NT%04d", notifications.size() + 1);
+            return String.format("NT%04d", notificationList.size() + 1);
         }
     }
 
@@ -455,9 +448,9 @@ public class PointsController {
             member.setTier(current);
             if (member.getGuestId() != null) {
                 String message = "Congratulations! You have been upgraded to " + current + "!";
-                notifications.addSorted(new Notification(nextNotificationId(), "TIER_UPGRADE",
+                notificationList.addSorted(new Notification(nextNotificationId(), "TIER_UPGRADE",
                         message, now, false, member.getGuestId()));
-                notificationDAO.saveToFile(notifications);
+                notificationDAO.saveToFile(notificationList);
             }
             return true;
         }
@@ -490,8 +483,8 @@ public class PointsController {
         if (member == null || member.getGuestId() == null) {
             return;
         }
-        notifications.addSorted(new Notification(nextNotificationId(), type, message, now, false, member.getGuestId()));
-        notificationDAO.saveToFile(notifications);
+        notificationList.addSorted(new Notification(nextNotificationId(), type, message, now, false, member.getGuestId()));
+        notificationDAO.saveToFile(notificationList);
     }
 
 }

@@ -17,14 +17,16 @@ public class PointTransactionDAO {
         }
     }
 
-    public void loadFromFile(LinkedListInterface<PointTransaction> list) {
-        list.clear();
+    public LinkedList<PointTransaction> retrieveFromFile() {
+        LinkedList<PointTransaction> result = new LinkedList<>();
         try {
             LinkedList<PointTransaction> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), PointTransaction.class);
             for (int i = 0; i < loaded.size(); i++) {
-                list.addBack(loaded.get(i));
+                result.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
-            System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());        }
+            System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
+        }
+        return result;
     }
 }
