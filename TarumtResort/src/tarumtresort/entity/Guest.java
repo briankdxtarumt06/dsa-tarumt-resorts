@@ -1,5 +1,8 @@
 package tarumtresort.entity;
 
+import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.LinkedList;
+
 public class Guest implements Comparable<Guest>{
     private String guestId;
     private String name;
@@ -7,19 +10,18 @@ public class Guest implements Comparable<Guest>{
     private String contactNumber;
     private String nationality;
     private String address;
+    private LinkedListInterface <Reservation> reservations;
 
-    public Guest() {
-    }
-
-    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality, String address) {
+    //Constructor 
+    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality, String address){
         this.guestId = guestId;
         this.name = name;
         this.icOrPassport = icOrPassport;
         this.contactNumber = contactNumber;
         this.nationality = nationality;
         this.address = address;
+        this.reservations = new LinkedList<>();
     }
-
 
     // constructor (no arguments)
     public Guest() {
@@ -40,12 +42,18 @@ public class Guest implements Comparable<Guest>{
     public String getContactNumber(){ return contactNumber; }
     public String getNationality(){ return nationality; }
     public String getAddress(){ return address; }
+    public LinkedListInterface<Reservation> getReservations(){ return reservations; }
 
     @Override
     public String toString() {
-        return "Guest{" + "guestId=" + guestId + ", name=" + name
-                + ", icOrPassport=" + icOrPassport + ", contactNumber=" + contactNumber
-                + ", nationality=" + nationality + ", address=" + address + '}';
+        return "Guest{" +
+                "guestId='" + guestId + '\'' +
+                ", name='" + name + '\'' +
+                ", icOrPassport='" + icOrPassport + '\'' +
+                ", contactNumber='" + contactNumber + '\'' +
+                ", nationality='" + nationality + '\'' +
+                ", address='" + address + '\'' +
+                '}';
     }
 
     @Override
