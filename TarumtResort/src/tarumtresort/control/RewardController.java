@@ -2,16 +2,83 @@ package tarumtresort.control;
 
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.boundary.RewardManagementUI;
 import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Reward;
 
+/**
+ * Business logic for the reward catalogue. The controller owns its UI and
+ * drives the menu loop; the UI only handles input and output.
+ */
 public class RewardController {
     private LinkedListInterface<Reward> rewardList = new LinkedList<>();
     private RewardDAO rewardDAO = new RewardDAO();
+    private RewardManagementUI rewardUI = new RewardManagementUI();
 
     public RewardController() {
         rewardList = rewardDAO.retrieveFromFile();
     }
+
+    public static void main(String[] args) {
+        new RewardController().run();
+    }
+
+    /** Drives the reward management menu until the user exits. */
+    public void run() {
+        int choice;
+        do {
+            choice = rewardUI.getMenuChoice();
+            switch (choice) {
+                case 1:
+                    addRewardFlow();
+                    break;
+                case 2:
+                    removeRewardFlow();
+                    break;
+                case 3:
+                    updateRewardFlow();
+                    break;
+                case 4:
+                    rewardUI.displayRewards(rewardList);
+                    rewardUI.pause();
+                    break;
+                case 5:
+                    rewardUI.show("Returning to main menu...");
+                    break;
+                default:
+                    rewardUI.show("Invalid choice. Please enter 1 - 5.");
+            }
+        } while (choice != 5);
+    }
+
+    private void addRewardFlow() {
+        Reward reward = rewardUI.inputNewReward(nextRewardId());
+        rewardUI.showMessage(addReward(reward));
+    }
+
+    private void removeRewardFlow() {
+        String rewardId = rewardUI.selectRewardId(rewardList, "Select a reward to remove");
+        if (rewardId == null) {
+            return;
+        }
+        rewardUI.showMessage(removeReward(rewardId));
+    }
+
+    private void updateRewardFlow() {
+        String rewardId = rewardUI.selectRewardId(rewardList, "Select a reward to update");
+        if (rewardId == null) {
+            return;
+        }
+        Reward reward = findReward(rewardId);
+        String name = rewardUI.promptWithDefault("New name", reward.getName());
+        String description = rewardUI.promptWithDefault("New description", reward.getDescription());
+        int cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
+        rewardUI.showMessage(updateReward(rewardId, name, description, cost));
+    }
+
+    // ---------------------------------------------------------------
+    // Business logic
+    // ---------------------------------------------------------------
 
     public LinkedListInterface<Reward> getRewards() {
         return rewardList;
@@ -26,6 +93,7 @@ public class RewardController {
         return null;
     }
 
+    /** Adds a reward to the catalogue and persists it. */
     public String addReward(Reward reward) {
         if (reward == null || reward.getRewardId() == null) {
             return "Reward cannot be null and must have an id.";
@@ -38,6 +106,7 @@ public class RewardController {
         return "Reward added: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
     }
 
+    /** Removes a reward from the catalogue by id and persists. */
     public String removeReward(String rewardId) {
         Reward reward = findReward(rewardId);
         if (reward == null) {
@@ -57,6 +126,7 @@ public class RewardController {
         return "Reward removed: " + reward.getName() + " (" + rewardId + ").";
     }
 
+    /** Updates the name, description and cost of a reward, then persists. */
     public String updateReward(String rewardId, String name, String description, int pointCost) {
         Reward reward = findReward(rewardId);
         if (reward == null) {
@@ -65,6 +135,7 @@ public class RewardController {
         reward.setName(name);
         reward.setDescription(description);
         reward.setPointCost(pointCost);
+        // re-sort so the list stays ordered by cost
         LinkedListInterface<Reward> reordered = new LinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {
             reordered.addSorted(rewardList.get(i));
@@ -77,6 +148,7 @@ public class RewardController {
         return "Reward updated: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
     }
 
+    /** Generates the next available reward id, e.g. R005. */
     public String nextRewardId() {
         try {
             int max = 0;
