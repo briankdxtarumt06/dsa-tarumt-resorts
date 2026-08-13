@@ -3,23 +3,16 @@ package tarumtresort.control;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.dao.MemberDAO;
-import tarumtresort.dao.PromotionDAO;
 import tarumtresort.entity.Member;
-import tarumtresort.entity.Promotion;
 import tarumtresort.entity.enums.Tier;
 
 public class MemberController {
     private final MemberDAO memberDAO;
     private final LinkedListInterface<Member> members = new LinkedList<>();
-    private final LinkedListInterface<Promotion> promotions = new LinkedList<>();
 
-    public MemberController(MemberDAO memberDAO, PromotionDAO promotionDAO) {
+    public MemberController(MemberDAO memberDAO) {
         this.memberDAO = memberDAO;
-        promotionDAO.loadFromFile(promotions);
         memberDAO.loadFromFile(members);
-        if (promotions.isEmpty()) {
-            seedDefaultPromotions();
-        }
     }
 
     public LinkedListInterface<Member> getMembers() {
@@ -35,7 +28,6 @@ public class MemberController {
         return null;
     }
 
-    /** Registers a new member and persists. */
     public String addMember(Member member) {
         if (member == null || member.getMemberId() == null) {
             return "Member cannot be null and must have an id.";
@@ -77,32 +69,6 @@ public class MemberController {
         return "Member " + memberId + " updated to tier " + tier + ".";
     }
 
-    /** @return the promotions that apply to the given tier (personalized offers). */
-    public LinkedListInterface<Promotion> getPromotionsForTier(Tier tier) {
-        LinkedListInterface<Promotion> result = new LinkedList<>();
-        for (int i = 0; i < promotions.size(); i++) {
-            Promotion p = promotions.get(i);
-            if (p.getMinTier().compareTo(tier) <= 0) {
-                result.addBack(p);
-            }
-        }
-        return result;
-    }
-
-    private void seedDefaultPromotions() {
-        promotions.addSorted(new Promotion("P001", "Welcome Drink", "Free welcome drink at the pool bar", Tier.SILVER));
-        promotions.addSorted(new Promotion("P002", "Early Check-in", "Check-in from 12pm at no extra charge", Tier.GOLD));
-        promotions.addSorted(new Promotion("P003", "10% Off Spa", "10% discount on spa packages", Tier.GOLD));
-        promotions.addSorted(new Promotion("P004", "Room Upgrade", "Free upgrade to deluxe room (subject to availability)", Tier.PLATINUM));
-        promotions.addSorted(new Promotion("P005", "Diamond Lounge Access", "Complimentary access to the Diamond lounge", Tier.DIAMOND));
-        persist();
-    }
-
-    private void persist() {
-        memberDAO.saveToFile(members);
-    }
-
-    /** Generates the next available member id, e.g. M005. */
     public String nextMemberId() {
         try {
             int max = 0;
@@ -121,4 +87,7 @@ public class MemberController {
         }
     }
 
+    private void persist() {
+        memberDAO.saveToFile(members);
+    }
 }

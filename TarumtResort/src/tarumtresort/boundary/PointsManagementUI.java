@@ -36,8 +36,6 @@ public class PointsManagementUI {
         NotificationDAO notificationDAO = new NotificationDAO();
         this.controller = new PointsController(memberDAO, pointTransactionDAO,
                 rewardDAO, redemptionRecordDAO, notificationDAO);
-        // Auto-check for points expiring soon so alerts appear when the
-        // module opens, not only when the user runs the generate option.
         String alert = controller.generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
             System.out.println(alert);
@@ -188,10 +186,6 @@ public class PointsManagementUI {
         return "VALID";
     }
 
-    /**
-     * Prints the member list and returns the chosen member id, or null if
-     * there are no members or the selection is invalid.
-     */
     private String selectMember() {
         if (controller.getMembers().isEmpty()) {
             System.out.println("No members registered yet.");
@@ -210,10 +204,6 @@ public class PointsManagementUI {
         return controller.getMembers().get(index).getMemberId();
     }
 
-    /**
-     * Prints the reward catalogue and returns the chosen reward id, or null
-     * if there are no rewards or the selection is invalid.
-     */
     private String selectReward() {
         if (controller.getRewards().isEmpty()) {
             System.out.println("No rewards in the catalogue.");

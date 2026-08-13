@@ -9,7 +9,6 @@ import tarumtresort.utility.JsonFileHandler;
 public class NotificationDAO {
     private final String FILE_NAME = "data/notifications.json";
 
-    /** Saves the given notification list to file. */
     public void saveToFile(LinkedListInterface<Notification> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));

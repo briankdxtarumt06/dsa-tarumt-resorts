@@ -3,19 +3,12 @@ package tarumtresort.boundary;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.control.MemberController;
 import tarumtresort.dao.MemberDAO;
-import tarumtresort.dao.PromotionDAO;
 import tarumtresort.entity.Member;
-import tarumtresort.entity.Promotion;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- * Console UI for managing member profiles and personalised promotions.
- * Run this class directly to try the module standalone, or via the main menu.
- */
 public class MemberManagementUI {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -23,17 +16,14 @@ public class MemberManagementUI {
     private final Scanner scanner;
     private final MemberController controller;
 
-    /** Standalone run - creates its own scanner. */
     public MemberManagementUI() {
         this(new Scanner(System.in));
     }
 
-    /** Uses a shared scanner so the main menu can pass its own. */
     public MemberManagementUI(Scanner scanner) {
         this.scanner = scanner;
         MemberDAO memberDAO = new MemberDAO();
-        PromotionDAO promotionDAO = new PromotionDAO();
-        this.controller = new MemberController(memberDAO, promotionDAO);
+        this.controller = new MemberController(memberDAO);
     }
 
     public void run() {
@@ -76,7 +66,7 @@ public class MemberManagementUI {
         System.out.println(" 2. Update Member Tier");
         System.out.println(" 3. Remove Member");
         System.out.println(" 4. List Members");
-        System.out.println(" 5. View Profile & Personalized Promotions");
+        System.out.println(" 5. View Member Profile");
         System.out.println(" 6. Exit");
         System.out.println("----------------------------------------");
     }
@@ -146,20 +136,9 @@ public class MemberManagementUI {
         System.out.println("Guest id      : " + m.getGuestId());
         System.out.println("Enrolled      : " + (m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)));
         System.out.println();
-        System.out.println("Personalized promotions for " + m.getTier() + ":");
-        LinkedListInterface<Promotion> promos = controller.getPromotionsForTier(m.getTier());
-        if (promos.isEmpty()) {
-            System.out.println("  No promotions available for this tier.");
-        } else {
-            for (int i = 0; i < promos.size(); i++) {
-                Promotion p = promos.get(i);
-                System.out.println("  - " + p.getName() + ": " + p.getDescription());
-            }
-        }
         ConsoleUtil.pressEnterToContinue(scanner);
     }
 
-    /** Prints the member list and returns the chosen member id, or null. */
     private String selectMember(String prompt) {
         if (controller.getMembers().isEmpty()) {
             System.out.println("No members registered yet.");
