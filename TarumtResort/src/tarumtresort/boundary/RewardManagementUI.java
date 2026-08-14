@@ -44,7 +44,7 @@ public class RewardManagementUI {
                 return null;
             }
             if (name.isEmpty()) {
-                System.out.println("Reward name cannot be empty.");
+                ConsoleUtil.printError("Reward name cannot be empty.");
             }
         }
         System.out.print("Description (0 to cancel): ");
@@ -61,7 +61,7 @@ public class RewardManagementUI {
             return null;
         }
         while (cost < 0) {
-            System.out.println("Point cost must be positive.");
+            ConsoleUtil.printError("Point cost must be positive.");
             cost = readInt("Point cost (0 to cancel)");
             if (cost == 0) {
                 System.out.println("Operation cancelled.");
@@ -87,7 +87,7 @@ public class RewardManagementUI {
             return null;
         }
         if (index >= rewards.size()) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
@@ -140,9 +140,15 @@ public class RewardManagementUI {
         try {
             return Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid number, keeping current value.");
+            ConsoleUtil.printError("Invalid number, keeping current value.");
             return current;
         }
+    }
+
+    /** Prints an error message in red and waits for the user to press Enter. */
+    public void showError(String message) {
+        ConsoleUtil.printError(message);
+        pause();
     }
 
     public void showMessage(String message) {
@@ -169,7 +175,7 @@ public class RewardManagementUI {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                ConsoleUtil.printError("Please enter a valid number.");
             }
         }
     }

@@ -8,7 +8,28 @@ import java.util.Scanner;
 
 public class ConsoleUtil {
 
+    // ANSI escape codes for coloured console output
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_GREEN = "\u001B[32m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+
     private ConsoleUtil() {
+    }
+
+    /** Prints a message in red - use for error/validation messages. */
+    public static void printError(String message) {
+        System.out.println(ANSI_RED + message + ANSI_RESET);
+    }
+
+    /** Prints a message in green - use for success messages. */
+    public static void printSuccess(String message) {
+        System.out.println(ANSI_GREEN + message + ANSI_RESET);
+    }
+
+    /** Prints a message in yellow - use for warnings/notices. */
+    public static void printWarning(String message) {
+        System.out.println(ANSI_YELLOW + message + ANSI_RESET);
     }
 
     public static void clearScreen() {
@@ -19,7 +40,7 @@ public class ConsoleUtil {
                 new ProcessBuilder("clear").inheritIO().start().waitFor();
             }
         } catch (Exception e) {
-            System.out.println("Could not clear the screen.");
+            printError("Could not clear the screen.");
         }
     }
 

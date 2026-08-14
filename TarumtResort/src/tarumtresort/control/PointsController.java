@@ -79,7 +79,7 @@ public class PointsController {
                     pointsUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    pointsUI.showMessage("Invalid choice. Please enter 1 - 10.");
+                    pointsUI.showError("Invalid choice. Please enter 1 - 10.");
             }
         } while (choice != 10);
     }

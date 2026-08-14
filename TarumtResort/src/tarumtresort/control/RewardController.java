@@ -43,7 +43,7 @@ public class RewardController {
                     rewardUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    rewardUI.showMessage("Invalid choice. Please enter 1 - 5.");
+                    rewardUI.showError("Invalid choice. Please enter 1 - 5.");
             }
         } while (choice != 5);
     }

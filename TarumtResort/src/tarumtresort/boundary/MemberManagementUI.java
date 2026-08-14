@@ -48,7 +48,7 @@ public class MemberManagementUI {
                 return null;
             }
             if (guestId.isEmpty()) {
-                System.out.println("Guest id cannot be empty.");
+                ConsoleUtil.printError("Guest id cannot be empty.");
             }
         }
         Tier tier = selectTier();
@@ -77,7 +77,7 @@ public class MemberManagementUI {
             return null;
         }
         if (index >= members.size()) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
@@ -127,11 +127,17 @@ public class MemberManagementUI {
             return null;
         }
         if (index >= tiers.length) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return tiers[index];
+    }
+
+    /** Prints an error message in red and waits for the user to press Enter. */
+    public void showError(String message) {
+        ConsoleUtil.printError(message);
+        pause();
     }
 
     /** Prints a message and waits for the user to press Enter. */
@@ -159,7 +165,7 @@ public class MemberManagementUI {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                ConsoleUtil.printError("Please enter a valid number.");
             }
         }
     }

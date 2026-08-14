@@ -47,7 +47,7 @@ public class MemberController {
                     memberUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    memberUI.showMessage("Invalid choice. Please enter 1 - 6.");
+                    memberUI.showError("Invalid choice. Please enter 1 - 6.");
             }
         } while (choice != 6);
     }
