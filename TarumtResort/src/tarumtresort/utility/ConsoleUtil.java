@@ -1,14 +1,9 @@
 package tarumtresort.utility;
 
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class ConsoleUtil {
 
-    // ANSI escape codes for coloured console output
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_RED = "\u001B[31m";
     private static final String ANSI_GREEN = "\u001B[32m";
@@ -17,17 +12,14 @@ public class ConsoleUtil {
     private ConsoleUtil() {
     }
 
-    /** Prints a message in red - use for error/validation messages. */
     public static void printError(String message) {
         System.out.println(ANSI_RED + message + ANSI_RESET);
     }
 
-    /** Prints a message in green - use for success messages. */
     public static void printSuccess(String message) {
         System.out.println(ANSI_GREEN + message + ANSI_RESET);
     }
 
-    /** Prints a message in yellow - use for warnings/notices. */
     public static void printWarning(String message) {
         System.out.println(ANSI_YELLOW + message + ANSI_RESET);
     }

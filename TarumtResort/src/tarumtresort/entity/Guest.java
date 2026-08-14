@@ -26,13 +26,6 @@ public class Guest implements Comparable<Guest> {
         this(guestId, name, icOrPassport, contactNumber, nationality, address, new LinkedList<>());
     }
 
-    /**
-     * Full constructor that also takes the guest's notification list.
-     *
-     * @param notificationList this guest's notifications; a null value is
-     *                         replaced with an empty list so
-     *                         {@link #getNotificationList()} is never null.
-     */
     public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality,
             String address, LinkedListInterface<Notification> notificationList) {
         this.guestId = guestId;
@@ -60,12 +53,8 @@ public class Guest implements Comparable<Guest> {
     public String getContactNumber() { return contactNumber; }
     public String getNationality() { return nationality; }
     public String getAddress() { return address; }
+    public LinkedListInterface<Reservation> getReservations(){ return reservations; }
 
-    /**
-     * @return this guest's notifications. Lazily initialised so it is
-     * never null, even for a guest loaded from JSON (Gson does not run
-     * field initialisers when deserialising).
-     */
     public LinkedListInterface<Notification> getNotificationList() {
         if (notificationList == null) {
             notificationList = new LinkedList<>();
@@ -73,20 +62,8 @@ public class Guest implements Comparable<Guest> {
         return notificationList;
     }
 
-    /** Adds a notification to this guest's list. */
     public void addNotification(Notification notification) {
         getNotificationList().addSorted(notification);
-    }
-
-    /**
-     * @return this guest's reservations. Lazily initialised so it is never
-     * null, even for a guest loaded from JSON.
-     */
-    public LinkedListInterface<Reservation> getReservations() {
-        if (reservations == null) {
-            reservations = new LinkedList<>();
-        }
-        return reservations;
     }
 
     @Override

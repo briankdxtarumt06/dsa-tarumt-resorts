@@ -33,7 +33,7 @@ public class PointsController {
     public PointsController(Scanner scanner) {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
-        guestList = guestDAO.retrieveFromFile();
+        guestList = new GuestControl().getAllGuests();
         pointsUI = new PointsManagementUI(scanner);
         reconcileTiersOnLoad();
     }

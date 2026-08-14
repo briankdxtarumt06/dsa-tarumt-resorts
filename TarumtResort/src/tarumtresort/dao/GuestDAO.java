@@ -30,11 +30,4 @@ public class GuestDAO {
             ConsoleUtil.printError("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
     }
-
-    /** Loads and returns a fresh guest list (empty list if the file is missing). */
-    public LinkedList<Guest> retrieveFromFile() {
-        LinkedList<Guest> result = new LinkedList<>();
-        loadFromFile(result);
-        return result;
-    }
 }
