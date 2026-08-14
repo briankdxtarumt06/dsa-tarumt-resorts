@@ -36,7 +36,6 @@ public class MemberManagementUI {
         return readInt("Enter your choice");
     }
 
-    /** Prompts for a new member's details and returns it. */
     public Member inputNewMember(String memberId) {
         System.out.println("New member id: " + memberId);
         String guestId = "";
