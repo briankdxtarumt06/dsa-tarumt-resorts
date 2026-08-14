@@ -1,7 +1,8 @@
-package tarumtresort.entity.enums;
+package tarumtresort.entity;
 
 public enum InquiryStatus {
     PENDING,
     IN_PROGRESS,
-    COMPLETED;
+    RESOLVED,
+    CANCELLED
 }
