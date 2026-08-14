@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
  *
  * @author Wen Ling
  */
-
 public class Payment implements Comparable<Payment> {
     private String paymentID;
     private double roomCharge;

@@ -17,6 +17,9 @@ public class Inquiry implements Comparable<Inquiry> {
     private LocalDateTime createdTime;
     private LocalDateTime resolvedTime;
 
+    public Inquiry() {
+    }
+
     public Inquiry(String inquiryId, String confirmationNumber, String guestId,
                     InquiryType inquiryType, String description) {
         this.inquiryId = inquiryId;
@@ -81,6 +84,7 @@ public class Inquiry implements Comparable<Inquiry> {
         }
         return cmp;
     }
+
 
     @Override
     public String toString() {
