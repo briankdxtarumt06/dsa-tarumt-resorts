@@ -12,9 +12,8 @@ import tarumtresort.utility.JsonFileHandler;
  * is no separate notifications file.
  */
 public class GuestDAO {
-    private final String FILE_NAME = "data/guests.json";
+    private final String FILE_NAME = "data/guestList.json";
 
-    /** Saves the given guest list to file. */
     public void saveToFile(LinkedListInterface<Guest> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
@@ -23,13 +22,12 @@ public class GuestDAO {
         }
     }
 
-    /** Loads from file and returns a fresh list, or an empty list if the file is missing. */
-    public LinkedList<Guest> retrieveFromFile() {
-        LinkedList<Guest> result = new LinkedList<>();
+    public void loadFromFile(LinkedListInterface<Guest> list) {
+        list.clear();
         try {
             LinkedList<Guest> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Guest.class);
             for (int i = 0; i < loaded.size(); i++) {
-                result.addBack(loaded.get(i));
+                list.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
