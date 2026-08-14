@@ -4,8 +4,8 @@ import tarumtresort.dao.RoomDAO;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.entity.Room;
-import tarumtresort.entity.RoomStatus;
-import tarumtresort.entity.RoomType;
+import tarumtresort.entity.enums.RoomStatus;
+import tarumtresort.entity.enums.RoomType;
 
 public class RoomControl {
     private static final RoomDAO roomDAO = new RoomDAO();
@@ -15,7 +15,7 @@ public class RoomControl {
 
     // Constructor
     public RoomControl() {
-        roomList = roomDAO.retrieveRoomList();
+        roomDAO.loadFromFile(roomList);
     }
 
     //get room by room id
