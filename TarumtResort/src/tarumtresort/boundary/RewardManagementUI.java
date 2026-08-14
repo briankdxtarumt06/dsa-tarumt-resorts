@@ -5,13 +5,18 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- * Pure input/output for the reward catalogue. No business logic - the
- * RewardController decides what to do and calls these methods.
- */
 public class RewardManagementUI {
 
-    private final Scanner scanner = new Scanner(System.in);
+    private Scanner scanner = new Scanner(System.in);
+
+    /** Standalone run creates its own scanner. */
+    public RewardManagementUI() {
+    }
+
+    /** Uses a shared scanner passed from the caller (main menu). */
+    public RewardManagementUI(Scanner scanner) {
+        this.scanner = scanner;
+    }
 
     public int getMenuChoice() {
         ConsoleUtil.clearScreen();

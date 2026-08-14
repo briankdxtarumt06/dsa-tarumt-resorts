@@ -5,6 +5,7 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.RewardManagementUI;
 import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Reward;
+import java.util.Scanner;
 
 /**
  * Business logic for the reward catalogue. The controller owns its UI and
@@ -13,10 +14,16 @@ import tarumtresort.entity.Reward;
 public class RewardController {
     private LinkedListInterface<Reward> rewardList = new LinkedList<>();
     private RewardDAO rewardDAO = new RewardDAO();
-    private RewardManagementUI rewardUI = new RewardManagementUI();
+    private RewardManagementUI rewardUI;
 
     public RewardController() {
+        this(new Scanner(System.in));
+    }
+
+    /** Shares a scanner with the caller (main menu) to avoid input conflicts. */
+    public RewardController(Scanner scanner) {
         rewardList = rewardDAO.retrieveFromFile();
+        rewardUI = new RewardManagementUI(scanner);
     }
 
     public static void main(String[] args) {

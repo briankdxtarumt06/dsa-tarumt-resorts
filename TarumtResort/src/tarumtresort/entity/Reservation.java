@@ -12,7 +12,7 @@ public class Reservation {
     private int numberOfNights;
     private String reservationType;
     private String status;
-    private ReservationTimestamps timestamps;
+    private ReservationTimestamps timestamps; 
 
     //constructors
     public Reservation(String reservationId, String confirmationNumber,

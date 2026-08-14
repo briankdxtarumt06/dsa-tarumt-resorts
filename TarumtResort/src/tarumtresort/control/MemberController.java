@@ -6,14 +6,20 @@ import tarumtresort.boundary.MemberManagementUI;
 import tarumtresort.dao.MemberDAO;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
+import java.util.Scanner;
 
 public class MemberController {
     private LinkedListInterface<Member> memberList = new LinkedList<>();
     private MemberDAO memberDAO = new MemberDAO();
-    private MemberManagementUI memberUI = new MemberManagementUI();
+    private MemberManagementUI memberUI;
 
     public MemberController() {
+        this(new Scanner(System.in));
+    }
+    
+    public MemberController(Scanner scanner) {
         memberList = memberDAO.retrieveFromFile();
+        memberUI = new MemberManagementUI(scanner);
     }
 
     public static void main(String[] args) {

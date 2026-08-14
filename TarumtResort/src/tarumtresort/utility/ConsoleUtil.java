@@ -14,7 +14,9 @@ public class ConsoleUtil {
     public static void clearScreen() {
         try {
             if (System.getProperty("os.name").contains("Windows")) {
-                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+                // route cls stdin from NUL so it does not consume the app's
+                // piped/console input
+                new ProcessBuilder("cmd", "/c", "cls < NUL").inheritIO().start().waitFor();
             } else {
                 new ProcessBuilder("clear").inheritIO().start().waitFor();
             }

@@ -1,6 +1,9 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+import tarumtresort.control.MemberController;
+import tarumtresort.control.PointsController;
+import tarumtresort.control.RewardController;
 import tarumtresort.utility.ConsoleUtil;
 
 public class MainMenu {
@@ -18,13 +21,13 @@ public class MainMenu {
             choice = readInt("Enter your choice");
             switch (choice) {
                 case 1:
-                    new MemberManagementUI(scanner).run();
+                    new MemberController(scanner).run();
                     break;
                 case 2:
-                    new RewardManagementUI(scanner).run();
+                    new RewardController(scanner).run();
                     break;
                 case 3:
-                    new PointsManagementUI(scanner).run();
+                    new PointsController(scanner).run();
                     break;
                 case 4:
                     System.out.println("Thank you for using TARUMT Resort System. Goodbye!");

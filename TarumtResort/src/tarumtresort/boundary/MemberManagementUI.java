@@ -8,15 +8,16 @@ import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- * Pure input/output for member profiles. No business logic - the
- * MemberController decides what to do and calls these methods.
- */
 public class MemberManagementUI {
-
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private Scanner scanner = new Scanner(System.in);
 
-    private final Scanner scanner = new Scanner(System.in);
+    public MemberManagementUI() {
+    }
+
+    public MemberManagementUI(Scanner scanner) {
+        this.scanner = scanner;
+    }
 
     public int getMenuChoice() {
         ConsoleUtil.clearScreen();
