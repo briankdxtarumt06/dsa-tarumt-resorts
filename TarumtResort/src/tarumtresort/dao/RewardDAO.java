@@ -17,15 +17,16 @@ public class RewardDAO {
         }
     }
 
-    public void loadFromFile(LinkedListInterface<Reward> list) {
-        list.clear();
+    public LinkedList<Reward> retrieveFromFile() {
+        LinkedList<Reward> result = new LinkedList<>();
         try {
             LinkedList<Reward> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Reward.class);
             for (int i = 0; i < loaded.size(); i++) {
-                list.addBack(loaded.get(i));
+                result.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return result;
     }
 }

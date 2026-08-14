@@ -4,87 +4,34 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.control.PointsController;
-import tarumtresort.dao.MemberDAO;
-import tarumtresort.dao.NotificationDAO;
-import tarumtresort.dao.PointTransactionDAO;
-import tarumtresort.dao.RedemptionRecordDAO;
-import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Notification;
 import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
+/**
+ * Pure input/output for the points module. No business logic - the
+ * PointsController decides what to do and calls these methods.
+ */
 public class PointsManagementUI {
+
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final Scanner scanner;
-    private final PointsController controller;
+    private Scanner scanner = new Scanner(System.in);
 
+    /** Standalone run creates its own scanner. */
     public PointsManagementUI() {
-        this(new Scanner(System.in));
     }
 
+    /** Uses a shared scanner passed from the caller (main menu). */
     public PointsManagementUI(Scanner scanner) {
         this.scanner = scanner;
-        MemberDAO memberDAO = new MemberDAO();
-        PointTransactionDAO pointTransactionDAO = new PointTransactionDAO();
-        RewardDAO rewardDAO = new RewardDAO();
-        RedemptionRecordDAO redemptionRecordDAO = new RedemptionRecordDAO();
-        NotificationDAO notificationDAO = new NotificationDAO();
-        this.controller = new PointsController(memberDAO, pointTransactionDAO,
-                rewardDAO, redemptionRecordDAO, notificationDAO);
-        String alert = controller.generateExpiryAlerts(LocalDateTime.now());
-        if (!alert.startsWith("No new")) {
-            System.out.println(alert);
-        }
     }
 
-    public void run() {
-        int choice;
-        do {
-            printMenu();
-            choice = readInt("Enter your choice");
-            switch (choice) {
-                case 1:
-                    viewBalance();
-                    break;
-                case 2:
-                    earnPoints();
-                    break;
-                case 3:
-                    requestRedemption();
-                    break;
-                case 4:
-                    runExpiryCheck();
-                    break;
-                case 5:
-                    viewHistory();
-                    break;
-                case 6:
-                    viewTierProgress();
-                    break;
-                case 7:
-                    generateAlerts();
-                    break;
-                case 8:
-                    viewNotifications();
-                    break;
-                case 9:
-                    processRedemptionRequests();
-                    break;
-                case 10:
-                    System.out.println("Returning to main menu...");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please enter 1 - 10.");
-            }
-        } while (choice != 10);
-    }
-
-    private void printMenu() {
+    public int getMenuChoice() {
         ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
@@ -101,78 +48,195 @@ public class PointsManagementUI {
         System.out.println(" 9. Process Redemption Requests");
         System.out.println("10. Exit");
         System.out.println("----------------------------------------");
+        return readInt("Enter your choice");
     }
 
-    private void viewBalance() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
+    /** Lists the members and returns the chosen member id, or null. */
+    public String selectMember(LinkedListInterface<Member> members) {
+        if (members.isEmpty()) {
+            System.out.println("No members registered yet.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
         }
-        Member member = controller.findMember(memberId);
-        int balance = controller.getAvailableBalance(memberId, LocalDateTime.now());
+        System.out.println();
+        for (int i = 0; i < members.size(); i++) {
+            Member m = members.get(i);
+            System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
+        }
+        System.out.println(" 0. Cancel");
+        int index = readInt("Select a member") - 1;
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= members.size()) {
+            System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return members.get(index).getMemberId();
+    }
+
+    /** Lists the rewards and returns the chosen reward id, or null. */
+    public String selectReward(LinkedListInterface<Reward> rewards) {
+        if (rewards.isEmpty()) {
+            System.out.println("No rewards in the catalogue.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        System.out.println();
+        for (int i = 0; i < rewards.size(); i++) {
+            Reward r = rewards.get(i);
+            System.out.printf(" %d. %-20s - %d pts%n", i + 1, r.getName(), r.getPointCost());
+        }
+        System.out.println(" 0. Cancel");
+        int index = readInt("Select a reward") - 1;
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= rewards.size()) {
+            System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return rewards.get(index).getRewardId();
+    }
+
+    public int inputAmount() {
+        int amount = readInt("Points to award (0 to cancel)");
+        if (amount == 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return 0;
+        }
+        while (amount < 0) {
+            System.out.println("Amount must be positive.");
+            amount = readInt("Points to award (0 to cancel)");
+            if (amount == 0) {
+                System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+                return 0;
+            }
+        }
+        return amount;
+    }
+
+    public String inputDescription() {
+        System.out.print("Description (0 to cancel): ");
+        String desc = scanner.nextLine().trim();
+        if (desc.equals("0")) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return desc;
+    }
+
+    public void displayBalance(Member member, int balance) {
         System.out.printf("Member %s (Tier: %s) - Available balance: %d pts%n",
                 member.getMemberId(), member.getTier(), balance);
     }
 
-    private void earnPoints() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
-        }
-        int amount = readInt("Points to award (positive)");
-        if (amount <= 0) {
-            System.out.println("Amount must be positive.");
-            return;
-        }
-        System.out.print("Description (optional): ");
-        String description = scanner.nextLine().trim();
-        System.out.println(controller.earnPoints(memberId, amount, description, LocalDateTime.now()));
-    }
-
-    private void requestRedemption() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
-        }
-        String rewardId = selectReward();
-        if (rewardId == null) {
-            return;
-        }
-        System.out.println(controller.requestRedemption(memberId, rewardId, LocalDateTime.now()));
-    }
-
-    private void runExpiryCheck() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
-        }
-        System.out.println(controller.expirePoints(memberId, LocalDateTime.now()));
-    }
-
-    private void viewHistory() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
-        }
-        if (controller.getTransactions(memberId).isEmpty()) {
-            System.out.println("No transactions found for " + memberId + ".");
+    public void displayTransactions(LinkedListInterface<PointTransaction> txs) {
+        if (txs.isEmpty()) {
+            System.out.println("No transactions found.");
             return;
         }
         System.out.println();
-        System.out.printf("%-10s | %-12s | %-22s | %7s | %9s | %-12s | %s%n",
-                "Tx ID", "Earned", "Description", "Change", "Remaining", "Expires", "Status");
-        System.out.println("---------------------------------------------------------------------------");
-        for (int i = 0; i < controller.getTransactions(memberId).size(); i++) {
-            PointTransaction t = controller.getTransactions(memberId).get(i);
-            System.out.printf("%-10s | %-12s | %-22s | %7d | %9d | %-12s | %s%n",
+        String[][] rows = new String[txs.size()][7];
+        for (int i = 0; i < txs.size(); i++) {
+            PointTransaction t = txs.get(i);
+            rows[i] = new String[] {
                     t.getTransactionId(),
                     t.getDate().format(DATE_FMT),
                     truncate(t.getDescription(), 22),
-                    t.getPointChange(),
-                    t.getRemainingPoints(),
+                    String.valueOf(t.getPointChange()),
+                    String.valueOf(t.getRemainingPoints()),
                     t.getExpiryDate().format(DATE_FMT),
-                    statusOf(t));
+                    statusOf(t)
+            };
         }
+        TablePrinter.displayTable(
+                new String[] { "Tx ID", "Earned", "Description", "Change", "Remaining", "Expires", "Status" },
+                rows);
+    }
+
+    public void displayNotifications(LinkedListInterface<Notification> list) {
+        if (list.isEmpty()) {
+            System.out.println("No notifications for this member.");
+            return;
+        }
+        System.out.println();
+        for (int i = 0; i < list.size(); i++) {
+            Notification n = list.get(i);
+            System.out.printf(" %d. [%s] %s (%s)%n",
+                    i + 1, n.isRead() ? "READ" : "UNREAD",
+                    n.getMessage(), n.getDate().format(DATE_FMT));
+        }
+    }
+
+    /** @return true if the user wants to mark all notifications as read. */
+    public boolean confirmMarkAllRead() {
+        System.out.print("Mark all as read? (y/n): ");
+        return scanner.nextLine().trim().equalsIgnoreCase("y");
+    }
+
+    /** Lists pending requests and returns the chosen redemption id, or null. */
+    public String selectPendingRequest(LinkedListInterface<RedemptionRecord> pending) {
+        if (pending.isEmpty()) {
+            System.out.println("No pending redemption requests.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        System.out.println();
+        for (int i = 0; i < pending.size(); i++) {
+            RedemptionRecord r = pending.get(i);
+            System.out.printf(" %d. %s - member %s, reward %s (%s)%n",
+                    i + 1, r.getRedemptionId(), r.getMemberId(), r.getRewardId(),
+                    r.getRedeemedDate().format(DATE_FMT));
+        }
+        System.out.println(" 0. Cancel");
+        int index = readInt("Select a request to process") - 1;
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= pending.size()) {
+            System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return pending.get(index).getRedemptionId();
+    }
+
+    /** @return "a" to approve, "r" to reject, or null for anything else. */
+    public String approveOrReject() {
+        System.out.print("Approve or reject? (a/r/c to cancel): ");
+        String answer = scanner.nextLine().trim();
+        if (answer.equalsIgnoreCase("a")) {
+            return "a";
+        }
+        if (answer.equalsIgnoreCase("r")) {
+            return "r";
+        }
+        return null;
+    }
+
+    /** Prints a message and waits for the user to press Enter. */
+    public void showMessage(String message) {
+        System.out.println(message);
+        pause();
+    }
+
+    public void show(String message) {
+        System.out.println(message);
+    }
+
+    public void pause() {
         ConsoleUtil.pressEnterToContinue(scanner);
     }
 
@@ -184,42 +248,6 @@ public class PointsManagementUI {
             return "PARTIAL";
         }
         return "VALID";
-    }
-
-    private String selectMember() {
-        if (controller.getMembers().isEmpty()) {
-            System.out.println("No members registered yet.");
-            return null;
-        }
-        System.out.println();
-        for (int i = 0; i < controller.getMembers().size(); i++) {
-            Member m = controller.getMembers().get(i);
-            System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
-        }
-        int index = readInt("Select a member") - 1;
-        if (index < 0 || index >= controller.getMembers().size()) {
-            System.out.println("Invalid selection.");
-            return null;
-        }
-        return controller.getMembers().get(index).getMemberId();
-    }
-
-    private String selectReward() {
-        if (controller.getRewards().isEmpty()) {
-            System.out.println("No rewards in the catalogue.");
-            return null;
-        }
-        System.out.println();
-        for (int i = 0; i < controller.getRewards().size(); i++) {
-            Reward r = controller.getRewards().get(i);
-            System.out.printf(" %d. %-20s - %d pts%n", i + 1, r.getName(), r.getPointCost());
-        }
-        int index = readInt("Select a reward") - 1;
-        if (index < 0 || index >= controller.getRewards().size()) {
-            System.out.println("Invalid selection.");
-            return null;
-        }
-        return controller.getRewards().get(index).getRewardId();
     }
 
     private int readInt(String prompt) {
@@ -244,82 +272,4 @@ public class PointsManagementUI {
         }
         return text.substring(0, width - 3) + "...";
     }
-
-    private void generateAlerts() {
-        System.out.println(controller.generateExpiryAlerts(LocalDateTime.now()));
-        ConsoleUtil.pressEnterToContinue(scanner);
-    }
-
-    private void viewNotifications() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
-        }
-        Member member = controller.findMember(memberId);
-        if (member == null || member.getGuestId() == null) {
-            System.out.println("Member has no guest account linked.");
-            return;
-        }
-        LinkedListInterface<Notification> list = controller.getNotifications(member.getGuestId());
-        if (list.isEmpty()) {
-            System.out.println("No notifications for " + memberId + ".");
-            return;
-        }
-        System.out.println();
-        for (int i = 0; i < list.size(); i++) {
-            Notification n = list.get(i);
-            System.out.printf(" %d. [%s] %s (%s)%n",
-                    i + 1, n.isRead() ? "READ" : "UNREAD",
-                    n.getMessage(), n.getDate().format(DATE_FMT));
-        }
-        System.out.print("Mark all as read? (y/n): ");
-        String answer = scanner.nextLine().trim();
-        if (answer.equalsIgnoreCase("y")) {
-            for (int i = 0; i < list.size(); i++) {
-                controller.markNotificationRead(list.get(i).getNotificationId());
-            }
-            System.out.println("All notifications marked as read.");
-        }
-        ConsoleUtil.pressEnterToContinue(scanner);
-    }
-
-    private void viewTierProgress() {
-        String memberId = selectMember();
-        if (memberId == null) {
-            return;
-        }
-        System.out.println(controller.getTierProgress(memberId));
-        ConsoleUtil.pressEnterToContinue(scanner);
-    }
-
-    private void processRedemptionRequests() {
-        if (controller.getPendingRedemptions().isEmpty()) {
-            System.out.println("No pending redemption requests.");
-            return;
-        }
-        System.out.println();
-        for (int i = 0; i < controller.getPendingRedemptions().size(); i++) {
-            RedemptionRecord r = controller.getPendingRedemptions().get(i);
-            System.out.printf(" %d. %s - member %s, reward %s (%s)%n",
-                    i + 1, r.getRedemptionId(), r.getMemberId(), r.getRewardId(),
-                    r.getRedeemedDate().format(DATE_FMT));
-        }
-        int index = readInt("Select a request to process") - 1;
-        if (index < 0 || index >= controller.getPendingRedemptions().size()) {
-            System.out.println("Invalid selection.");
-            return;
-        }
-        RedemptionRecord chosen = controller.getPendingRedemptions().get(index);
-        System.out.print("Approve or reject? (a/r): ");
-        String answer = scanner.nextLine().trim();
-        if (answer.equalsIgnoreCase("a")) {
-            System.out.println(controller.approveRedemption(chosen.getRedemptionId(), LocalDateTime.now()));
-        } else if (answer.equalsIgnoreCase("r")) {
-            System.out.println(controller.rejectRedemption(chosen.getRedemptionId(), LocalDateTime.now()));
-        } else {
-            System.out.println("Invalid choice; request left pending.");
-        }
-        ConsoleUtil.pressEnterToContinue(scanner);
-    }
 }
-

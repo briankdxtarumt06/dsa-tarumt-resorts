@@ -17,15 +17,16 @@ public class MemberDAO {
         }
     }
 
-    public void loadFromFile(LinkedListInterface<Member> list) {
-        list.clear();
+    public LinkedList<Member> retrieveFromFile() {
+        LinkedList<Member> result = new LinkedList<>();
         try {
             LinkedList<Member> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Member.class);
             for (int i = 0; i < loaded.size(); i++) {
-                list.addBack(loaded.get(i));
+                result.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return result;
     }
 }

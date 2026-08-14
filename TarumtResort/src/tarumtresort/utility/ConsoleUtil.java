@@ -1,5 +1,9 @@
 package tarumtresort.utility;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 /**
@@ -14,7 +18,9 @@ public class ConsoleUtil {
     public static void clearScreen() {
         try {
             if (System.getProperty("os.name").contains("Windows")) {
-                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+                // route cls stdin from NUL so it does not consume the app's
+                // piped/console input
+                new ProcessBuilder("cmd", "/c", "cls < NUL").inheritIO().start().waitFor();
             } else {
                 new ProcessBuilder("clear").inheritIO().start().waitFor();
             }

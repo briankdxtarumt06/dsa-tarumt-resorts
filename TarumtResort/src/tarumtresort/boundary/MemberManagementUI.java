@@ -3,60 +3,24 @@ package tarumtresort.boundary;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import tarumtresort.control.MemberController;
-import tarumtresort.dao.MemberDAO;
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
 public class MemberManagementUI {
-
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-    private final Scanner scanner;
-    private final MemberController controller;
+    private Scanner scanner = new Scanner(System.in);
 
     public MemberManagementUI() {
-        this(new Scanner(System.in));
     }
 
     public MemberManagementUI(Scanner scanner) {
         this.scanner = scanner;
-        MemberDAO memberDAO = new MemberDAO();
-        this.controller = new MemberController(memberDAO);
     }
 
-    public void run() {
-        int choice;
-        do {
-            printMenu();
-            choice = readInt("Enter your choice");
-            switch (choice) {
-                case 1:
-                    addMember();
-                    break;
-                case 2:
-                    updateMember();
-                    break;
-                case 3:
-                    removeMember();
-                    break;
-                case 4:
-                    listMembers();
-                    break;
-                case 5:
-                    viewProfile();
-                    break;
-                case 6:
-                    System.out.println("Returning to main menu...");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please enter 1 - 6.");
-            }
-        } while (choice != 6);
-    }
-
-    private void printMenu() {
+    public int getMenuChoice() {
         ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
@@ -69,106 +33,121 @@ public class MemberManagementUI {
         System.out.println(" 5. View Member Profile");
         System.out.println(" 6. Exit");
         System.out.println("----------------------------------------");
+        return readInt("Enter your choice");
     }
 
-    private void addMember() {
-        String memberId = controller.nextMemberId();
+    /** Prompts for a new member's details and returns it. */
+    public Member inputNewMember(String memberId) {
         System.out.println("New member id: " + memberId);
-        System.out.print("Guest id (linked guest account): ");
-        String guestId = scanner.nextLine().trim();
+        String guestId = "";
+        while (guestId.isEmpty()) {
+            System.out.print("Guest id (0 to cancel): ");
+            guestId = scanner.nextLine().trim();
+            if (guestId.equals("0")) {
+                System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (guestId.isEmpty()) {
+                System.out.println("Guest id cannot be empty.");
+            }
+        }
         Tier tier = selectTier();
         if (tier == null) {
-            return;
+            tier = Tier.SILVER;
         }
-        Member member = new Member(memberId, 0, tier, LocalDateTime.now(), guestId);
-        System.out.println(controller.addMember(member));
+        return new Member(memberId, 0, tier, LocalDateTime.now(), guestId);
     }
 
-    private void updateMember() {
-        String memberId = selectMember("Select a member to update");
-        if (memberId == null) {
-            return;
+    /** Lists the members and returns the chosen member id, or null. */
+    public String selectMember(LinkedListInterface<Member> members, String prompt) {
+        if (members.isEmpty()) {
+            System.out.println("No members registered yet.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
         }
-        Member member = controller.findMember(memberId);
-        System.out.println("Current tier: " + member.getTier());
-        Tier tier = selectTier();
-        if (tier == null) {
-            return;
+        System.out.println();
+        for (int i = 0; i < members.size(); i++) {
+            Member m = members.get(i);
+            System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
         }
-        System.out.println(controller.updateMember(memberId, tier));
+        System.out.println(" 0. Cancel");
+        int index = readInt(prompt) - 1;
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= members.size()) {
+            System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return members.get(index).getMemberId();
     }
 
-    private void removeMember() {
-        String memberId = selectMember("Select a member to remove");
-        if (memberId == null) {
-            return;
-        }
-        System.out.println(controller.removeMember(memberId));
-    }
-
-    private void listMembers() {
-        if (controller.getMembers().isEmpty()) {
+    public void displayMembers(LinkedListInterface<Member> members) {
+        if (members.isEmpty()) {
             System.out.println("No members registered yet.");
             return;
         }
         System.out.println();
-        System.out.printf("%-10s | %-10s | %8s | %s%n", "Member ID", "Tier", "Points", "Enrolled");
-        System.out.println("-------------------------------------------------------------");
-        for (int i = 0; i < controller.getMembers().size(); i++) {
-            Member m = controller.getMembers().get(i);
-            System.out.printf("%-10s | %-10s | %8d | %s%n",
-                    m.getMemberId(), m.getTier(), m.getPoints(),
-                    m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT));
+        String[][] rows = new String[members.size()][4];
+        for (int i = 0; i < members.size(); i++) {
+            Member m = members.get(i);
+            rows[i] = new String[] {
+                    m.getMemberId(),
+                    m.getTier().name(),
+                    String.valueOf(m.getPoints()),
+                    m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)
+            };
         }
-        ConsoleUtil.pressEnterToContinue(scanner);
+        TablePrinter.displayTable(
+                new String[] { "Member ID", "Tier", "Points", "Enrolled" }, rows);
     }
 
-    private void viewProfile() {
-        String memberId = selectMember("Select a member");
-        if (memberId == null) {
-            return;
-        }
-        Member m = controller.findMember(memberId);
+    public void displayProfile(Member m) {
         System.out.println();
         System.out.println("Member id     : " + m.getMemberId());
         System.out.println("Tier          : " + m.getTier());
         System.out.println("Points        : " + m.getPoints());
         System.out.println("Guest id      : " + m.getGuestId());
         System.out.println("Enrolled      : " + (m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)));
-        System.out.println();
-        ConsoleUtil.pressEnterToContinue(scanner);
     }
 
-    private String selectMember(String prompt) {
-        if (controller.getMembers().isEmpty()) {
-            System.out.println("No members registered yet.");
-            return null;
-        }
-        System.out.println();
-        for (int i = 0; i < controller.getMembers().size(); i++) {
-            Member m = controller.getMembers().get(i);
-            System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
-        }
-        int index = readInt(prompt) - 1;
-        if (index < 0 || index >= controller.getMembers().size()) {
-            System.out.println("Invalid selection.");
-            return null;
-        }
-        return controller.getMembers().get(index).getMemberId();
-    }
-
-    private Tier selectTier() {
+    public Tier selectTier() {
         System.out.println(" 1. SILVER");
         System.out.println(" 2. GOLD");
         System.out.println(" 3. PLATINUM");
         System.out.println(" 4. DIAMOND");
+        System.out.println(" 0. Cancel");
         int index = readInt("Select a tier") - 1;
         Tier[] tiers = Tier.values();
-        if (index < 0 || index >= tiers.length) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= tiers.length) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return tiers[index];
+    }
+
+    /** Prints a message and waits for the user to press Enter. */
+    public void showMessage(String message) {
+        System.out.println(message);
+        pause();
+    }
+
+    public void show(String message) {
+        System.out.println(message);
+    }
+
+    public void pause() {
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 
     private int readInt(String prompt) {

@@ -17,15 +17,16 @@ public class RedemptionRecordDAO {
         }
     }
 
-    public void loadFromFile(LinkedListInterface<RedemptionRecord> list) {
-        list.clear();
+    public LinkedList<RedemptionRecord> retrieveFromFile() {
+        LinkedList<RedemptionRecord> result = new LinkedList<>();
         try {
             LinkedList<RedemptionRecord> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), RedemptionRecord.class);
             for (int i = 0; i < loaded.size(); i++) {
-                list.addBack(loaded.get(i));
+                result.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+        return result;
     }
 }

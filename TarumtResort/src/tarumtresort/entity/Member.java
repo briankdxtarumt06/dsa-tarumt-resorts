@@ -1,6 +1,8 @@
 package tarumtresort.entity;
 
 import java.time.LocalDateTime;
+import tarumtresort.adt.LinkedList;
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.*;
 
 public class Member implements Comparable<Member> {
@@ -9,6 +11,12 @@ public class Member implements Comparable<Member> {
     private Tier tier;
     private LocalDateTime enrollmentDate;
     private String guestId;
+    /**
+     * The member's point transactions and redemption records, stored inside
+     * members.json (serialised as JSON arrays by LinkedListTypeAdapterFactory).
+     */
+    private LinkedListInterface<PointTransaction> pointTransactionList = new LinkedList<>();
+    private LinkedListInterface<RedemptionRecord> redemptionRecordList = new LinkedList<>();
 
     public Member() {
     }
@@ -59,6 +67,38 @@ public class Member implements Comparable<Member> {
 
     public void setGuestId(String guestId) {
         this.guestId = guestId;
+    }
+
+    /**
+     * @return this member's point transactions. Lazily initialised so it is
+     * never null, even for a member loaded from JSON.
+     */
+    public LinkedListInterface<PointTransaction> getPointTransactionList() {
+        if (pointTransactionList == null) {
+            pointTransactionList = new LinkedList<>();
+        }
+        return pointTransactionList;
+    }
+
+    /** Adds a point transaction to this member's list. */
+    public void addPointTransaction(PointTransaction transaction) {
+        getPointTransactionList().addSorted(transaction);
+    }
+
+    /**
+     * @return this member's redemption records. Lazily initialised so it is
+     * never null, even for a member loaded from JSON.
+     */
+    public LinkedListInterface<RedemptionRecord> getRedemptionRecordList() {
+        if (redemptionRecordList == null) {
+            redemptionRecordList = new LinkedList<>();
+        }
+        return redemptionRecordList;
+    }
+
+    /** Adds a redemption record to this member's list. */
+    public void addRedemptionRecord(RedemptionRecord record) {
+        getRedemptionRecordList().addSorted(record);
     }
 
     @Override

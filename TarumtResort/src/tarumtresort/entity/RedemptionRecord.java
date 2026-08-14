@@ -7,7 +7,6 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private LocalDateTime redeemedDate;
     private String memberId;
     private String rewardId;
-    /** PENDING, APPROVED or REJECTED. */
     private String status;
 
     public RedemptionRecord() {
