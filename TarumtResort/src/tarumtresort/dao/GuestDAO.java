@@ -18,16 +18,23 @@ public class GuestDAO {
         }
     }
 
-    public LinkedList<Guest> retrieveFromFile() {
-        LinkedList<Guest> result = new LinkedList<>();
+    /** Loads guests into the given list, replacing its current contents. */
+    public void loadFromFile(LinkedListInterface<Guest> list) {
+        list.clear();
         try {
             LinkedList<Guest> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Guest.class);
             for (int i = 0; i < loaded.size(); i++) {
-                result.addBack(loaded.get(i));
+                list.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             ConsoleUtil.printError("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
+    }
+
+    /** Loads and returns a fresh guest list (empty list if the file is missing). */
+    public LinkedList<Guest> retrieveFromFile() {
+        LinkedList<Guest> result = new LinkedList<>();
+        loadFromFile(result);
         return result;
     }
 }
