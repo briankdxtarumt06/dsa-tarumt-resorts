@@ -11,19 +11,26 @@ import tarumtresort.dao.*;
 import java.time.LocalDateTime;
 
 public class PriorityReservationController {
+    //ADT declaration
     private LinkedListInterface<PriorityReservation> priorityReservations = new LinkedList<>();
+    private LinkedListInterface<Member> members = new LinkedList<>();
+
+    //DAO
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
 
+    //Controllers
     private MemberController memberController = new MemberController();
-    private ReservationControl reservationControl = new ReservationControl();
+    private ReservationControl reservationControl;
 
-    private LinkedListInterface<Member> members = memberController.getMembers();
 
     public PriorityReservationController() {
         priorityReservations = priorityReservationDAO.loadFromFile();
     }
 
-    public void addPriorityReservation(PriorityReservation priorityReservation) {
+    public void addPriorityReservation(String reservationId, String guestId) {
+        Member member = findMemberByGuestId(guestId);
+        PriorityLevel priorityLevel = PriorityLevel.convertTierToPriority(member.getTier());
+        PriorityReservation priorityReservation = new PriorityReservation(reservationId, priorityLevel);
         priorityReservations.addSorted(priorityReservation);
         priorityReservationDAO.saveToFile(priorityReservations);
     }
@@ -83,7 +90,7 @@ public class PriorityReservationController {
         return result;
     }
 
-    public boolean isMember(String guestId) {
+    public boolean checkMember(String guestId) {
         Member member = findMemberByGuestId(guestId);
         if (member != null) {
             return true;
@@ -93,6 +100,7 @@ public class PriorityReservationController {
     }
 
     public Member findMemberByGuestId(String guestId) { // need move to member control
+        members = memberController.getMembers();
         for (int i = 0; i < members.size(); i++) {
             if (guestId.equals(members.get(i).getGuestId())) {
                 return members.get(i);

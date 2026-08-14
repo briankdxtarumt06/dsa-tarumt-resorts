@@ -35,7 +35,7 @@ public class PointsController {
     public PointsController(Scanner scanner) {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
-        guestList = guestDAO.retrieveFromFile();
+        guestDAO.loadFromFile(guestList);
         if (guestList.isEmpty()) {
             guestList.addSorted(new Guest("G001", "Alice Tan", "IC001", "0123456789", "Malaysian", "KL"));
             guestList.addSorted(new Guest("G002", "Bob Lee", "IC002", "0112345678", "Malaysian", "Penang"));

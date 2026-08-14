@@ -12,6 +12,13 @@ public class PriorityReservation implements Comparable<PriorityReservation> {
     public PriorityReservation() {
     }
 
+    public PriorityReservation(String reservationId, PriorityLevel priorityLevel) {
+        this.reservationId = reservationId;
+        this.priorityLevel = priorityLevel;
+        this.overriddenBy = null;
+        this.overrideReason = null;
+    }
+
     public PriorityReservation(String reservationId, PriorityLevel priorityLevel, String overriddenBy,
             String overrideReason) {
         this.reservationId = reservationId;
