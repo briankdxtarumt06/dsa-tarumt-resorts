@@ -1,6 +1,7 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+import tarumtresort.utility.Ansi;
 
 /**
  *
@@ -26,22 +27,27 @@ public class MainMenuUI {
         System.out.println("  0. Exit");
         System.out.println("========================================");
 
-        int choice = -1;
-        while (choice < 0 || choice > 1) {
+        while (true) {
             System.out.print("Enter choice (0-1): ");
-            if (scanner.hasNextInt()) {
-                choice = scanner.nextInt();
-                scanner.nextLine();
-                if (choice < 0 || choice > 1) {
-                    System.out.println("  ✗ Please enter a number between 0 and 1!");
+            String line = scanner.nextLine();
+            if (line.trim().isEmpty()) {
+                // ignore a bare Enter: re-prompt in place, no error, no advance
+                if (Ansi.ENABLED) {
+                    System.out.print("\u001B[1A\u001B[2K");
                 }
-            } else {
-                System.out.println("  ✗ Invalid input! Please enter a number.");
-                scanner.nextLine();
+                continue;
             }
+            try {
+                int value = Integer.parseInt(line.trim());
+                if (value >= 0 && value <= 1) {
+                    System.out.println();
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                // fall through to the range error below
+            }
+            System.out.println("  ✗ Please enter a number between 0 and 1!");
         }
-        System.out.println();
-        return choice;
     }
 
     public void printExitMessage() {

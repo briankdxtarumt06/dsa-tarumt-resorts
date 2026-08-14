@@ -20,6 +20,7 @@ public class Task implements Comparable<Task> {
     private LocalDateTime startDateTime;
     private String roomId;
     private LinkedListInterface<TaskAssignment> taskAssignments;
+    private LinkedListInterface<TaskStatus> statusHistory;
 
     public Task() {
     }
@@ -123,6 +124,17 @@ public class Task implements Comparable<Task> {
             return false;
         }
         return taskAssignments != null && taskAssignments.removeElement(taskAssignment);
+    }
+
+    public LinkedListInterface<TaskStatus> getStatusHistory() {
+        if (statusHistory == null) {
+            statusHistory = new LinkedList<>();
+        }
+        return statusHistory;
+    }
+
+    public void setStatusHistory(LinkedListInterface<TaskStatus> statusHistory) {
+        this.statusHistory = statusHistory;
     }
 
     @Override

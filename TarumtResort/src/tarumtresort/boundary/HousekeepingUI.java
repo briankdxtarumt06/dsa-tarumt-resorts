@@ -4,13 +4,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
+import tarumtresort.report.ReportChart;
 import tarumtresort.report.ReportResult;
+import tarumtresort.utility.Ansi;
 
 /**
  *
@@ -49,84 +52,146 @@ public class HousekeepingUI {
         return inputIntChoice("Enter choice", 0, 4);
     }
 
-    // STAFF SUB-MENU
-    public int getStaffMenuChoice() {
+    // STAFF SELECT-ENTITY LIST
+    // prints the numbered staff list plus the extra options; returns the choice
+    // STAFF SELECT-ENTITY LIST (paged; the Actions section is separate from
+    // the rows, so a row is never chosen directly - use "View Details")
+    public int printStaffListMenu(LinkedListInterface<Staff> pageList, int page, int pageCount, boolean hasFilter) {
+        clearScreen();
         System.out.println("\n========================================");
-        System.out.println("  STAFF MANAGEMENT");
+        System.out.println("  STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
         System.out.println("========================================");
-        System.out.println("  1. Add Staff");
-        System.out.println("  2. View All Staff");
-        System.out.println("  3. Search Staff");
-        System.out.println("  4. Update Staff");
-        System.out.println("  5. Remove Staff (Resign)");
-        System.out.println("  6. Filter Staff by Department");
-        System.out.println("  7. Filter Staff by Availability");
+        if (pageList.isEmpty()) {
+            System.out.println("  (no staff records)");
+        } else {
+            for (int i = 0; i < pageList.size(); i++) {
+                Staff staff = pageList.get(i);
+                System.out.println("  " + (i + 1) + ". " + staff.getStaffId() + " " + staff.getStaffName()
+                        + " — " + staff.getStaffRole() + " — " + staff.getAvailabilityStatus());
+            }
+        }
+        System.out.println("\n--- Actions ---");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Add New Staff");
+        System.out.println("  " + action++ + ". Filter by Department");
+        System.out.println("  " + action++ + ". Filter by Availability");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
         System.out.println("  0. Back");
         System.out.println("========================================");
-        return inputIntChoice("Enter choice", 0, 7);
+        return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int getStaffSearchMenuChoice() {
-        System.out.println("\n---- SEARCH STAFF ----");
-        System.out.println("  1. Search by Staff ID");
-        System.out.println("  2. Search by Staff Name");
-        System.out.println("  0. Back");
-        return inputIntChoice("Enter choice", 0, 2);
+    public int getStaffActionChoice() {
+        System.out.println("\n--- Staff Actions ---");
+        System.out.println("  1. Update Staff Info");
+        System.out.println("  2. Resign Staff");
+        System.out.println("  3. View Task Assignments");
+        System.out.println("  0. Back to List");
+        return inputIntChoice("Enter choice", 0, 3);
     }
 
-    // TASK SUB-MENU
-    public int getTaskMenuChoice() {
+    // TASK SELECT-ENTITY LIST (paged; the Actions section is separate from
+    // the rows, so a row is never chosen directly - use "View Details")
+    public int printTaskListMenu(LinkedListInterface<Task> pageList, int page, int pageCount, boolean hasFilter) {
+        clearScreen();
         System.out.println("\n========================================");
-        System.out.println("  TASK MANAGEMENT");
+        System.out.println("  TASK MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
         System.out.println("========================================");
-        System.out.println("  1. Add Task");
-        System.out.println("  2. View All Tasks");
-        System.out.println("  3. Search Task");
-        System.out.println("  4. Update Task");
-        System.out.println("  5. Update Task Status");
+        if (pageList.isEmpty()) {
+            System.out.println("  (no task records)");
+        } else {
+            for (int i = 0; i < pageList.size(); i++) {
+                Task task = pageList.get(i);
+                System.out.println("  " + (i + 1) + ". " + task.getTaskId() + " " + task.getTaskName()
+                        + " — " + task.getTaskType() + " — " + task.getTaskPriority()
+                        + " — " + (task.getTaskStatus() == null ? "-" : task.getTaskStatus()));
+            }
+        }
+        System.out.println("\n--- Actions ---");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Add New Task");
+        System.out.println("  " + action++ + ". Filter by Priority");
+        System.out.println("  " + action++ + ". Filter by Type");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+        System.out.println("========================================");
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int getTaskActionChoice() {
+        System.out.println("\n--- Task Actions ---");
+        System.out.println("  1. Update Task Info");
+        System.out.println("  2. Update Task Status");
+        System.out.println("  3. Assign Task to Room");
+        System.out.println("  4. View Assignments");
+        System.out.println("  5. Rollback Task Status");
         System.out.println("  6. Remove Task");
-        System.out.println("  7. Filter Tasks by Priority");
-        System.out.println("  8. Filter Tasks by Type");
-        System.out.println("  0. Back");
-        System.out.println("========================================");
-        return inputIntChoice("Enter choice", 0, 8);
+        System.out.println("  0. Back to List");
+        return inputIntChoice("Enter choice", 0, 6);
     }
 
-    public int getTaskSearchMenuChoice() {
-        System.out.println("\n---- SEARCH TASK ----");
-        System.out.println("  1. Search by Task ID");
-        System.out.println("  2. Search by Task Name");
-        System.out.println("  0. Back");
-        return inputIntChoice("Enter choice", 0, 2);
-    }
-
-    // ASSIGNMENT SUB-MENU
-    public int getAssignmentMenuChoice() {
+    // ASSIGNMENT SELECT-ENTITY LIST (paged; the Actions section is separate
+    // from the rows, so a row is never chosen directly - use "View Details")
+    public int printAssignmentListMenu(String[] lines, int page, int pageCount, boolean hasFilter) {
+        clearScreen();
         System.out.println("\n========================================");
-        System.out.println("  ASSIGNMENTS & SCHEDULING");
+        System.out.println("  ASSIGNMENTS & SCHEDULING (Page " + (page + 1) + " of " + pageCount + ")");
         System.out.println("========================================");
-        System.out.println("  1. Assign Staff to Task");
-        System.out.println("  2. View All Assignments");
-        System.out.println("  3. Search Assignment");
-        System.out.println("  4. Update Assignment");
-        System.out.println("  5. Assign Task to Room");
-        System.out.println("  6. View Tasks by Room");
-        System.out.println("  7. Simulate Guest Checkout");
-        System.out.println("  8. Update Assignment Status (Worker)");
-        System.out.println("  9. Update Task Status (Tracked)");
-        System.out.println("  10. View Change History");
-        System.out.println("  11. Guest Cleaning Request");
+        if (lines.length == 0) {
+            System.out.println("  (no assignment records)");
+        } else {
+            for (int i = 0; i < lines.length; i++) {
+                System.out.println("  " + (i + 1) + ". " + lines[i]);
+            }
+        }
+        System.out.println("\n--- Actions ---");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". + New Assignment");
+        System.out.println("  " + action++ + ". Filter by Staff");
+        System.out.println("  " + action++ + ". Filter by Task");
+        System.out.println("  " + action++ + ". View Tasks by Room");
+        System.out.println("  " + action++ + ". Simulate Guest Checkout");
+        System.out.println("  " + action++ + ". Guest Cleaning Request");
+        System.out.println("  " + action++ + ". View All Change History");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
         System.out.println("  0. Back");
         System.out.println("========================================");
-        return inputIntChoice("Enter choice", 0, 11);
+        return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int getAssignmentSearchMenuChoice() {
-        System.out.println("\n---- SEARCH ASSIGNMENT ----");
-        System.out.println("  1. Search by Assignment ID");
-        System.out.println("  2. Search by Staff ID");
-        System.out.println("  3. Search by Task ID");
-        System.out.println("  0. Back");
+    public int getAssignmentActionChoice() {
+        System.out.println("\n--- Assignment Actions ---");
+        System.out.println("  1. Update Assignment Status (Worker)");
+        System.out.println("  2. Reassign Staff / Task");
+        System.out.println("  3. View Change History");
+        System.out.println("  0. Back to List");
         return inputIntChoice("Enter choice", 0, 3);
     }
 
@@ -137,9 +202,11 @@ public class HousekeepingUI {
         System.out.println("========================================");
         System.out.println("  1. Room Cleaning Report (Room + Staff + Task)");
         System.out.println("  2. Staff Workload Report (Staff + Task + Assignment)");
+        System.out.println("  3. Room Turnover & Readiness Report (Room + Task + Assignment + Change)");
+        System.out.println("  4. Staff Productivity & Reassignment Report (Staff + Assignment + Change)");
         System.out.println("  0. Back");
         System.out.println("========================================");
-        return inputIntChoice("Enter choice", 0, 2);
+        return inputIntChoice("Enter choice", 0, 4);
     }
 
     // INPUT METHODS (staff)
@@ -348,14 +415,16 @@ public class HousekeepingUI {
         System.out.println("  4. Handed Off (shift change)");
         System.out.println("  5. Paused");
         System.out.println("  6. Work Finished (awaiting inspection)");
-        int choice = inputIntChoice("Enter status", 1, 6);
+        System.out.println("  7. Inspected (passed inspection)");
+        int choice = inputIntChoice("Enter status", 1, 7);
         switch (choice) {
             case 1: return "In Progress";
             case 2: return "Completed";
             case 3: return "Cancelled";
             case 4: return "Handed Off";
             case 5: return "Paused";
-            default: return "Work Finished";
+            case 6: return "Work Finished";
+            default: return "Inspected";
         }
     }
 
@@ -530,9 +599,13 @@ public class HousekeepingUI {
         }
         TablePrinter.printTable(result.getTable());
         TablePrinter.printSummary(result.getSummary());
+        for (ReportChart chart : result.getCharts()) {
+            TablePrinter.printChart(chart);
+        }
+        TablePrinter.printCallouts(result.getCallouts());
     }
 
-    public void printGuestCheckoutTask(Task task, Staff staff, boolean deferred) {
+    public void printGuestCheckoutTask(Task task, Staff staff, TaskAssignment assignment, boolean deferred) {
         System.out.println("\n--- Guest Checkout Processed ---");
         System.out.println("Room ID           : " + task.getRoomId());
         System.out.println("Task ID           : " + task.getTaskId());
@@ -540,6 +613,10 @@ public class HousekeepingUI {
         System.out.println("Current Status    : " + task.getTaskStatus());
         System.out.println("Priority          : " + task.getTaskPriority());
         System.out.println("Assigned Staff    : " + (staff == null ? "-" : staff.getStaffId() + " (" + staff.getStaffName() + ")"));
+        System.out.println("Assignment ID     : " + (assignment == null ? "-" : assignment.getTaskAssignmentId()));
+        System.out.println("Assignment Status : " + (assignment == null ? "-" : assignment.getStatus()));
+        System.out.println("Date Assigned     : " + (assignment == null || assignment.getDateTimeAssigned() == null ? "-"
+                : assignment.getDateTimeAssigned()));
         System.out.println("Scheduled Start   : " + task.getStartDateTime());
         System.out.println("Scheduled End     : " + task.getStartDateTime().plusMinutes(60));
         if (deferred) {
@@ -600,6 +677,45 @@ public class HousekeepingUI {
         System.out.println("    on the next available staff's timetable.");
     }
 
+    public void printNoStaffFreeForTask() {
+        System.out.println("\n  ✗ No Housekeeping staff is free for this task's 60-minute window!");
+        System.out.println("    Try another task, or cancel / complete an overlapping task first.");
+    }
+
+    public void printNoPreviousStatus() {
+        System.out.println("\n  ✗ No previous status to roll back to!");
+        System.out.println("    (The rollback stack for this task is empty.)");
+    }
+
+    public void printTaskStatusDenied() {
+        System.out.println("\n  ✗ Task status change not allowed!");
+        System.out.println("    The transition is outside the allowed status matrix");
+        System.out.println("    (or the task still has unfinished workers).");
+    }
+
+    public void printNoRecords() {
+        System.out.println("\n  ✗ No records to view!");
+    }
+
+    // view flow prompt: which row of the current page to open (0 = cancel)
+    public int inputListIndex(String entityLabel, int max) {
+        return inputIntChoice("Enter " + entityLabel + " number (0 = cancel)", 0, max);
+    }
+
+    // STAFF PICKER (manual assignment / reassign): lists the eligible staff
+    // (built by the controller) as numbered options; returns the choice,
+    // 0 = cancel
+    public int printEligibleStaffMenu(LinkedListInterface<Staff> staffList) {
+        System.out.println("\n--- Select Staff to Assign ---");
+        for (int i = 0; i < staffList.size(); i++) { // size() = current record count of the list
+            Staff staff = staffList.get(i); // get(i) = record at index i
+            System.out.println("  " + (i + 1) + ". " + staff.getStaffId() + " | " + staff.getStaffName()
+                    + " — " + staff.getDepartment() + " — " + staff.getAvailabilityStatus());
+        }
+        System.out.println("  0. Cancel");
+        return inputIntChoice("Enter choice", 0, staffList.size());
+    }
+
     public void printExitMessage() {
         System.out.println("\n  Exiting Housekeeping Module. Goodbye!");
     }
@@ -610,21 +726,34 @@ public class HousekeepingUI {
 
     // HELPER METHODS
     private int inputIntChoice(String prompt, int min, int max) {
-        int choice = -1;
-        while (choice < min || choice > max) {
+        while (true) {
             System.out.print(prompt + " (" + min + "-" + max + "): ");
-            if (scanner.hasNextInt()) {
-                choice = scanner.nextInt();
-                scanner.nextLine();
-                if (choice < min || choice > max)
-                    System.out.println("  ✗ Please enter a number between " + min + " and " + max + "!");
-            } else {
-                System.out.println("  ✗ Invalid input! Please enter a number.");
-                scanner.nextLine();
+            String line = scanner.nextLine();
+            if (line.trim().isEmpty()) {
+                // ignore a bare Enter: re-prompt in place, no error, no advance
+                if (Ansi.ENABLED) {
+                    System.out.print("\u001B[1A\u001B[2K");
+                }
+                continue;
             }
+            try {
+                int value = Integer.parseInt(line.trim());
+                if (value >= min && value <= max) {
+                    System.out.println();
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                // fall through to the range error below
+            }
+            System.out.println("  ✗ Please enter a number between " + min + " and " + max + "!");
         }
-        System.out.println();
-        return choice;
+    }
+
+    // clears the console screen (no-op when piped or when colors are disabled)
+    private void clearScreen() {
+        if (Ansi.ENABLED) {
+            System.out.print("\u001B[2J\u001B[H");
+        }
     }
 
     public void pressEnterToContinue() {

@@ -86,7 +86,7 @@ public class RoomCleaningReport {
             }
         }
 
-        return new ReportResult(toTable(rows), summary(rows.size()));
+        return new ReportResult(toTable(rows), summary(rows));
     }
 
     // -------------------- helpers --------------------
@@ -151,10 +151,28 @@ public class RoomCleaningReport {
         return table;
     }
 
-    private String[] summary(int rowCount) {
+    private String[] summary(List<String[]> rows) {
+        // count the distinct rooms actually present in the filtered rows
+        List<String> rooms = new ArrayList<>();
+        for (String[] row : rows) {
+            String roomId = row[0];
+            if ("-".equals(roomId) || roomId == null) {
+                continue;
+            }
+            boolean seen = false;
+            for (String existing : rooms) {
+                if (existing.equalsIgnoreCase(roomId)) {
+                    seen = true;
+                    break;
+                }
+            }
+            if (!seen) {
+                rooms.add(roomId);
+            }
+        }
         return new String[] {
-                "Total task-worker rows: " + rowCount,
-                "Rooms in report: " + roomList.size()
+                "Total task-worker rows: " + rows.size(),
+                "Rooms in report: " + rooms.size()
         };
     }
 }
