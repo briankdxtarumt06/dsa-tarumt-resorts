@@ -8,7 +8,7 @@ import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
 
 public class GuestDAO {
-    private final String FILE_NAME = "data/guests.json";
+    private final String FILE_NAME = "data/guestList.json";
 
     public void saveToFile(LinkedListInterface<Guest> list) {
         try {
