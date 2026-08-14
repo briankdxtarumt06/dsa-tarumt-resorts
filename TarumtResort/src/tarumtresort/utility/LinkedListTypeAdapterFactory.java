@@ -13,14 +13,6 @@ import java.lang.reflect.Type;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 
-/**
- * Gson adapter factory that lets the custom LinkedList ADT be embedded in
- * entity JSON (e.g. Guest.notificationList inside guests.json).
- * A LinkedListInterface field is written as a plain JSON array of its
- * elements (never the Node chain) and read back into a fresh LinkedList.
- * Raw types are used internally because LinkedList requires Comparable
- * elements; only size/get/addBack are touched.
- */
 public class LinkedListTypeAdapterFactory implements TypeAdapterFactory {
 
     @Override
