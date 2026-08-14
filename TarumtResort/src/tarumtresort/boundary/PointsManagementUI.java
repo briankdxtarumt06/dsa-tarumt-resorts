@@ -10,6 +10,7 @@ import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
 /**
  * Pure input/output for the points module. No business logic - the
@@ -145,20 +146,22 @@ public class PointsManagementUI {
             return;
         }
         System.out.println();
-        System.out.printf("%-10s | %-12s | %-22s | %7s | %9s | %-12s | %s%n",
-                "Tx ID", "Earned", "Description", "Change", "Remaining", "Expires", "Status");
-        System.out.println("---------------------------------------------------------------------------");
+        String[][] rows = new String[txs.size()][7];
         for (int i = 0; i < txs.size(); i++) {
             PointTransaction t = txs.get(i);
-            System.out.printf("%-10s | %-12s | %-22s | %7d | %9d | %-12s | %s%n",
+            rows[i] = new String[] {
                     t.getTransactionId(),
                     t.getDate().format(DATE_FMT),
                     truncate(t.getDescription(), 22),
-                    t.getPointChange(),
-                    t.getRemainingPoints(),
+                    String.valueOf(t.getPointChange()),
+                    String.valueOf(t.getRemainingPoints()),
                     t.getExpiryDate().format(DATE_FMT),
-                    statusOf(t));
+                    statusOf(t)
+            };
         }
+        TablePrinter.displayTable(
+                new String[] { "Tx ID", "Earned", "Description", "Change", "Remaining", "Expires", "Status" },
+                rows);
     }
 
     public void displayNotifications(LinkedListInterface<Notification> list) {

@@ -9,11 +9,7 @@ public class Guest implements Comparable<Guest> {
     private String icOrPassport;
     private String contactNumber;
     private String nationality;
-    private String address;
-    /**
-     * Notifications belonging to this guest, stored inside guests.json
-     * (serialised as a JSON array by LinkedListTypeAdapterFactory).
-     */
+    private String address;          
     private LinkedListInterface<Notification> notificationList = new LinkedList<>();
 
     public Guest() {

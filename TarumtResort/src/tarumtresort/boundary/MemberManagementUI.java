@@ -7,6 +7,7 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
 public class MemberManagementUI {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -91,14 +92,18 @@ public class MemberManagementUI {
             return;
         }
         System.out.println();
-        System.out.printf("%-10s | %-10s | %8s | %s%n", "Member ID", "Tier", "Points", "Enrolled");
-        System.out.println("-------------------------------------------------------------");
+        String[][] rows = new String[members.size()][4];
         for (int i = 0; i < members.size(); i++) {
             Member m = members.get(i);
-            System.out.printf("%-10s | %-10s | %8d | %s%n",
-                    m.getMemberId(), m.getTier(), m.getPoints(),
-                    m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT));
+            rows[i] = new String[] {
+                    m.getMemberId(),
+                    m.getTier().name(),
+                    String.valueOf(m.getPoints()),
+                    m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)
+            };
         }
+        TablePrinter.displayTable(
+                new String[] { "Member ID", "Tier", "Points", "Enrolled" }, rows);
     }
 
     public void displayProfile(Member m) {

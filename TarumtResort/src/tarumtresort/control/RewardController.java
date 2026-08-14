@@ -6,6 +6,7 @@ import tarumtresort.boundary.RewardManagementUI;
 import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Reward;
 import java.util.Scanner;
+import tarumtresort.utility.ConsoleUtil;
 
 /**
  * Business logic for the reward catalogue. The controller owns its UI and
@@ -27,6 +28,7 @@ public class RewardController {
     }
 
     public static void main(String[] args) {
+        // ConsoleUtil.enableUtf8Console();
         new RewardController().run();
     }
 

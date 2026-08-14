@@ -15,6 +15,7 @@ import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
+import tarumtresort.utility.ConsoleUtil;
 
 public class PointsController {
     private LinkedListInterface<Member> memberList = new LinkedList<>();
@@ -45,6 +46,7 @@ public class PointsController {
     }
 
     public static void main(String[] args) {
+        // ConsoleUtil.enableUtf8Console();
         new PointsController().run();
     }
 

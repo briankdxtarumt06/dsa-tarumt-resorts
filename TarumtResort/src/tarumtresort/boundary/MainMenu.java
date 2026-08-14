@@ -11,6 +11,7 @@ public class MainMenu {
     private final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
+        // ConsoleUtil.enableUtf8Console();
         new MainMenu().run();
     }
 

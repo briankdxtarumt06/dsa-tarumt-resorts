@@ -4,6 +4,7 @@ import java.util.Scanner;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
 public class RewardManagementUI {
 
@@ -103,14 +104,18 @@ public class RewardManagementUI {
             return;
         }
         System.out.println();
-        System.out.printf("%-10s | %-22s | %10s | %s%n",
-                "Reward ID", "Name", "Cost", "Description");
-        System.out.println("--------------------------------------------------------------------");
+        String[][] rows = new String[rewards.size()][4];
         for (int i = 0; i < rewards.size(); i++) {
             Reward r = rewards.get(i);
-            System.out.printf("%-10s | %-22s | %10d | %s%n",
-                    r.getRewardId(), truncate(r.getName(), 22), r.getPointCost(), r.getDescription());
+            rows[i] = new String[] {
+                    r.getRewardId(),
+                    truncate(r.getName(), 22),
+                    String.valueOf(r.getPointCost()),
+                    r.getDescription()
+            };
         }
+        TablePrinter.displayTable(
+                new String[] { "Reward ID", "Name", "Cost", "Description" }, rows);
     }
 
     /** Prompts for a string, returning the current value if the input is empty. */

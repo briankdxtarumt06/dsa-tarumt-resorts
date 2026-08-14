@@ -7,6 +7,7 @@ import tarumtresort.dao.MemberDAO;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import java.util.Scanner;
+import tarumtresort.utility.ConsoleUtil;
 
 public class MemberController {
     private LinkedListInterface<Member> memberList = new LinkedList<>();
@@ -23,6 +24,7 @@ public class MemberController {
     }
 
     public static void main(String[] args) {
+        // ConsoleUtil.enableUtf8Console();
         new MemberController().run();
     }
 
