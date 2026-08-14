@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtresort.entity;
 import tarumtresort.entity.enums.*;
 
@@ -11,95 +7,95 @@ import java.time.LocalDateTime;
  *
  * @author Wen Ling
  */
-public class Inquiry {
-
-    private String inquiryID;
+public class Inquiry implements Comparable<Inquiry> {
+    private String inquiryId;
+    private String confirmationNumber;
+    private String guestId;
     private InquiryType inquiryType;
-    private LocalDateTime inquiryDateTime;
-    private InquiryPriority inquiryPriority;
     private String description;
     private InquiryStatus status;
-    private String reservationID;
-    private String staffID;
+    private LocalDateTime createdTime;
+    private LocalDateTime resolvedTime;
 
     public Inquiry() {
-
     }
 
-    public Inquiry(String inquiryID, InquiryType inquiryType, LocalDateTime inquiryDateTime,
-                    InquiryPriority inquiryPriority, String description,
-                    InquiryStatus status, String reservationID, String staffID
-    ) {
-        this.inquiryID = inquiryID;
+    public Inquiry(String inquiryId, String confirmationNumber, String guestId,
+                    InquiryType inquiryType, String description) {
+        this.inquiryId = inquiryId;
+        this.confirmationNumber = confirmationNumber;
+        this.guestId = guestId;
         this.inquiryType = inquiryType;
-        this.inquiryDateTime = inquiryDateTime;
-        this.inquiryPriority = inquiryType.getPriority();
         this.description = description;
-        this.status = status;
-        this.reservationID = reservationID;
-        this.staffID = staffID;
+        this.status = InquiryStatus.PENDING;
+        this.createdTime = LocalDateTime.now();
+        this.resolvedTime = null;
     }
 
-    public String getInquiryID() {
-        return inquiryID;
+    public String getInquiryId() {
+        return inquiryId;
     }
 
-    public InquiryType getInquiryType() {
-        return inquiryType;
+    public String getConfirmationNumber() { 
+        return confirmationNumber; 
     }
 
-    public void setInquiryType(InquiryType inquiryType) {
-        this.inquiryType = inquiryType;
-        this.inquiryPriority = inquiryType.getPriority();
+    public String getGuestId() { 
+        return guestId; 
     }
 
-    public LocalDateTime getInquiryDateTime() {
-        return inquiryDateTime;
+    public InquiryType getInquiryType() { 
+        return inquiryType; 
     }
 
-    public InquiryPriority getInquiryPriority() {
-        return inquiryPriority;
+    public String getDescription() { 
+        return description; 
     }
 
-    public String getDescription() {
-        return description;
+    public InquiryStatus getStatus() { 
+        return status; 
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setStatus(InquiryStatus status) { 
+        this.status = status; 
     }
 
-    public InquiryStatus getStatus() {
-        return status;
+    public LocalDateTime getCreatedTime() { 
+        return createdTime; 
     }
 
-    public void setStatus(InquiryStatus status) {
-        this.status = status;
+    public LocalDateTime getResolvedTime() { 
+        return resolvedTime; 
     }
 
-    public String getReservationID() {
-        return reservationID;
+    public void setResolvedTime(LocalDateTime resolvedTime) { 
+        this.resolvedTime = resolvedTime; 
     }
 
-    public String getStaffID() {
-        return staffID;
+
+    @Override
+    public int compareTo(Inquiry other) {
+        int cmp = Integer.compare(
+                this.inquiryType.getPriority().getRank(),
+                other.inquiryType.getPriority().getRank()
+        );
+        if (cmp == 0) {
+            cmp = this.createdTime.compareTo(other.createdTime);
+        }
+        return cmp;
     }
 
-    public void setStaffID(String staffID) {
-        this.staffID = staffID;
-    }
-
-    /*TO DO : public int compareTo() {} */
 
     @Override
     public String toString() {
-        return "Inquiry ID: " + inquiryID
-                + "\nInquiry Type: " + inquiryType
-                + "\nInquiry Date Time: " + inquiryDateTime
-                + "\nInquiry Priority: " + inquiryPriority
-                + "\nDescription: " + description
-                + "\nStatus: " + status
-                + "\nReservation ID: " + reservationID
-                + "\nStaff ID: " + staffID;
+        return "Inquiry{" +
+                "inquiryId='" + inquiryId + '\'' +
+                ", confirmationNumber='" + confirmationNumber + '\'' +
+                ", inquiryType=" + inquiryType +
+                ", description='" + description + '\'' +
+                ", priority=" + inquiryType.getPriority() +
+                ", status=" + status +
+                ", createdTime=" + createdTime +
+                '}';
     }
 }
