@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtresort.entity;
 import tarumtresort.entity.enums.*;
 
@@ -20,7 +16,6 @@ public class Inquiry implements Comparable<Inquiry> {
     private InquiryStatus status;
     private LocalDateTime createdTime;
     private LocalDateTime resolvedTime;
-    private String assignedStaffId;
 
     public Inquiry(String inquiryId, String confirmationNumber, String guestId,
                     InquiryType inquiryType, String description) {
@@ -32,31 +27,54 @@ public class Inquiry implements Comparable<Inquiry> {
         this.status = InquiryStatus.PENDING;
         this.createdTime = LocalDateTime.now();
         this.resolvedTime = null;
-        this.assignedStaffId = null;
     }
 
-    // getters
-    public String getInquiryId() { return inquiryId; }
-    public String getConfirmationNumber() { return confirmationNumber; }
-    public String getGuestId() { return guestId; }
-    public InquiryType getQueryType() { return inquiryType; }
-    public String getDescription() { return description; }
-    public InquiryStatus getStatus() { return status; }
-    public LocalDateTime getCreatedTime() { return createdTime; }
-    public LocalDateTime getResolvedTime() { return resolvedTime; }
-    public String getAssignedStaffId() { return assignedStaffId; }
+    public String getInquiryId() {
+        return inquiryId;
+    }
 
-    // setters
-    public void setDescription(String description) { this.description = description; }
-    public void setStatus(InquiryStatus status) { this.status = status; }
-    public void setResolvedTime(LocalDateTime resolvedTime) { this.resolvedTime = resolvedTime; }
-    public void setAssignedStaffId(String assignedStaffId) { this.assignedStaffId = assignedStaffId; }
+    public String getConfirmationNumber() { 
+        return confirmationNumber; 
+    }
+
+    public String getGuestId() { 
+        return guestId; 
+    }
+
+    public InquiryType getInquiryType() { 
+        return inquiryType; 
+    }
+
+    public String getDescription() { 
+        return description; 
+    }
+
+    public InquiryStatus getStatus() { 
+        return status; 
+    }
+
+    public void setStatus(InquiryStatus status) { 
+        this.status = status; 
+    }
+
+    public LocalDateTime getCreatedTime() { 
+        return createdTime; 
+    }
+
+    public LocalDateTime getResolvedTime() { 
+        return resolvedTime; 
+    }
+
+    public void setResolvedTime(LocalDateTime resolvedTime) { 
+        this.resolvedTime = resolvedTime; 
+    }
+
 
     @Override
     public int compareTo(Inquiry other) {
         int cmp = Integer.compare(
-            this.inquiryType.getPriority().getLevel(),
-            other.inquiryType.getPriority().getLevel()
+                this.inquiryType.getPriority().getRank(),
+                other.inquiryType.getPriority().getRank()
         );
         if (cmp == 0) {
             cmp = this.createdTime.compareTo(other.createdTime);
@@ -74,7 +92,6 @@ public class Inquiry implements Comparable<Inquiry> {
                 ", priority=" + inquiryType.getPriority() +
                 ", status=" + status +
                 ", createdTime=" + createdTime +
-                ", assignedStaffId='" + assignedStaffId + '\'' +
                 '}';
     }
 }

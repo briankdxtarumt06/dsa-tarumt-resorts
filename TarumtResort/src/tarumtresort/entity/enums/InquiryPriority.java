@@ -1,17 +1,18 @@
-package tarumtresort.entity.enums;
+package tarumtresort.entity;
 
 public enum InquiryPriority {
-    HIGH(1),
-    MEDIUM(2),
-    LOW(3);
+    URGENT(1),
+    HIGH(2),
+    MEDIUM(3),
+    LOW(4);
 
-    private final int level;
+    private final int rank;
 
-    public int getLevel() {
-        return level;
+    InquiryPriority(int rank) {
+        this.rank = rank;
     }
 
-    InquiryPriority(int level) {
-        this.level = level;
+    public int getRank() {
+        return rank;
     }
 }

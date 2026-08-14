@@ -1,10 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtresort.entity;
 import tarumtresort.entity.enums.*;
 import java.time.LocalDateTime;
+
+/**
+ *
+ * @author Wen Ling
+ */
 
 public class Payment implements Comparable<Payment> {
     private String paymentID;
