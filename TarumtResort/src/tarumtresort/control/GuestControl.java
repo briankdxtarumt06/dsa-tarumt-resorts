@@ -15,7 +15,7 @@ public class GuestControl {
     
     // Constructor
     //public GuestControl() {
-     //   guestList = guestDAO.retrieveGuestList();
+    //    guestList = guestDAO.retrieveGuestList();
     //}
 
     // register guest

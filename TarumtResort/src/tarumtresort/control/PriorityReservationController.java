@@ -13,9 +13,11 @@ import java.time.LocalDateTime;
 public class PriorityReservationController {
     private LinkedListInterface<PriorityReservation> priorityReservations = new LinkedList<>();
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
-    private MemberController memberController = new MemberController();
 
+    private MemberController memberController = new MemberController();
     private ReservationControl reservationControl = new ReservationControl();
+
+    private LinkedListInterface<Member> members = memberController.getMembers();
 
     public PriorityReservationController() {
         priorityReservations = priorityReservationDAO.loadFromFile();
@@ -85,26 +87,23 @@ public class PriorityReservationController {
         Member member = findMemberByGuestId(guestId);
         if (member != null) {
             return true;
-        }else {
+        } else {
             return false;
         }
     }
 
-    public Member findMemberByGuestId(String guestId) {  // need move to member control
-        LinkedListInterface<Member> members = new LinkedList<>();
-        memberDAO.loadFromFile(members);
-
+    public Member findMemberByGuestId(String guestId) { // need move to member control
         for (int i = 0; i < members.size(); i++) {
-            if (members.get(i).getGuestId().equals(guestId)) {
+            if (guestId.equals(members.get(i).getGuestId())) {
                 return members.get(i);
             }
         }
         return null;
     }
 
-    public LinkedListInterface<PriorityReservation> generatePriorityQueue() {
+    public LinkedListInterface<Reservation> generateVIPQueue() {
         int n = priorityReservations.size();
-        LinkedListInterface<PriorityReservation> queue = new LinkedList<>();
+        LinkedListInterface<Reservation> queue = new LinkedList<>();
         boolean[] used = new boolean[n];
 
         for (int count = 0; count < n; count++) {
@@ -116,57 +115,46 @@ public class PriorityReservationController {
                 if (used[i]) {
                     continue;
                 }
-                PriorityReservation candidate = priorityReservations.get(i);
+                PriorityReservation tmp = priorityReservations.get(i);
 
                 if (best == null) {
                     bestIndex = i;
-                    best = candidate;
-                    bestTime = getTimestamp(candidate);
+                    best = tmp;
+                    bestTime = getTimestamp(tmp);
                     continue;
                 }
 
                 int rankCompare = Integer.compare(
-                        candidate.getPriorityLevel().getRank(),
+                        tmp.getPriorityLevel().getRank(),
                         best.getPriorityLevel().getRank());
 
-                if (rankCompare > 0) {
-                    // strictly higher priority wins
+                if (rankCompare > 0) { // tmp > best
                     bestIndex = i;
-                    best = candidate;
-                    bestTime = getTimestamp(candidate);
-                } else if (rankCompare == 0) {
-                    // same priority level -> earlier registration time wins
-                    LocalDateTime candidateTime = getTimestamp(candidate);
-                    if (bestTime == null && candidateTime != null) {
+                    best = tmp;
+                    bestTime = getTimestamp(tmp);
+                } else if (rankCompare == 0) { // tmp == best
+                    LocalDateTime tmpTime = getTimestamp(tmp);
+                    if (tmpTime.isBefore(bestTime)) {
                         bestIndex = i;
-                        best = candidate;
-                        bestTime = candidateTime;
-                    } else if (bestTime != null && candidateTime != null
-                            && candidateTime.isBefore(bestTime)) {
-                        bestIndex = i;
-                        best = candidate;
-                        bestTime = candidateTime;
+                        best = tmp;
+                        bestTime = tmpTime;
                     }
-                    // if both timestamps are null (reservation not found), keep
-                    // the earlier one already found -> preserves original order
                 }
             }
 
             used[bestIndex] = true;
-            queue.addBack(best);
+
+            Reservation reservation = reservationControl.getReservationByReservationId(best.getReservationId());
+            if (reservation != null) {
+                queue.addBack(reservation);
+            }
         }
 
         return queue;
     }
 
-    // looks up the registration timestamp of the reservation this override
-    // belongs to; returns null if the reservation can no longer be found
-    // (e.g. cancelled or removed elsewhere) so callers can fall back gracefully
     private LocalDateTime getTimestamp(PriorityReservation pr) {
         Reservation reservation = reservationControl.getReservationByReservationId(pr.getReservationId());
-        if (reservation == null || reservation.getTimestamps() == null) {
-            return null;
-        }
         return reservation.getTimestamps().getRegistrationTimestamp();
     }
 
