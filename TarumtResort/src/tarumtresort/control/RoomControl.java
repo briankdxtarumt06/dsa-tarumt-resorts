@@ -13,9 +13,9 @@ public class RoomControl {
     private LinkedListInterface<Room> roomList = new LinkedList<>();
 
     // Constructor
-    public RoomControl() {
-        roomList = roomDAO.retrieveRoomList();
-    }
+    //public RoomControl() {
+    //    roomList = roomDAO.retrieveRoomList();
+    //}
 
     //get room by room id
     public Room getRoomById(String roomId) {

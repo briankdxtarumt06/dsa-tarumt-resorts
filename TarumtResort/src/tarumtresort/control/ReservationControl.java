@@ -28,10 +28,10 @@ public class ReservationControl {
     private ReservationUI reservationUI = new ReservationUI();
 ;
     //Constructor 
-    public ReservationControl(){
-        guestQueue = reservationDAO.retrieveGuestQueue();
-        assignedList = reservationDAO.retrieveAssignedList();
-    }
+    //public ReservationControl(){
+    //    guestQueue = reservationDAO.retrieveGuestQueue();
+    //    assignedList = reservationDAO.retrieveAssignedList();
+    //}
 
     public void runReservationModule() {
         int choice = 0;
@@ -97,7 +97,7 @@ public class ReservationControl {
                 reservation.getTimestamps().setAssignedTime(LocalDateTime.now());
                 roomControl.updateRoomStatus(room.getRoomId(), RoomStatus.OCCUPIED);
                 assignedList.addBack(reservation);
-                guestQueue.removeAt(i);
+                //guestQueue.removeAt(i);
 
                 //reservationDAO.saveGuestQueue(guestQueue);
                 //reservationDAO.saveAssignedList(assignedList);
@@ -118,7 +118,7 @@ public class ReservationControl {
 
             if (reservation.getConfirmationNumber().equals(confirmationNumber)) {
                 reservation.setStatus(ReservationStatus.CANCELLED);
-                guestQueue.removeAt(i);
+                //guestQueue.removeAt(i);
                 //reservationDAO.saveGuestQueue(guestQueue);
                 return true;
             }
@@ -134,7 +134,7 @@ public class ReservationControl {
 
                 // release room
                 roomControl.updateRoomStatus( reservation.getRoomId(), RoomStatus.AVAILABLE);
-                assignedList.removeAt(i);
+                //assignedList.removeAt(i);
                 //reservationDAO.saveAssignedList(assignedList);
                 return true;
             }
@@ -384,7 +384,7 @@ public class ReservationControl {
             generateConfirmationNumber()
         );
         guestQueue.addSorted(newReservation);
-        reservationDAO.saveGuestQueue(guestQueue);
+        //reservationDAO.saveGuestQueue(guestQueue);
         reservationUI.printReservationDetails(newReservation);
         reservationUI.pressEnterToContinue();
     }

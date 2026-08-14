@@ -14,9 +14,9 @@ public class GuestControl {
     private static final GuestDAO guestDAO = new GuestDAO();
     
     // Constructor
-    public GuestControl() {
-        guestList = guestDAO.retrieveGuestList();
-    }
+    //public GuestControl() {
+     //   guestList = guestDAO.retrieveGuestList();
+    //}
 
     // register guest
     public String registerGuest(String name, String icOrPassport, String contactNumber, String nationality, String address) {
