@@ -22,6 +22,8 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import tarumtresort.adt.LinkedList;
@@ -117,7 +119,7 @@ public class JsonFileHandler {
             Function<T, LinkedListInterface<E>> listGetter,
             Function<E, String> idGetter) throws IOException {
 
-        JsonArray objects = new JsonArray();
+        List<JsonObject> objects = new ArrayList<>();
         // iterate through list of entity
         for (int i = 0; i < list.size(); i++) {
             T entity = list.get(i);

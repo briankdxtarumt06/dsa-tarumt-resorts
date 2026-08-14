@@ -3,6 +3,8 @@ package tarumtresort.entity;
 import java.time.LocalDateTime;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.PointTransaction;
+import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.enums.*;
 
 public class Member implements Comparable<Member> {
