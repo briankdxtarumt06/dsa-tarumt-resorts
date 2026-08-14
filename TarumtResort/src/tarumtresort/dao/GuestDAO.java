@@ -6,11 +6,6 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- * Stateless data access for Guest records, persisted to data/guests.json.
- * Notifications are embedded inside each guest's notificationList, so there
- * is no separate notifications file.
- */
 public class GuestDAO {
     private final String FILE_NAME = "data/guestList.json";
 
@@ -32,6 +27,5 @@ public class GuestDAO {
         } catch (java.io.IOException e) {
             System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
-        return result;
     }
 }
