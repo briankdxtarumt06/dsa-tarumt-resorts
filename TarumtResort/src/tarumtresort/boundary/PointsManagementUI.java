@@ -12,21 +12,14 @@ import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- * Pure input/output for the points module. No business logic - the
- * PointsController decides what to do and calls these methods.
- */
 public class PointsManagementUI {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
     private Scanner scanner = new Scanner(System.in);
 
-    /** Standalone run creates its own scanner. */
     public PointsManagementUI() {
     }
 
-    /** Uses a shared scanner passed from the caller (main menu). */
     public PointsManagementUI(Scanner scanner) {
         this.scanner = scanner;
     }

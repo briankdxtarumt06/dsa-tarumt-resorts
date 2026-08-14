@@ -6,15 +6,9 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- * Stateless data access for Guest records, persisted to data/guests.json.
- * Notifications are embedded inside each guest's notificationList, so there
- * is no separate notifications file.
- */
 public class GuestDAO {
     private final String FILE_NAME = "data/guests.json";
 
-    /** Saves the given guest list to file. */
     public void saveToFile(LinkedListInterface<Guest> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
@@ -23,7 +17,6 @@ public class GuestDAO {
         }
     }
 
-    /** Loads from file and returns a fresh list, or an empty list if the file is missing. */
     public LinkedList<Guest> retrieveFromFile() {
         LinkedList<Guest> result = new LinkedList<>();
         try {

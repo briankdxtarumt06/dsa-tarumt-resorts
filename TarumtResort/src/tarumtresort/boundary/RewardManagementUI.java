@@ -10,11 +10,9 @@ public class RewardManagementUI {
 
     private Scanner scanner = new Scanner(System.in);
 
-    /** Standalone run creates its own scanner. */
     public RewardManagementUI() {
     }
 
-    /** Uses a shared scanner passed from the caller (main menu). */
     public RewardManagementUI(Scanner scanner) {
         this.scanner = scanner;
     }
@@ -34,7 +32,6 @@ public class RewardManagementUI {
         return readInt("Enter your choice");
     }
 
-    /** Prompts for a new reward's details and returns it. */
     public Reward inputNewReward(String rewardId) {
         System.out.println("New reward id: " + rewardId);
         String name = "";
@@ -75,7 +72,6 @@ public class RewardManagementUI {
         return new Reward(rewardId, name, description, cost);
     }
 
-    /** Lists the rewards and returns the chosen reward id, or null. */
     public String selectRewardId(LinkedListInterface<Reward> rewards, String prompt) {
         if (rewards.isEmpty()) {
             System.out.println("No rewards in the catalogue.");
@@ -130,7 +126,6 @@ public class RewardManagementUI {
         return input.isEmpty() ? current : input;
     }
 
-    /** Prompts for an int, returning the current value if the input is empty/invalid. */
     public Integer promptIntWithDefault(String prompt, int current) {
         System.out.print(prompt + " (" + current + ") (0 to cancel): ");
         String input = scanner.nextLine().trim();
@@ -150,7 +145,6 @@ public class RewardManagementUI {
         }
     }
 
-    /** Prints a message and waits for the user to press Enter. */
     public void showMessage(String message) {
         System.out.println(message);
         pause();

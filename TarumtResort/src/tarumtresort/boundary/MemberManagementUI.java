@@ -59,7 +59,6 @@ public class MemberManagementUI {
         return new Member(memberId, 0, tier, LocalDateTime.now(), guestId);
     }
 
-    /** Lists the members and returns the chosen member id, or null. */
     public String selectMember(LinkedListInterface<Member> members, String prompt) {
         if (members.isEmpty()) {
             System.out.println("No members registered yet.");

@@ -15,13 +15,20 @@ public class Guest implements Comparable<Guest> {
     public Guest() {
     }
 
-    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality, String address) {
+    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality,
+            String address) {
+        this(guestId, name, icOrPassport, contactNumber, nationality, address, new LinkedList<>());
+    }
+
+    public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality,
+            String address, LinkedListInterface<Notification> notificationList) {
         this.guestId = guestId;
         this.name = name;
         this.icOrPassport = icOrPassport;
         this.contactNumber = contactNumber;
         this.nationality = nationality;
         this.address = address;
+        this.notificationList = notificationList;
     }
 
     public String getGuestId() {

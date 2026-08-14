@@ -15,7 +15,6 @@ import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
-import tarumtresort.utility.ConsoleUtil;
 
 public class PointsController {
     private LinkedListInterface<Member> memberList = new LinkedList<>();
@@ -31,28 +30,16 @@ public class PointsController {
         this(new Scanner(System.in));
     }
 
-    /** Shares a scanner with the caller (main menu) to avoid input conflicts. */
     public PointsController(Scanner scanner) {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
         guestList = guestDAO.retrieveFromFile();
-        if (guestList.isEmpty()) {
-            guestList.addSorted(new Guest("G001", "Alice Tan", "IC001", "0123456789", "Malaysian", "KL"));
-            guestList.addSorted(new Guest("G002", "Bob Lee", "IC002", "0112345678", "Malaysian", "Penang"));
-            guestDAO.saveToFile(guestList);
-        }
         pointsUI = new PointsManagementUI(scanner);
         reconcileTiersOnLoad();
     }
 
-    public static void main(String[] args) {
-        // ConsoleUtil.enableUtf8Console();
-        new PointsController().run();
-    }
 
-    /** Drives the points & redemption menu until the user exits. */
     public void run() {
-        // auto-alert for points expiring soon, shown when the module opens
         String alert = generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
             pointsUI.show(alert);
@@ -690,8 +677,7 @@ public class PointsController {
         }
         return line;
     }
-
-    /** Creates and persists a notification for a member (via their guest id). */
+    
     private void notifyMember(Member member, String type, String message, LocalDateTime now) {
         if (member == null || member.getGuestId() == null) {
             return;
