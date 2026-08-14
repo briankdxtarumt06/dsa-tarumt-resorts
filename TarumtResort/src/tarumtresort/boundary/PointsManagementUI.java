@@ -54,6 +54,7 @@ public class PointsManagementUI {
     public String selectMember(LinkedListInterface<Member> members) {
         if (members.isEmpty()) {
             System.out.println("No members registered yet.");
+            ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         System.out.println();
@@ -61,9 +62,16 @@ public class PointsManagementUI {
             Member m = members.get(i);
             System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
         }
+        System.out.println(" 0. Cancel");
         int index = readInt("Select a member") - 1;
-        if (index < 0 || index >= members.size()) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= members.size()) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return members.get(index).getMemberId();
@@ -73,6 +81,7 @@ public class PointsManagementUI {
     public String selectReward(LinkedListInterface<Reward> rewards) {
         if (rewards.isEmpty()) {
             System.out.println("No rewards in the catalogue.");
+            ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         System.out.println();
@@ -80,26 +89,49 @@ public class PointsManagementUI {
             Reward r = rewards.get(i);
             System.out.printf(" %d. %-20s - %d pts%n", i + 1, r.getName(), r.getPointCost());
         }
+        System.out.println(" 0. Cancel");
         int index = readInt("Select a reward") - 1;
-        if (index < 0 || index >= rewards.size()) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= rewards.size()) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return rewards.get(index).getRewardId();
     }
 
     public int inputAmount() {
-        int amount = readInt("Points to award (positive)");
-        while (amount <= 0) {
+        int amount = readInt("Points to award (0 to cancel)");
+        if (amount == 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return 0;
+        }
+        while (amount < 0) {
             System.out.println("Amount must be positive.");
-            amount = readInt("Points to award (positive)");
+            amount = readInt("Points to award (0 to cancel)");
+            if (amount == 0) {
+                System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+                return 0;
+            }
         }
         return amount;
     }
 
     public String inputDescription() {
-        System.out.print("Description (optional): ");
-        return scanner.nextLine().trim();
+        System.out.print("Description (0 to cancel): ");
+        String desc = scanner.nextLine().trim();
+        if (desc.equals("0")) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return desc;
     }
 
     public void displayBalance(Member member, int balance) {
@@ -153,6 +185,7 @@ public class PointsManagementUI {
     public String selectPendingRequest(LinkedListInterface<RedemptionRecord> pending) {
         if (pending.isEmpty()) {
             System.out.println("No pending redemption requests.");
+            ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         System.out.println();
@@ -162,9 +195,16 @@ public class PointsManagementUI {
                     i + 1, r.getRedemptionId(), r.getMemberId(), r.getRewardId(),
                     r.getRedeemedDate().format(DATE_FMT));
         }
+        System.out.println(" 0. Cancel");
         int index = readInt("Select a request to process") - 1;
-        if (index < 0 || index >= pending.size()) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= pending.size()) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return pending.get(index).getRedemptionId();
@@ -172,7 +212,7 @@ public class PointsManagementUI {
 
     /** @return "a" to approve, "r" to reject, or null for anything else. */
     public String approveOrReject() {
-        System.out.print("Approve or reject? (a/r): ");
+        System.out.print("Approve or reject? (a/r/c to cancel): ");
         String answer = scanner.nextLine().trim();
         if (answer.equalsIgnoreCase("a")) {
             return "a";

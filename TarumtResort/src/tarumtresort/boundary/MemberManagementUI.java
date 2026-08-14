@@ -38,8 +38,19 @@ public class MemberManagementUI {
     /** Prompts for a new member's details and returns it. */
     public Member inputNewMember(String memberId) {
         System.out.println("New member id: " + memberId);
-        System.out.print("Guest id (linked guest account): ");
-        String guestId = scanner.nextLine().trim();
+        String guestId = "";
+        while (guestId.isEmpty()) {
+            System.out.print("Guest id (0 to cancel): ");
+            guestId = scanner.nextLine().trim();
+            if (guestId.equals("0")) {
+                System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (guestId.isEmpty()) {
+                System.out.println("Guest id cannot be empty.");
+            }
+        }
         Tier tier = selectTier();
         if (tier == null) {
             tier = Tier.SILVER;
@@ -51,6 +62,7 @@ public class MemberManagementUI {
     public String selectMember(LinkedListInterface<Member> members, String prompt) {
         if (members.isEmpty()) {
             System.out.println("No members registered yet.");
+            ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         System.out.println();
@@ -58,9 +70,16 @@ public class MemberManagementUI {
             Member m = members.get(i);
             System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
         }
+        System.out.println(" 0. Cancel");
         int index = readInt(prompt) - 1;
-        if (index < 0 || index >= members.size()) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= members.size()) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return members.get(index).getMemberId();
@@ -96,10 +115,17 @@ public class MemberManagementUI {
         System.out.println(" 2. GOLD");
         System.out.println(" 3. PLATINUM");
         System.out.println(" 4. DIAMOND");
+        System.out.println(" 0. Cancel");
         int index = readInt("Select a tier") - 1;
         Tier[] tiers = Tier.values();
-        if (index < 0 || index >= tiers.length) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= tiers.length) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return tiers[index];

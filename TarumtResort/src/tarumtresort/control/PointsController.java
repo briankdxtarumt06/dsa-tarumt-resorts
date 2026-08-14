@@ -87,10 +87,10 @@ public class PointsController {
                     processRedemptionRequestsFlow();
                     break;
                 case 10:
-                    pointsUI.show("Returning to main menu...");
+                    pointsUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    pointsUI.show("Invalid choice. Please enter 1 - 10.");
+                    pointsUI.showMessage("Invalid choice. Please enter 1 - 10.");
             }
         } while (choice != 10);
     }
@@ -111,7 +111,15 @@ public class PointsController {
             return;
         }
         int amount = pointsUI.inputAmount();
+        if (amount == 0) {
+            pointsUI.showMessage("Operation cancelled.");
+            return;
+        }
         String description = pointsUI.inputDescription();
+        if (description == null) {
+            pointsUI.showMessage("Operation cancelled.");
+            return;
+        }
         pointsUI.showMessage(earnPoints(memberId, amount, description, LocalDateTime.now()));
     }
 
@@ -159,7 +167,7 @@ public class PointsController {
         }
         Member member = findMember(memberId);
         if (member == null || member.getGuestId() == null) {
-            pointsUI.show("Member has no guest account linked.");
+            pointsUI.showMessage("Member has no guest account linked.");
             return;
         }
         LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
@@ -180,12 +188,14 @@ public class PointsController {
             return;
         }
         String answer = pointsUI.approveOrReject();
+        if (answer == null) {
+            pointsUI.showMessage("Operation cancelled.");
+            return;
+        }
         if ("a".equals(answer)) {
             pointsUI.showMessage(approveRedemption(redemptionId, LocalDateTime.now()));
-        } else if ("r".equals(answer)) {
-            pointsUI.showMessage(rejectRedemption(redemptionId, LocalDateTime.now()));
         } else {
-            pointsUI.show("Invalid choice; request left pending.");
+            pointsUI.showMessage(rejectRedemption(redemptionId, LocalDateTime.now()));
         }
     }
 

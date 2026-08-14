@@ -34,6 +34,7 @@ public class MainMenu {
                     break;
                 default:
                     System.out.println("Invalid choice. Please enter 1 - 4.");
+                ConsoleUtil.pressEnterToContinue(scanner);
             }
         } while (choice != 4);
     }

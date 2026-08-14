@@ -49,16 +49,20 @@ public class MemberController {
                     viewProfileFlow();
                     break;
                 case 6:
-                    memberUI.show("Returning to main menu...");
+                    memberUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    memberUI.show("Invalid choice. Please enter 1 - 6.");
+                    memberUI.showMessage("Invalid choice. Please enter 1 - 6.");
             }
         } while (choice != 6);
     }
 
     private void addMemberFlow() {
         Member member = memberUI.inputNewMember(nextMemberId());
+        if (member == null) {
+            memberUI.showMessage("Operation cancelled.");
+            return;
+        }
         memberUI.showMessage(addMember(member));
     }
 

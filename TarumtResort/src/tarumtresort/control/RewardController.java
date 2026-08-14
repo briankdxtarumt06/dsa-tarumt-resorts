@@ -50,16 +50,20 @@ public class RewardController {
                     rewardUI.pause();
                     break;
                 case 5:
-                    rewardUI.show("Returning to main menu...");
+                    rewardUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    rewardUI.show("Invalid choice. Please enter 1 - 5.");
+                    rewardUI.showMessage("Invalid choice. Please enter 1 - 5.");
             }
         } while (choice != 5);
     }
 
     private void addRewardFlow() {
         Reward reward = rewardUI.inputNewReward(nextRewardId());
+        if (reward == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
         rewardUI.showMessage(addReward(reward));
     }
 
@@ -78,8 +82,20 @@ public class RewardController {
         }
         Reward reward = findReward(rewardId);
         String name = rewardUI.promptWithDefault("New name", reward.getName());
+        if (name == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
         String description = rewardUI.promptWithDefault("New description", reward.getDescription());
-        int cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
+        if (description == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        Integer cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
+        if (cost == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
         rewardUI.showMessage(updateReward(rewardId, name, description, cost));
     }
 

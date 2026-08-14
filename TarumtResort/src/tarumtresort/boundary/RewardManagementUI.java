@@ -36,17 +36,40 @@ public class RewardManagementUI {
     /** Prompts for a new reward's details and returns it. */
     public Reward inputNewReward(String rewardId) {
         System.out.println("New reward id: " + rewardId);
-        System.out.print("Reward name: ");
-        String name = scanner.nextLine().trim();
-        if (name.isEmpty()) {
-            name = "Unnamed reward";
+        String name = "";
+        while (name.isEmpty()) {
+            System.out.print("Reward name (0 to cancel): ");
+            name = scanner.nextLine().trim();
+            if (name.equals("0")) {
+                System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (name.isEmpty()) {
+                System.out.println("Reward name cannot be empty.");
+            }
         }
-        System.out.print("Description: ");
+        System.out.print("Description (0 to cancel): ");
         String description = scanner.nextLine().trim();
-        int cost = readInt("Point cost");
-        while (cost <= 0) {
+        if (description.equals("0")) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        int cost = readInt("Point cost (0 to cancel)");
+        if (cost == 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        while (cost < 0) {
             System.out.println("Point cost must be positive.");
-            cost = readInt("Point cost");
+            cost = readInt("Point cost (0 to cancel)");
+            if (cost == 0) {
+                System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
         }
         return new Reward(rewardId, name, description, cost);
     }
@@ -55,12 +78,20 @@ public class RewardManagementUI {
     public String selectRewardId(LinkedListInterface<Reward> rewards, String prompt) {
         if (rewards.isEmpty()) {
             System.out.println("No rewards in the catalogue.");
+            ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         displayRewards(rewards);
+        System.out.println(" 0. Cancel");
         int index = readInt(prompt) - 1;
-        if (index < 0 || index >= rewards.size()) {
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= rewards.size()) {
             System.out.println("Invalid selection.");
+        ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return rewards.get(index).getRewardId();
@@ -84,15 +115,25 @@ public class RewardManagementUI {
 
     /** Prompts for a string, returning the current value if the input is empty. */
     public String promptWithDefault(String prompt, String current) {
-        System.out.print(prompt + " (" + current + "): ");
+        System.out.print(prompt + " (" + current + ") (0 to cancel): ");
         String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
         return input.isEmpty() ? current : input;
     }
 
     /** Prompts for an int, returning the current value if the input is empty/invalid. */
-    public int promptIntWithDefault(String prompt, int current) {
-        System.out.print(prompt + " (" + current + "): ");
+    public Integer promptIntWithDefault(String prompt, int current) {
+        System.out.print(prompt + " (" + current + ") (0 to cancel): ");
         String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+        ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
         if (input.isEmpty()) {
             return current;
         }
