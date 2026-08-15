@@ -1,11 +1,10 @@
 package tarumtresort.entity.enums;
 
 public enum InquiryType {
-    BILLING(InquiryPriority.HIGH),
-    MAINTENANCE(InquiryPriority.HIGH),
-    HOUSEKEEPING(InquiryPriority.MEDIUM),
-    ROOM_AVAILABILITY(InquiryPriority.MEDIUM),
-    GUEST_IDENTIFICATION(InquiryPriority.LOW);
+    ROOMSERVICE(InquiryPriority.URGENT),
+    BILLINGDETAILS(InquiryPriority.HIGH),
+    ROOMAVAILABILITY(InquiryPriority.MEDIUM),
+    GUESTIDENTIFICATION(InquiryPriority.LOW);
 
     private final InquiryPriority priority;
 
