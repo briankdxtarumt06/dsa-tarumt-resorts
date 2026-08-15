@@ -7,7 +7,6 @@ import tarumtresort.dao.MemberDAO;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import java.util.Scanner;
-import tarumtresort.utility.ConsoleUtil;
 
 public class MemberController {
     private LinkedListInterface<Member> memberList = new LinkedList<>();
@@ -23,12 +22,6 @@ public class MemberController {
         memberUI = new MemberManagementUI(scanner);
     }
 
-    public static void main(String[] args) {
-        // ConsoleUtil.enableUtf8Console();
-        new MemberController().run();
-    }
-
-    /** Drives the member management menu until the user exits. */
     public void run() {
         int choice;
         do {
@@ -54,13 +47,14 @@ public class MemberController {
                     memberUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    memberUI.showMessage("Invalid choice. Please enter 1 - 6.");
+                    memberUI.showError("Invalid choice. Please enter 1 - 6.");
             }
         } while (choice != 6);
     }
 
     private void addMemberFlow() {
-        Member member = memberUI.inputNewMember(nextMemberId());
+        String guestId = new GuestControl().generateGuestId();
+        Member member = memberUI.inputNewMember(nextMemberId(), guestId);
         if (member == null) {
             memberUI.showMessage("Operation cancelled.");
             return;
@@ -99,10 +93,6 @@ public class MemberController {
         memberUI.pause();
     }
 
-    // ---------------------------------------------------------------
-    // Business logic
-    // ---------------------------------------------------------------
-
     public LinkedListInterface<Member> getMembers() {
         return memberList;
     }
@@ -116,7 +106,6 @@ public class MemberController {
         return null;
     }
 
-    /** Registers a new member and persists. */
     public String addMember(Member member) {
         if (member == null || member.getMemberId() == null) {
             return "Member cannot be null and must have an id.";
@@ -129,7 +118,6 @@ public class MemberController {
         return "Member added: " + member.getMemberId() + " (Tier: " + member.getTier() + ").";
     }
 
-    /** Removes a member by id and persists. */
     public String removeMember(String memberId) {
         Member member = findMember(memberId);
         if (member == null) {
@@ -149,7 +137,6 @@ public class MemberController {
         return "Member removed: " + memberId + ".";
     }
 
-    /** Updates a member's tier and persists. */
     public String updateMember(String memberId, Tier tier) {
         Member member = findMember(memberId);
         if (member == null) {
@@ -160,7 +147,6 @@ public class MemberController {
         return "Member " + memberId + " updated to tier " + tier + ".";
     }
 
-    /** Generates the next available member id, e.g. M005. */
     public String nextMemberId() {
         try {
             int max = 0;

@@ -1,18 +1,6 @@
 package tarumtresort.utility;
 
-/**
- * Console table renderer (converted from the C++ OutputManager::displayTable).
- * Draws a box-drawing table:
- * <pre>
- * ╔═════════╦══════════╗
- * ║  Head 1 ║  Head 2  ║
- * ╠═════════╬══════════╣
- * ║  cell   ║  cell    ║
- * ╚═════════╩══════════╝
- * </pre>
- */
 public class TablePrinter {
-
     private static final char HORIZONTAL = '═';
     private static final char VERTICAL = '║';
     private static final char CORNER_TL = '╔';
@@ -25,16 +13,9 @@ public class TablePrinter {
     private static final char T_LEFT = '╣';
     private static final char CROSS = '╬';
 
-    private TablePrinter() { // static-only utility
+    private TablePrinter() {
     }
 
-    /**
-     * Prints a box-drawing table with a header row and data rows.
-     * Columns are sized to the longest value (plus padding) and left-aligned.
-     *
-     * @param header the column headers
-     * @param rows   the data rows; each row must have the same length as header
-     */
     public static void displayTable(String[] header, String[][] rows) {
         int numColumns = header.length;
         int[] columnWidths = new int[numColumns];
@@ -52,7 +33,7 @@ public class TablePrinter {
             }
         }
         for (int i = 0; i < numColumns; i++) {
-            columnWidths[i] += 2; // padding on each side
+            columnWidths[i] += 2; 
         }
 
         drawHorizontalLine(columnWidths, CORNER_TL, T_DOWN, CORNER_TR);

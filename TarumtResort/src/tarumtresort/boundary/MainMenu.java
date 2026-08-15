@@ -7,11 +7,9 @@ import tarumtresort.control.RewardController;
 import tarumtresort.utility.ConsoleUtil;
 
 public class MainMenu {
-
     private final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        // ConsoleUtil.enableUtf8Console();
         new MainMenu().run();
     }
 
@@ -31,11 +29,11 @@ public class MainMenu {
                     new PointsController(scanner).run();
                     break;
                 case 4:
-                    System.out.println("Thank you for using TARUMT Resort System. Goodbye!");
+                    System.out.println("Thank you for using TARUMT Resort Loyalty System. Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter 1 - 4.");
-                ConsoleUtil.pressEnterToContinue(scanner);
+                    ConsoleUtil.printError("Invalid choice. Please enter 1 - 4.");
+                    ConsoleUtil.pressEnterToContinue(scanner);
             }
         } while (choice != 4);
     }
@@ -44,7 +42,7 @@ public class MainMenu {
         ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
-        System.out.println("   TARUMT RESORT MANAGEMENT SYSTEM");
+        System.out.println("   TARUMT RESORT LOYALTY SYSTEM");
         System.out.println("========================================");
         System.out.println(" 1. Member Management");
         System.out.println(" 2. Reward Management");
@@ -64,7 +62,7 @@ public class MainMenu {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                ConsoleUtil.printError("Please enter a valid number.");
             }
         }
     }

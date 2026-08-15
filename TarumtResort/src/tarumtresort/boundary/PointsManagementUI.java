@@ -12,21 +12,14 @@ import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- * Pure input/output for the points module. No business logic - the
- * PointsController decides what to do and calls these methods.
- */
 public class PointsManagementUI {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
     private Scanner scanner = new Scanner(System.in);
 
-    /** Standalone run creates its own scanner. */
     public PointsManagementUI() {
     }
 
-    /** Uses a shared scanner passed from the caller (main menu). */
     public PointsManagementUI(Scanner scanner) {
         this.scanner = scanner;
     }
@@ -71,7 +64,7 @@ public class PointsManagementUI {
             return null;
         }
         if (index >= members.size()) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
@@ -98,7 +91,7 @@ public class PointsManagementUI {
             return null;
         }
         if (index >= rewards.size()) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
@@ -113,7 +106,7 @@ public class PointsManagementUI {
             return 0;
         }
         while (amount < 0) {
-            System.out.println("Amount must be positive.");
+            ConsoleUtil.printError("Amount must be positive.");
             amount = readInt("Points to award (0 to cancel)");
             if (amount == 0) {
                 System.out.println("Operation cancelled.");
@@ -206,11 +199,17 @@ public class PointsManagementUI {
             return null;
         }
         if (index >= pending.size()) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
         return pending.get(index).getRedemptionId();
+    }
+
+    /** Prints an error message in red and waits for the user to press Enter. */
+    public void showError(String message) {
+        ConsoleUtil.printError(message);
+        pause();
     }
 
     /** @return "a" to approve, "r" to reject, or null for anything else. */
@@ -261,7 +260,7 @@ public class PointsManagementUI {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                ConsoleUtil.printError("Please enter a valid number.");
             }
         }
     }

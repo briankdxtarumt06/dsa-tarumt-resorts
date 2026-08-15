@@ -10,11 +10,9 @@ public class RewardManagementUI {
 
     private Scanner scanner = new Scanner(System.in);
 
-    /** Standalone run creates its own scanner. */
     public RewardManagementUI() {
     }
 
-    /** Uses a shared scanner passed from the caller (main menu). */
     public RewardManagementUI(Scanner scanner) {
         this.scanner = scanner;
     }
@@ -34,7 +32,6 @@ public class RewardManagementUI {
         return readInt("Enter your choice");
     }
 
-    /** Prompts for a new reward's details and returns it. */
     public Reward inputNewReward(String rewardId) {
         System.out.println("New reward id: " + rewardId);
         String name = "";
@@ -47,7 +44,7 @@ public class RewardManagementUI {
                 return null;
             }
             if (name.isEmpty()) {
-                System.out.println("Reward name cannot be empty.");
+                ConsoleUtil.printError("Reward name cannot be empty.");
             }
         }
         System.out.print("Description (0 to cancel): ");
@@ -64,7 +61,7 @@ public class RewardManagementUI {
             return null;
         }
         while (cost < 0) {
-            System.out.println("Point cost must be positive.");
+            ConsoleUtil.printError("Point cost must be positive.");
             cost = readInt("Point cost (0 to cancel)");
             if (cost == 0) {
                 System.out.println("Operation cancelled.");
@@ -75,7 +72,6 @@ public class RewardManagementUI {
         return new Reward(rewardId, name, description, cost);
     }
 
-    /** Lists the rewards and returns the chosen reward id, or null. */
     public String selectRewardId(LinkedListInterface<Reward> rewards, String prompt) {
         if (rewards.isEmpty()) {
             System.out.println("No rewards in the catalogue.");
@@ -91,7 +87,7 @@ public class RewardManagementUI {
             return null;
         }
         if (index >= rewards.size()) {
-            System.out.println("Invalid selection.");
+            ConsoleUtil.printError("Invalid selection.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
@@ -130,7 +126,6 @@ public class RewardManagementUI {
         return input.isEmpty() ? current : input;
     }
 
-    /** Prompts for an int, returning the current value if the input is empty/invalid. */
     public Integer promptIntWithDefault(String prompt, int current) {
         System.out.print(prompt + " (" + current + ") (0 to cancel): ");
         String input = scanner.nextLine().trim();
@@ -145,12 +140,17 @@ public class RewardManagementUI {
         try {
             return Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid number, keeping current value.");
+            ConsoleUtil.printError("Invalid number, keeping current value.");
             return current;
         }
     }
 
-    /** Prints a message and waits for the user to press Enter. */
+    /** Prints an error message in red and waits for the user to press Enter. */
+    public void showError(String message) {
+        ConsoleUtil.printError(message);
+        pause();
+    }
+
     public void showMessage(String message) {
         System.out.println(message);
         pause();
@@ -175,7 +175,7 @@ public class RewardManagementUI {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                ConsoleUtil.printError("Please enter a valid number.");
             }
         }
     }

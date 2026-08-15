@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Reward;
+import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
 
 public class RewardDAO {
@@ -13,7 +14,7 @@ public class RewardDAO {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
-            System.err.println("Failed to save " + FILE_NAME + ": " + e.getMessage());
+            ConsoleUtil.printError("Failed to save " + FILE_NAME + ": " + e.getMessage());
         }
     }
 
@@ -25,7 +26,7 @@ public class RewardDAO {
                 result.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
-            System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
+            ConsoleUtil.printError("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
         return result;
     }
