@@ -11,17 +11,17 @@ import tarumtresort.dao.*;
 import java.time.LocalDateTime;
 
 public class PriorityReservationController {
-    //ADT declaration
+    // ADT declaration
     private LinkedListInterface<PriorityReservation> priorityReservations = new LinkedList<>();
     private LinkedListInterface<Member> members = new LinkedList<>();
+    private LinkedListInterface<Reservation> vipQueue = new LinkedList<>();
 
-    //DAO
+    // DAO
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
 
-    //Controllers
+    // Controllers
     private MemberController memberController = new MemberController();
     private ReservationControl reservationControl;
-
 
     public PriorityReservationController() {
         priorityReservations = priorityReservationDAO.loadFromFile();
@@ -111,7 +111,6 @@ public class PriorityReservationController {
 
     public LinkedListInterface<Reservation> generateVIPQueue() {
         int n = priorityReservations.size();
-        LinkedListInterface<Reservation> queue = new LinkedList<>();
         boolean[] used = new boolean[n];
 
         for (int count = 0; count < n; count++) {
@@ -154,11 +153,11 @@ public class PriorityReservationController {
 
             Reservation reservation = reservationControl.getReservationByReservationId(best.getReservationId()); // todo
             if (reservation != null) {
-                queue.addBack(reservation);
+                vipQueue.addBack(reservation);
             }
         }
 
-        return queue;
+        return vipQueue;
     }
 
     private LocalDateTime getTimestamp(PriorityReservation pr) {
@@ -176,5 +175,4 @@ public class PriorityReservationController {
 
 }
 
-
-//todo UI, validation, staff edit priority reservation, report
+// todo UI, validation, staff edit priority reservation, report
