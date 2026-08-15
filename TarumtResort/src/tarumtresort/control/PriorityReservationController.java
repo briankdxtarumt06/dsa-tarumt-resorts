@@ -2,13 +2,14 @@ package tarumtresort.control;
 
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-
+import tarumtresort.boundary.PriorityReservationUI;
 import tarumtresort.entity.*;
 import tarumtresort.entity.enums.*;
 
 import tarumtresort.dao.*;
 
 import java.time.LocalDateTime;
+import java.util.Scanner;
 
 public class PriorityReservationController {
     // ADT declaration
@@ -20,10 +21,19 @@ public class PriorityReservationController {
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
 
     // Controllers
-    private MemberController memberController = new MemberController();
+    private MemberController memberController;
+
+    // Boundary
+    private PriorityReservationUI priorityReservationUI = new PriorityReservationUI();
 
     public PriorityReservationController() {
-        priorityReservations = priorityReservationDAO.loadFromFile();
+        this(new Scanner(System.in));
+    }
+
+    public PriorityReservationController(Scanner scanner) {
+        this.memberController = new MemberController(scanner);
+        this.priorityReservationUI = new PriorityReservationUI(scanner);
+        this.priorityReservations = priorityReservationDAO.loadFromFile();
     }
 
     public boolean addPriorityReservation(String reservationId, String guestId) {
@@ -187,6 +197,92 @@ public class PriorityReservationController {
         return priorityReservations.size();
     }
 
+    // UI
+    public void run(LinkedListInterface<Reservation> guestQueue) {
+        int choice;
+        do {
+            choice = priorityReservationUI.getMenuChoice();
+            switch (choice) {
+                case 1:
+                    viewVIPQueueFlow(guestQueue);
+                    break;
+                case 2:
+                    listAllFlow();
+                    break;
+                case 3:
+                    filterFlow();
+                    break;
+                case 4:
+                    overrideFlow();
+                    break;
+                case 5:
+                    break;
+                default:
+                    priorityReservationUI.showError("Invalid choice. Please enter 1 - 5.");
+            }
+        } while (choice != 5);
+    }
+
+    private void viewVIPQueueFlow(LinkedListInterface<Reservation> guestQueue) {
+        LinkedListInterface<Reservation> queue = generateVIPQueue(guestQueue);
+        priorityReservationUI.displayVIPQueue(queue, priorityReservations);
+        priorityReservationUI.pause();
+    }
+
+    private void listAllFlow() {
+        priorityReservationUI.displayPriorityReservations(priorityReservations);
+        priorityReservationUI.pause();
+    }
+
+    private void filterFlow() {
+        PriorityLevel level = priorityReservationUI.selectPriorityLevel("Select a level to filter by");
+        if (level == null) {
+            return; // cancelled - the UI already paused
+        }
+        priorityReservationUI.displayPriorityReservations(filterByLevel(level));
+        priorityReservationUI.pause();
+    }
+
+    private void overrideFlow() {
+        String reservationId = priorityReservationUI.selectPriorityReservation(
+                priorityReservations, "Select a record to override");
+        if (reservationId == null) {
+            return;
+        }
+
+        PriorityReservation pr = searchById(reservationId);
+        if (pr == null) {
+            priorityReservationUI.showError("Record not found.");
+            return;
+        }
+
+        priorityReservationUI.displayDetails(pr);
+
+        PriorityLevel newLevel = priorityReservationUI.selectPriorityLevel("Select the new priority level");
+        if (newLevel == null) {
+            return;
+        }
+
+        String staffId = priorityReservationUI.readNonEmpty("Enter your staff ID");
+        String reason = priorityReservationUI.readNonEmpty("Enter the reason for this override");
+
+        priorityReservationUI.displayOverridePreview(pr, newLevel, staffId, reason);
+
+        if (!priorityReservationUI.confirm("Apply this override?")) {
+            priorityReservationUI.showMessage("Override cancelled. Nothing was changed.");
+            return;
+        }
+
+        boolean updated = updatePriorityReservation(
+                new PriorityReservation(reservationId, newLevel, staffId, reason));
+
+        if (updated) {
+            priorityReservationUI.showMessage("Priority for " + reservationId + " updated to " + newLevel + ".");
+        } else {
+            priorityReservationUI.showError("Update failed - the record no longer exists.");
+        }
+    }
+
 }
 
-// todo UI, validation, staff edit priority reservation, report
+// todo validation, report
