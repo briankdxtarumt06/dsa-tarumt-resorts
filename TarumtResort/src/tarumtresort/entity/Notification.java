@@ -8,19 +8,17 @@ public class Notification implements Comparable<Notification> {
     private String message;
     private LocalDateTime date;
     private boolean isRead;
-    private String guestId;
 
     public Notification() {
     }
 
     public Notification(String notificationId, String type, String message,
-            LocalDateTime date, boolean isRead, String guestId) {
+            LocalDateTime date, boolean isRead) {
         this.notificationId = notificationId;
         this.type = type;
         this.message = message;
         this.date = date;
         this.isRead = isRead;
-        this.guestId = guestId;
     }
 
     public String getNotificationId() {
@@ -63,14 +61,6 @@ public class Notification implements Comparable<Notification> {
         this.isRead = isRead;
     }
 
-    public String getGuestId() {
-        return guestId;
-    }
-
-    public void setGuestId(String guestId) {
-        this.guestId = guestId;
-    }
-
     @Override
     public int compareTo(Notification other) {
         int byDate = this.date.compareTo(other.date);
@@ -83,7 +73,6 @@ public class Notification implements Comparable<Notification> {
     @Override
     public String toString() {
         return "Notification{" + "notificationId=" + notificationId + ", type=" + type
-                + ", message=" + message + ", date=" + date + ", isRead=" + isRead
-                + ", guestId=" + guestId + '}';
+                + ", message=" + message + ", date=" + date + ", isRead=" + isRead + '}';
     }
 }
