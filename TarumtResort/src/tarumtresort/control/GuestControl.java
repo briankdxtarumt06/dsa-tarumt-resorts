@@ -294,4 +294,7 @@ public class GuestControl {
         return result;
     }
 
+    public void saveGuestList() {
+        guestDAO.saveToFile(guestList);
+    }
 }

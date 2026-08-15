@@ -2,6 +2,9 @@ package tarumtresort.control;
 
 import tarumtresort.dao.RoomDAO;
 import tarumtresort.adt.LinkedListInterface;
+
+import java.time.LocalDate;
+
 import tarumtresort.adt.LinkedList;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.enums.RoomStatus;
@@ -47,6 +50,20 @@ public class RoomControl {
         return null;
     }
 
+    // count how many physical rooms exist for a given room type
+    // used by ReservationControl at booking time to check if enough rooms of
+    // this type exist for the requested date range (capacity check only,
+    // does NOT lock/reserve any specific room)
+    public int countRoomsByType(RoomType roomType) {
+        int count = 0;
+        for (int i = 0; i < roomList.size(); i++) {
+            if (roomList.get(i).getRoomType() == roomType) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     // update room status
     public boolean updateRoomStatus(String roomId, RoomStatus roomStatus) {
 
@@ -57,8 +74,7 @@ public class RoomControl {
             if (room.getRoomId().equals(roomId)) {
 
                 room.setRoomStatus(roomStatus);
-
-                // roomDAO.saveRoomList(roomList);
+                roomDAO.saveToFile(roomList);
 
                 return true;
             }
@@ -158,5 +174,9 @@ public class RoomControl {
         }
 
         return room.getPricePerNight();
+    }
+
+    public void saveRoomList() {
+        roomDAO.saveToFile(roomList);
     }
 }
