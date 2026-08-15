@@ -649,7 +649,8 @@ public class PointsController {
         if (member.getTier() != current) {
             member.setTier(current);
             if (member.getGuestId() != null) {
-                String message = "Congratulations! You have been upgraded to " + current + "!";
+                String message = "Congratulations! You have been upgraded to " + current
+                        + "! You now enjoy " + current.getDiscountPercent() + "% off stays & dining.";
                 notifyMember(member, "TIER_UPGRADE", message, now);
             }
             return true;

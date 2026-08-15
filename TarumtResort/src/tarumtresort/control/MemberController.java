@@ -53,7 +53,8 @@ public class MemberController {
     }
 
     private void addMemberFlow() {
-        Member member = memberUI.inputNewMember(nextMemberId());
+        String guestId = new GuestControl().generateGuestId();
+        Member member = memberUI.inputNewMember(nextMemberId(), guestId);
         if (member == null) {
             memberUI.showMessage("Operation cancelled.");
             return;

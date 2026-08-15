@@ -36,21 +36,9 @@ public class MemberManagementUI {
         return readInt("Enter your choice");
     }
 
-    public Member inputNewMember(String memberId) {
+    public Member inputNewMember(String memberId, String guestId) {
         System.out.println("New member id: " + memberId);
-        String guestId = "";
-        while (guestId.isEmpty()) {
-            System.out.print("Guest id (0 to cancel): ");
-            guestId = scanner.nextLine().trim();
-            if (guestId.equals("0")) {
-                System.out.println("Operation cancelled.");
-        ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (guestId.isEmpty()) {
-                ConsoleUtil.printError("Guest id cannot be empty.");
-            }
-        }
+        System.out.println("Guest id (auto-generated): " + guestId);
         Tier tier = selectTier();
         if (tier == null) {
             tier = Tier.SILVER;
@@ -108,6 +96,7 @@ public class MemberManagementUI {
         System.out.println();
         System.out.println("Member id     : " + m.getMemberId());
         System.out.println("Tier          : " + m.getTier());
+        System.out.println("Discount      : " + m.getTier().getDiscountPercent() + "% off stays & dining");
         System.out.println("Points        : " + m.getPoints());
         System.out.println("Guest id      : " + m.getGuestId());
         System.out.println("Enrolled      : " + (m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)));
