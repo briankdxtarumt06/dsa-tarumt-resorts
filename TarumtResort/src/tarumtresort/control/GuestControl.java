@@ -145,7 +145,7 @@ public class GuestControl {
     }
 
     // generate guest id
-    private String generateGuestId() {
+    public String generateGuestId() {
 
         int max = 0;
 

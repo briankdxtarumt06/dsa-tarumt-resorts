@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Guest;
+import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
 
 public class GuestDAO {
@@ -13,10 +14,11 @@ public class GuestDAO {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
-            System.err.println("Failed to save " + FILE_NAME + ": " + e.getMessage());
+            ConsoleUtil.printError("Failed to save " + FILE_NAME + ": " + e.getMessage());
         }
     }
 
+    /** Loads guests into the given list, replacing its current contents. */
     public void loadFromFile(LinkedListInterface<Guest> list) {
         list.clear();
         try {
@@ -25,7 +27,7 @@ public class GuestDAO {
                 list.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
-            System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
+            ConsoleUtil.printError("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
     }
 }

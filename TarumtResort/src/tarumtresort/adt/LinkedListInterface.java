@@ -10,7 +10,6 @@ package tarumtresort.adt;
  * @param <T>
  */
 public interface LinkedListInterface<T extends Comparable<T>> {
-
     // LIST
 
     void addFront(T element);
