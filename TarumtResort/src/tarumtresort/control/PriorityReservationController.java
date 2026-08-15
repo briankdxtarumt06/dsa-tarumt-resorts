@@ -152,7 +152,7 @@ public class PriorityReservationController {
 
             used[bestIndex] = true;
 
-            Reservation reservation = reservationControl.getReservationByReservationId(best.getReservationId());
+            Reservation reservation = reservationControl.getReservationByReservationId(best.getReservationId()); // todo
             if (reservation != null) {
                 queue.addBack(reservation);
             }
@@ -175,3 +175,6 @@ public class PriorityReservationController {
     }
 
 }
+
+
+//todo UI, validation, staff edit priority reservation, report
