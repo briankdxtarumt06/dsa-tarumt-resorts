@@ -11,13 +11,12 @@ public class Reservation implements Comparable<Reservation> {
     private int numberOfGuests;
     private int numberOfNights;
     private ReservationType reservationType;
-    private ReservationStatus status;
+    private ReservationStatus status;     
+    private boolean isNoShow;        
     private ReservationTimestamps timestamps;
 
-    // constructors
-    public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId,
-            RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType,
-            ReservationStatus status, ReservationTimestamps timestamps) {
+    //constructors
+    public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId, RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType, ReservationStatus status, boolean isNoShow, ReservationTimestamps timestamps) {
         this.reservationId = reservationId;
         this.confirmationNumber = confirmationNumber;
         this.guestId = guestId;
@@ -27,90 +26,35 @@ public class Reservation implements Comparable<Reservation> {
         this.numberOfNights = numberOfNights;
         this.reservationType = reservationType;
         this.status = status;
+        this.isNoShow = isNoShow;
         this.timestamps = timestamps;
     }
 
-    // setters
-    public void setReservationId(String reservationId) {
-        this.reservationId = reservationId;
-    }
+    //setters
+    public void setReservationId(String reservationId) { this.reservationId = reservationId; }
+    public void setConfirmationNumber(String confirmationNumber) { this.confirmationNumber = confirmationNumber; }
+    public void setGuestId(String guestId) { this.guestId = guestId; }
+    public void setRoomId(String roomId) { this.roomId = roomId; }
+    public void setRoomTypeRequested(RoomType roomTypeRequested) { this.roomTypeRequested = roomTypeRequested; }
+    public void setNumberOfGuests(int numberOfGuests) { this.numberOfGuests = numberOfGuests; }
+    public void setNumberOfNights(int numberOfNights) { this.numberOfNights = numberOfNights; }
+    public void setReservationType(ReservationType reservationType) { this.reservationType = reservationType; }
+    public void setStatus(ReservationStatus status) { this.status = status; }
+    public void serIsNoShow(boolean isNoShow){ this.isNoShow = isNoShow; }
+    public void setTimestamps(ReservationTimestamps timestamps) { this.timestamps = timestamps; }
 
-    public void setConfirmationNumber(String confirmationNumber) {
-        this.confirmationNumber = confirmationNumber;
-    }
-
-    public void setGuestId(String guestId) {
-        this.guestId = guestId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    public void setRoomTypeRequested(RoomType roomTypeRequested) {
-        this.roomTypeRequested = roomTypeRequested;
-    }
-
-    public void setNumberOfGuests(int numberOfGuests) {
-        this.numberOfGuests = numberOfGuests;
-    }
-
-    public void setNumberOfNights(int numberOfNights) {
-        this.numberOfNights = numberOfNights;
-    }
-
-    public void setReservationType(ReservationType reservationType) {
-        this.reservationType = reservationType;
-    }
-
-    public void setStatus(ReservationStatus status) {
-        this.status = status;
-    }
-
-    public void setTimestamps(ReservationTimestamps timestamps) {
-        this.timestamps = timestamps;
-    }
-
-    // getters
-    public String getReservationId() {
-        return reservationId;
-    }
-
-    public String getConfirmationNumber() {
-        return confirmationNumber;
-    }
-
-    public String getGuestId() {
-        return guestId;
-    }
-
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public RoomType getRoomTypeRequested() {
-        return roomTypeRequested;
-    }
-
-    public int getNumberOfGuests() {
-        return numberOfGuests;
-    }
-
-    public int getNumberOfNights() {
-        return numberOfNights;
-    }
-
-    public ReservationType getReservationType() {
-        return reservationType;
-    }
-
-    public ReservationStatus getStatus() {
-        return status;
-    }
-
-    public ReservationTimestamps getTimestamps() {
-        return timestamps;
-    }
+    //getters
+    public String getReservationId() { return reservationId; }
+    public String getConfirmationNumber() { return confirmationNumber; }
+    public String getGuestId() { return guestId; }
+    public String getRoomId() { return roomId; }
+    public RoomType getRoomTypeRequested() { return roomTypeRequested; }
+    public int getNumberOfGuests() { return numberOfGuests; }
+    public int getNumberOfNights() { return numberOfNights; }
+    public ReservationType getReservationType() { return reservationType; }
+    public ReservationStatus getStatus() { return status; }
+    public boolean getIsNoShow(){ return isNoShow; }
+    public ReservationTimestamps getTimestamps() { return timestamps; }
 
     // toString
     @Override

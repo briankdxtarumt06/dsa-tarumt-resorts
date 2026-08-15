@@ -3,6 +3,7 @@ package tarumtresort.boundary;
 import java.util.Scanner;
 
 import tarumtresort.entity.Guest;
+import tarumtresort.utility.SharedServices;
 
 public class GuestUI {
 
@@ -10,33 +11,27 @@ public class GuestUI {
 
     // INPUTS
     public String inputName() {
-        System.out.print("Name: ");
-        return scanner.nextLine();
+        return SharedServices.askNonEmptyInput(scanner, "Name");
     }
 
     public String inputNationality() {
-        System.out.print("Nationality: ");
-        return scanner.nextLine();
+        return SharedServices.askNonEmptyInput(scanner, "Nationality");
     }
 
     public String inputIc() {
-        System.out.print("IC Number (######-##-####): ");
-        return scanner.nextLine();
+        return SharedServices.askNonEmptyInput(scanner, "IC Number (######-##-####)");
     }
 
     public String inputPassport() {
-        System.out.print("Passport Number: ");
-        return scanner.nextLine();
+        return SharedServices.askNonEmptyInput(scanner, "Passport Number");
     }
 
     public String inputContactNumber() {
-        System.out.print("Contact Number: ");
-        return scanner.nextLine();
+        return SharedServices.askNonEmptyInput(scanner, "Contact Number");
     }
 
     public String inputAddress() {
-        System.out.print("Address: ");
-        return scanner.nextLine();
+        return SharedServices.askNonEmptyInput(scanner, "Address");
     }
 
     public void printInvalidInput(String message) {

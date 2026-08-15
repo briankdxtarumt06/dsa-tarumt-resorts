@@ -30,12 +30,7 @@ import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 
 public class JsonFileHandler {
-    // object to json, json to object builder
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .registerTypeHierarchyAdapter(LinkedListInterface.class, new LinkedListInterfaceAdapter())
-            .create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(new LinkedListTypeAdapterFactory()).create();
 
     private JsonFileHandler() { 
     }
