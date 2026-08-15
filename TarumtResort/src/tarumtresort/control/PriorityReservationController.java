@@ -139,12 +139,16 @@ public class PriorityReservationController {
                     bestTime = getTimestamp(reservations, tmp);
                 } else if (rankCompare == 0) { // tmp == best
                     LocalDateTime tmpTime = getTimestamp(reservations, tmp);
-                    if (tmpTime.isBefore(bestTime)) {
+                    if (tmpTime != null && (bestTime == null || tmpTime.isBefore(bestTime))) {
                         bestIndex = i;
                         best = tmp;
                         bestTime = tmpTime;
                     }
                 }
+            }
+
+            if (bestIndex == -1) {
+                break;
             }
 
             used[bestIndex] = true;
