@@ -397,14 +397,12 @@ public class ReservationControl {
 
         vipQueue = priorityReservationController.generateVIPQueue();
 
-        if (vipQueue.size() > 0) {
-            for (int i = 0; i < vipQueue.size(); i++) {
-                Reservation r = vipQueue.get(i);
-                if (r.getRoomTypeRequested() == roomType) {
-                    found = r;
-                    foundIndex = i;
-                    break;
-                }
+        for (int i = 0; i < vipQueue.size(); i++) {
+            Reservation r = vipQueue.get(i);
+            if (r.getRoomTypeRequested() == roomType) {
+                found = r;
+                foundIndex = i;
+                break;
             }
         }
 
@@ -428,11 +426,11 @@ public class ReservationControl {
 
         // assign room
         if (fromGuestQueue) {
-            guestQueue.removeIndex(foundIndex); 
-        } else{
+            guestQueue.removeIndex(foundIndex);
+        } else {
             vipQueue.removeIndex(foundIndex);
         }
-        
+
         found.setRoomId(availableRoom.getRoomId());
         found.setStatus(ReservationStatus.ASSIGNED);
         found.getTimestamps().setAssignedTime(LocalDateTime.now());
