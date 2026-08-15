@@ -21,17 +21,25 @@ public class PriorityReservationController {
 
     // Controllers
     private MemberController memberController = new MemberController();
-    private ReservationControl reservationControl;
 
     public PriorityReservationController() {
         priorityReservations = priorityReservationDAO.loadFromFile();
     }
 
-    public void addPriorityReservation(String reservationId, String guestId) {
+    public boolean addPriorityReservation(String reservationId, String guestId) {
         Member member = findMemberByGuestId(guestId);
+        if (member == null) {
+            return false;
+        }
         PriorityLevel priorityLevel = PriorityLevel.convertTierToPriority(member.getTier());
         PriorityReservation priorityReservation = new PriorityReservation(reservationId, priorityLevel);
-        priorityReservations.addSorted(priorityReservation);
+        priorityReservations.addBack(priorityReservation);
+        priorityReservationDAO.saveToFile(priorityReservations);
+        return true;
+    }
+
+    public void addPriorityReservation(PriorityReservation priorityReservation) {
+        priorityReservations.addBack(priorityReservation);
         priorityReservationDAO.saveToFile(priorityReservations);
     }
 
@@ -56,15 +64,13 @@ public class PriorityReservationController {
 
     public boolean updatePriorityReservation(PriorityReservation updatedReservation) {
         PriorityReservation pr = searchById(updatedReservation.getReservationId());
-
         if (pr == null) {
             return false;
         }
-        removeById(updatedReservation.getReservationId());
+
         pr.setPriorityLevel(updatedReservation.getPriorityLevel());
         pr.setOverriddenBy(updatedReservation.getOverriddenBy());
         pr.setOverrideReason(updatedReservation.getOverrideReason());
-        priorityReservations.addSorted(pr);
         priorityReservationDAO.saveToFile(priorityReservations);
         return true;
     }
@@ -90,15 +96,6 @@ public class PriorityReservationController {
         return result;
     }
 
-    public boolean checkMember(String guestId) {
-        Member member = findMemberByGuestId(guestId);
-        if (member != null) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public Member findMemberByGuestId(String guestId) { // need move to member control
         members = memberController.getMembers();
         for (int i = 0; i < members.size(); i++) {
@@ -109,7 +106,8 @@ public class PriorityReservationController {
         return null;
     }
 
-    public LinkedListInterface<Reservation> generateVIPQueue() {
+    public LinkedListInterface<Reservation> generateVIPQueue(LinkedListInterface<Reservation> reservations) {
+        vipQueue = new LinkedList<>();
         int n = priorityReservations.size();
         boolean[] used = new boolean[n];
 
@@ -127,7 +125,7 @@ public class PriorityReservationController {
                 if (best == null) {
                     bestIndex = i;
                     best = tmp;
-                    bestTime = getTimestamp(tmp);
+                    bestTime = getTimestamp(reservations, tmp);
                     continue;
                 }
 
@@ -138,9 +136,9 @@ public class PriorityReservationController {
                 if (rankCompare > 0) { // tmp > best
                     bestIndex = i;
                     best = tmp;
-                    bestTime = getTimestamp(tmp);
+                    bestTime = getTimestamp(reservations, tmp);
                 } else if (rankCompare == 0) { // tmp == best
-                    LocalDateTime tmpTime = getTimestamp(tmp);
+                    LocalDateTime tmpTime = getTimestamp(reservations, tmp);
                     if (tmpTime.isBefore(bestTime)) {
                         bestIndex = i;
                         best = tmp;
@@ -151,7 +149,7 @@ public class PriorityReservationController {
 
             used[bestIndex] = true;
 
-            Reservation reservation = reservationControl.getReservationByReservationId(best.getReservationId()); // todo
+            Reservation reservation = getReservation(reservations, best.getReservationId());
             if (reservation != null) {
                 vipQueue.addBack(reservation);
             }
@@ -160,8 +158,20 @@ public class PriorityReservationController {
         return vipQueue;
     }
 
-    private LocalDateTime getTimestamp(PriorityReservation pr) {
-        Reservation reservation = reservationControl.getReservationByReservationId(pr.getReservationId());
+    private Reservation getReservation(LinkedListInterface<Reservation> source, String reservationId) {
+        for (int i = 0; i < source.size(); i++) {
+            if (source.get(i).getReservationId().equals(reservationId)) {
+                return source.get(i);
+            }
+        }
+        return null;
+    }
+
+    private LocalDateTime getTimestamp(LinkedListInterface<Reservation> source, PriorityReservation pr) {
+        Reservation reservation = getReservation(source, pr.getReservationId());
+        if (reservation == null || reservation.getTimestamps() == null) {
+            return null;
+        }
         return reservation.getTimestamps().getRegistrationTimestamp();
     }
 

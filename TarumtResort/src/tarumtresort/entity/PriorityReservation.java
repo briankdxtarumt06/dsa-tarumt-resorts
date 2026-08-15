@@ -68,4 +68,24 @@ public class PriorityReservation implements Comparable<PriorityReservation> {
         return "PriorityReservation [reservationId=" + reservationId + ", priorityLevel=" + priorityLevel
                 + ", overriddenBy=" + overriddenBy + ", overrideReason=" + overrideReason + "]";
     }
+
+    @Override
+    public int hashCode() {
+        return reservationId == null ? 0 : reservationId.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        PriorityReservation other = (PriorityReservation) obj;
+        return reservationId == null
+                ? other.reservationId == null
+                : reservationId.equals(other.reservationId);
+    }
+
 }
