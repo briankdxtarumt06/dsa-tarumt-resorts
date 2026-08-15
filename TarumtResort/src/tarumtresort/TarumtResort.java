@@ -15,23 +15,29 @@ public class TarumtResort {
 
     // Placeholder Main Menu
     public static void main(String[] args) {
-        MainMenuUI menu = new MainMenuUI(scanner);
+        try {
+            MainMenuUI menu = new MainMenuUI(scanner);
 
-        int choice;
+            int choice;
 
-        do {
-            choice = menu.getModuleChoice();
+            do {
+                choice = menu.getModuleChoice();
 
-            switch (choice) {
-                case 1:
-                    new HousekeepingController(new HousekeepingUI(scanner)).runHousekeeping();
-                    break;
-                case 0:
-                    menu.printExitMessage();
-                    break;
-                default:
-                    menu.printInvalidChoice();
-            }
-        } while (choice != 0);
+                switch (choice) {
+                    case 1:
+                        new HousekeepingController(new HousekeepingUI(scanner)).runHousekeeping();
+                        break;
+                    case 0:
+                        menu.printExitMessage();
+                        break;
+                    default:
+                        menu.printInvalidChoice();
+                }
+            } while (choice != 0);
+        } catch (Exception e) {
+            System.err.println("\n  ✗ An unexpected error occurred: " + e.getMessage());
+        } finally {
+            scanner.close();
+        }
     }
 }

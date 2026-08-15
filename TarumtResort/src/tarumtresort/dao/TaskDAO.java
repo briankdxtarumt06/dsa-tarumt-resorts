@@ -25,7 +25,7 @@ public class TaskDAO {
                     Task::getTaskAssignments,
                     TaskAssignment::getTaskAssignmentId);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to save task data: " + e.getMessage());
         }
     }
 
@@ -36,7 +36,7 @@ public class TaskDAO {
                     TASK_ASSIGNMENT_DAO::getTaskAssignmentById,
                     Task::setTaskAssignments);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to load task data: " + e.getMessage());
             return new LinkedList<>();
         }
     }

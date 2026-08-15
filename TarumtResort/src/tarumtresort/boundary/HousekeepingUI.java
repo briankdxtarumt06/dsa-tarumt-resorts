@@ -334,7 +334,12 @@ public class HousekeepingUI {
     }
 
     public LocalDateTime parseDateTime(String value) {
-        return LocalDateTime.parse(value);
+        try {
+            return LocalDateTime.parse(value);
+        } catch (DateTimeParseException e) {
+            System.out.println("  ✗ Invalid date & time format! Please use yyyy-MM-dd HH:mm.");
+            return null;
+        }
     }
 
     public String inputTaskStatus() {

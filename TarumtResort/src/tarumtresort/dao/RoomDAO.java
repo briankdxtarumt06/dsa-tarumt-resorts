@@ -18,7 +18,7 @@ public class RoomDAO {
         try {
             JsonFileHandler.saveList(roomList, FILE);
         } catch (java.io.IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to save room data: " + e.getMessage());
         }
     }
 
@@ -26,7 +26,7 @@ public class RoomDAO {
         try {
             return JsonFileHandler.loadList(FILE, Room.class);
         } catch (java.io.IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to load room data: " + e.getMessage());
             return new LinkedList<>();
         }
     }

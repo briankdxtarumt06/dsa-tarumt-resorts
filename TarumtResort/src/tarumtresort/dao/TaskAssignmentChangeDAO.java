@@ -19,7 +19,7 @@ public class TaskAssignmentChangeDAO {
         try {
             JsonFileHandler.saveList(changeList, FILE);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to save change history data: " + e.getMessage());
         }
     }
 
@@ -27,7 +27,7 @@ public class TaskAssignmentChangeDAO {
         try {
             return JsonFileHandler.loadList(FILE, TaskAssignmentChange.class);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to load change history data: " + e.getMessage());
             return new LinkedList<>();
         }
     }

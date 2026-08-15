@@ -135,32 +135,35 @@ public class HousekeepingController {
 
     // entry point for housekeeping module
     public void runHousekeeping() {
+        try {
+            int choice;
 
-        int choice;
+            do {
+                choice = ui.getMenuChoice();
 
-        do {
-            choice = ui.getMenuChoice();
-
-            switch (choice) {
-                case 1:
-                    runStaffManagement();
-                    break;
-                case 2:
-                    runTaskManagement();
-                    break;
-                case 3:
-                    runAssignmentManagement();
-                    break;
-                case 4:
-                    runReports();
-                    break;
-                case 0:
-                    ui.printExitMessage();
-                    break;
-                default:
-                    ui.printInvalidChoice();
-            }
-        } while (choice != 0);
+                switch (choice) {
+                    case 1:
+                        runStaffManagement();
+                        break;
+                    case 2:
+                        runTaskManagement();
+                        break;
+                    case 3:
+                        runAssignmentManagement();
+                        break;
+                    case 4:
+                        runReports();
+                        break;
+                    case 0:
+                        ui.printExitMessage();
+                        break;
+                    default:
+                        ui.printInvalidChoice();
+                }
+            } while (choice != 0);
+        } catch (Exception e) {
+            System.err.println("\n  ✗ An unexpected error occurred in Housekeeping module: " + e.getMessage());
+        }
     }
 
     // entry point for the reports
@@ -699,6 +702,11 @@ public class HousekeepingController {
             }
         }
 
+        // TODO: FUTURE INTEGRATION — validate roomId against RoomDAO.
+        //   When RoomDAO is shared, reject tasks with an unknown roomId here
+        //   and in guestCleaningRequestMenu / simulateGuestCheckoutMenu.
+        //   For now, roomId is accepted as-is (may be null or blank).
+
         String taskId = generateTaskId();
 
         Task task = new Task(
@@ -791,16 +799,26 @@ public class HousekeepingController {
 
                 task.setTaskStatus(taskStatus);
 
-                // cancelling a task frees its workers: every non-cancelled
-                // worker assignment is cancelled so the schedule gaps reopen
-                if (taskStatus == TaskStatus.CANCELLED) {
-                    cancelTaskWorkers(taskId);
-                }
+                try {
+                    // cancelling a task frees its workers: every non-cancelled
+                    // worker assignment is cancelled so the schedule gaps reopen
+                    if (taskStatus == TaskStatus.CANCELLED) {
+                        cancelTaskWorkers(taskId);
+                    }
 
-                // a Housekeeping task that passes inspection makes the room
-                // available again for the next guest
-                if (taskStatus == TaskStatus.COMPLETED) {
-                    setRoomStatus(task.getRoomId(), RoomStatus.AVAILABLE);
+                    // a Housekeeping task that passes inspection makes the room
+                    // available again for the next guest
+                    if (taskStatus == TaskStatus.COMPLETED) {
+                        setRoomStatus(task.getRoomId(), RoomStatus.AVAILABLE);
+                    }
+                } catch (Exception e) {
+                    // room / worker update failed — undo the task status change
+                    task.setTaskStatus(current);
+                    if (current != null) {
+                        task.getStatusHistory().removeFront(); // undo push
+                    }
+                    System.err.println("  ✗ Status update failed during room/worker update: " + e.getMessage());
+                    return false;
                 }
 
                 // every task status change is recorded as a TaskAssignmentChange
@@ -834,10 +852,9 @@ public class HousekeepingController {
         }
         return switch (current) {
             case PENDING -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
-            case IN_PROGRESS -> next == TaskStatus.PENDING || next == TaskStatus.CANCELLED
-                    || next == TaskStatus.COMPLETED;
+            case IN_PROGRESS -> next == TaskStatus.CANCELLED || next == TaskStatus.COMPLETED;
             case COMPLETED -> false; // revert only via rollback
-            case CANCELLED -> next == TaskStatus.PENDING || next == TaskStatus.IN_PROGRESS;
+            case CANCELLED -> next == TaskStatus.IN_PROGRESS; // reopening goes directly to IN_PROGRESS
         };
     }
 
@@ -863,13 +880,22 @@ public class HousekeepingController {
                 TaskStatus current = task.getTaskStatus();
 
                 task.setTaskStatus(previous);
-                appendTaskStatusChange(task, previous.name(), LocalDateTime.now());
 
-                // leaving the inspected/finished state puts the room back into cleaning
-                if (current == TaskStatus.COMPLETED) {
-                    setRoomStatus(task.getRoomId(), RoomStatus.CLEANING);
+                try {
+                    // leaving the inspected/finished state puts the room back into cleaning
+                    if (current == TaskStatus.COMPLETED) {
+                        setRoomStatus(task.getRoomId(), RoomStatus.CLEANING);
+                    }
+                } catch (Exception e) {
+                    // room status update failed — undo the task status rollback
+                    task.setTaskStatus(current);
+                    stack.addFront(previous); // push back
+                    System.err.println("  ✗ Rollback failed during room status update: " + e.getMessage());
+                    return false;
                 }
 
+                // audit entry is written even if later steps fail
+                appendTaskStatusChange(task, previous.name(), LocalDateTime.now());
                 taskDAO.saveTaskList(taskList);
 
                 // re-opening a cancelled task: workers were freed when it was
@@ -1425,9 +1451,15 @@ public class HousekeepingController {
 
             // the only worker dropped/declined: parent task back to Pending,
             // then auto-reassign to the next free slot (not to the same worker)
+            // NOTE: this bypasses the transition matrix — it is an internal
+            // system action, not a user-driven status change.
             Task parentTask = getTaskById(taskId);
             if (parentTask != null && parentTask.getTaskStatus() != TaskStatus.PENDING) {
-                updateTaskStatus(taskId, "Pending");
+                TaskStatus prevStatus = parentTask.getTaskStatus();
+                parentTask.getStatusHistory().addFront(prevStatus); // push for rollback
+                parentTask.setTaskStatus(TaskStatus.PENDING);
+                appendTaskStatusChange(parentTask, "Pending", LocalDateTime.now());
+                taskDAO.saveTaskList(taskList);
             }
 
             String droppedStaffId = target.getAssignedStaffId();

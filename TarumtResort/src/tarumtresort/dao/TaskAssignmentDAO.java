@@ -19,7 +19,7 @@ public class TaskAssignmentDAO {
         try {
             JsonFileHandler.saveList(taskAssignmentList, FILE);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to save assignment data: " + e.getMessage());
         }
     }
 
@@ -27,7 +27,7 @@ public class TaskAssignmentDAO {
         try {
             return JsonFileHandler.loadList(FILE, TaskAssignment.class);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("  ✗ Failed to load assignment data: " + e.getMessage());
             return new LinkedList<>();
         }
     }
