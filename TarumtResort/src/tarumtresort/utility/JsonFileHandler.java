@@ -90,14 +90,10 @@ public class JsonFileHandler {
             }
             JsonArray array = parsed.getAsJsonArray();
             for (JsonElement element : array) {
-                try {
-                    if (element.isJsonNull()) {
-                        continue;
-                    }
-                    result.addBack(GSON.fromJson(element, elementType));
-                } catch (RuntimeException e) {
-                    System.err.println("  ✗ Skipping corrupted record in " + file.getFileName() + ": " + e.getMessage());
+                if (element.isJsonNull()) {
+                    continue;
                 }
+                result.addBack(GSON.fromJson(element, elementType));
             }
         } catch (IOError | RuntimeException e) {
             return new LinkedList<>();
@@ -181,33 +177,29 @@ public class JsonFileHandler {
                 return result;
             }
             for (JsonElement element : parsed.getAsJsonArray()) {
-                try {
-                    if (!element.isJsonObject()) {
-                        continue;
-                    }
-                    JsonObject json = element.getAsJsonObject();
+                if (!element.isJsonObject()) {
+                    continue;
+                }
+                JsonObject json = element.getAsJsonObject();
 
-                    // extract the nested id list and resolve each id to a full entity
-                    LinkedListInterface<E> nested = new LinkedList<>();
-                    JsonElement nestedElement = json.remove(fieldName);
-                    if (nestedElement != null && nestedElement.isJsonArray()) {
-                        for (JsonElement idElement : nestedElement.getAsJsonArray()) {
-                            if (idElement.isJsonNull()) {
-                                continue;
-                            }
-                            E entity = idResolver.apply(idElement.getAsString()); // load nested entity using entity id
-                            if (entity != null) {
-                                nested.addBack(entity);
-                            }
+                // extract the nested id list and resolve each id to a full entity
+                LinkedListInterface<E> nested = new LinkedList<>();
+                JsonElement nestedElement = json.remove(fieldName);
+                if (nestedElement != null && nestedElement.isJsonArray()) {
+                    for (JsonElement idElement : nestedElement.getAsJsonArray()) {
+                        if (idElement.isJsonNull()) {
+                            continue;
+                        }
+                        E entity = idResolver.apply(idElement.getAsString()); // load nested entity using entity id
+                        if (entity != null) {
+                            nested.addBack(entity);
                         }
                     }
-
-                    T entity = GSON.fromJson(json, entityType);
-                    listSetter.accept(entity, nested); // set nested entity list of entity
-                    result.addBack(entity);
-                } catch (RuntimeException e) {
-                    System.err.println("  ✗ Skipping corrupted record in " + file.getFileName() + ": " + e.getMessage());
                 }
+
+                T entity = GSON.fromJson(json, entityType);
+                listSetter.accept(entity, nested); // set nested entity list of entity
+                result.addBack(entity);
             }
         } catch (IOError | RuntimeException e) {
             return new LinkedList<>();

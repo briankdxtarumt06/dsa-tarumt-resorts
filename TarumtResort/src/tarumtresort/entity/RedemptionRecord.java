@@ -7,6 +7,7 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private LocalDateTime redeemedDate;
     private String memberId;
     private String rewardId;
+    private String status;
 
     public RedemptionRecord() {
     }
@@ -16,6 +17,7 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
         this.redeemedDate = redeemedDate;
         this.memberId = memberId;
         this.rewardId = rewardId;
+        this.status = "PENDING"; // new redemptions start as requests
     }
 
     public String getRedemptionId() {
@@ -48,6 +50,14 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
 
     public void setRewardId(String rewardId) {
         this.rewardId = rewardId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @Override

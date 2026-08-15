@@ -90,6 +90,18 @@ public class PointTransaction implements Comparable<PointTransaction> {
         return this.transactionId.compareTo(other.transactionId); 
     }
 
+    /**
+     * A transaction still holds unredeemed points past its expiry date.
+     * Once the expiry sweep zeroes remainingPoints, this returns false so the
+     * row is kept in history but no longer counts toward the balance.
+     *
+     * @param now the reference time to check against
+     * @return true if this transaction holds unredeemed points past expiry
+     */
+    public boolean isExpired(LocalDateTime now) {
+        return remainingPoints > 0 && expiryDate != null && !now.isBefore(expiryDate);
+    }
+
     @Override
     public String toString() {
         return "PointTransaction{" + "transactionId=" + transactionId + ", date=" + date

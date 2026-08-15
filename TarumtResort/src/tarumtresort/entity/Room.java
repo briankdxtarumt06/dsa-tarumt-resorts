@@ -1,22 +1,25 @@
 package tarumtresort.entity;
 
+import tarumtresort.adt.LinkedList;
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.*;
 
-public class Room implements Comparable<Room> {
+public class Room implements Comparable<Room>{
     private String roomId;
     private String roomNumber;
     private RoomType roomType;
     private RoomStatus roomStatus;
     private double pricePerNight;
+    private LinkedListInterface <Reservation> reservations;
 
     //constructor
-    public Room(String roomId, String roomNumber, RoomType roomType,
-                RoomStatus roomStatus, double pricePerNight) {
+    public Room(String roomId, String roomNumber, RoomType roomType, RoomStatus roomStatus, double pricePerNight) {
         this.roomId = roomId;
         this.roomNumber = roomNumber;
         this.roomType = roomType;
         this.roomStatus = roomStatus;
         this.pricePerNight = pricePerNight;
+        this.reservations = new LinkedList<>();
     }
 
     //getters 
@@ -25,7 +28,8 @@ public class Room implements Comparable<Room> {
     public RoomType getRoomType() { return roomType; }
     public RoomStatus getRoomStatus() { return roomStatus; }
     public double getPricePerNight() { return pricePerNight; }
-    
+    public LinkedListInterface<Reservation> getReservations() { return reservations; }
+
     //setters
     public void setRoomId(String roomId) { this.roomId = roomId; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
@@ -46,20 +50,6 @@ public class Room implements Comparable<Room> {
 
     @Override
     public int compareTo(Room other) {
-        // null checks to avoid NullPointerException
-        if (other == null) {
-            return 1;
-        }
-        if (this.roomId == null && other.roomId == null) {
-            return 0;
-        }
-        if (this.roomId == null) {
-            return 1;
-        }
-        if (other.roomId == null) {
-            return -1;
-        }
-
-        return this.roomId.compareToIgnoreCase(other.roomId);
+        return this.roomId.compareTo(other.roomId);
     }
 }

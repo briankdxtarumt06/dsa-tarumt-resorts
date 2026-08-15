@@ -3,14 +3,14 @@ package tarumtresort.dao;
 import java.nio.file.Path;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.entity.Reward;
+import tarumtresort.entity.Guest;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
 
-public class RewardDAO {
-    private final String FILE_NAME = "data/rewards.json";
+public class GuestDAO {
+    private final String FILE_NAME = "data/guestList.json";
 
-    public void saveToFile(LinkedListInterface<Reward> list) {
+    public void saveToFile(LinkedListInterface<Guest> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -18,16 +18,16 @@ public class RewardDAO {
         }
     }
 
-    public LinkedList<Reward> retrieveFromFile() {
-        LinkedList<Reward> result = new LinkedList<>();
+    /** Loads guests into the given list, replacing its current contents. */
+    public void loadFromFile(LinkedListInterface<Guest> list) {
+        list.clear();
         try {
-            LinkedList<Reward> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Reward.class);
+            LinkedList<Guest> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Guest.class);
             for (int i = 0; i < loaded.size(); i++) {
-                result.addBack(loaded.get(i));
+                list.addBack(loaded.get(i));
             }
         } catch (java.io.IOException e) {
             ConsoleUtil.printError("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
-        return result;
     }
 }

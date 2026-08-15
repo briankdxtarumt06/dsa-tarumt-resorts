@@ -1,6 +1,6 @@
 package tarumtresort.entity.enums;
 
-public enum RoomStatus {
+public enum RoomStatus{
     AVAILABLE,
     OCCUPIED,
     CLEANING,

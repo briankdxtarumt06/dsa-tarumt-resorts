@@ -6,38 +6,26 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Room;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- *
- * @author Brian
- */
 public class RoomDAO {
+    private final String FILE_NAME = "data/roomList.json";
 
-    private static final Path FILE = Path.of("data/rooms.json");
-
-    public void saveRoomList(LinkedListInterface<Room> roomList) {
+    public void saveToFile(LinkedListInterface<Room> list) {
         try {
-            JsonFileHandler.saveList(roomList, FILE);
+            JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
-            System.err.println("  ✗ Failed to save room data: " + e.getMessage());
+            System.err.println("Failed to save " + FILE_NAME + ": " + e.getMessage());
         }
     }
 
-    public LinkedList<Room> retrieveRoomList() {
+    public void loadFromFile(LinkedListInterface<Room> list) {
+        list.clear();
         try {
-            return JsonFileHandler.loadList(FILE, Room.class);
-        } catch (java.io.IOException e) {
-            System.err.println("  ✗ Failed to load room data: " + e.getMessage());
-            return new LinkedList<>();
-        }
-    }
-
-    public Room getRoomById(String roomId) {
-        LinkedListInterface<Room> roomList = retrieveRoomList();
-        for (int i = 0; i < roomList.size(); i++) {
-            if (roomList.get(i).getRoomId().equals(roomId)) {
-                return roomList.get(i);
+            LinkedList<Room> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Room.class);
+            for (int i = 0; i < loaded.size(); i++) {
+                list.addBack(loaded.get(i));
             }
+        } catch (java.io.IOException e) {
+            System.err.println("Failed to load " + FILE_NAME + ": " + e.getMessage());
         }
-        return null;
     }
 }
