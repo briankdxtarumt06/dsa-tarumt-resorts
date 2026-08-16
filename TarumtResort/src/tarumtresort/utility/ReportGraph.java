@@ -80,9 +80,10 @@ public class ReportGraph {
             }
         }
         int scaleY = computeScaleY(globalMax);
-        int scaleHeight = scaleY; // number of Y rows
 
-        // block width = max(title length, scale_width + content width)
+        // block width = max(title length, scale_width + content width).
+        // Every row of a block is padded to exactly this width, so the
+        // " | " separator between blocks sits in the same column on all rows.
         int leftBlock = Math.max(Ansi.strip(left.getTitle()).length(),
                 SCALE_WIDTH + leftContentWidth);
         int rightBlock = (right != null)
@@ -91,30 +92,12 @@ public class ReportGraph {
                 : 0;
 
         // title row
-        StringBuilder titleRow = new StringBuilder();
-        titleRow.append(rightPad(Ansi.strip(left.getTitle()), leftBlock));
-        if (right != null) {
-            titleRow.append(" | ");
-            titleRow.append(rightPad(Ansi.strip(right.getTitle()), rightBlock));
-        }
-        System.out.println(titleRow);
+        System.out.println(joinPair(rightPad(Ansi.strip(left.getTitle()), leftBlock),
+                right != null ? rightPad(Ansi.strip(right.getTitle()), rightBlock) : null));
 
-        // alignment caret row (marks y-axis column of each block)
-        StringBuilder caretRow = new StringBuilder();
-        caretRow.append(repeat(' ', SCALE_WIDTH - 1));
-        caretRow.append('^');
-        for (int i = SCALE_WIDTH; i < leftBlock; i++) {
-            caretRow.append(' ');
-        }
-        if (right != null) {
-            caretRow.append(" | ");
-            caretRow.append(repeat(' ', SCALE_WIDTH - 1));
-            caretRow.append('^');
-            for (int i = SCALE_WIDTH; i < rightBlock; i++) {
-                caretRow.append(' ');
-            }
-        }
-        System.out.println(caretRow);
+        // alignment caret row (marks the y-axis column of each block)
+        System.out.println(joinPair(caretRow(leftBlock),
+                right != null ? caretRow(rightBlock) : null));
 
         // compute bar heights for each chart
         int[] leftHeights = computeHeights(left.getBars(), scaleY);
@@ -122,40 +105,15 @@ public class ReportGraph {
 
         // scale rows (top to bottom: scaleY, scaleY-1, ..., 1)
         for (int y = scaleY; y >= 1; y--) {
-            StringBuilder row = new StringBuilder();
-
-            // left block
-            row.append(rightPad(String.valueOf(y), SCALE_WIDTH - 1));
-            row.append(" |");
-            row.append(buildBarRow(leftHeights, y, leftBars));
-
-            // right block
-            if (right != null) {
-                row.append(" | ");
-                row.append(rightPad(String.valueOf(y), SCALE_WIDTH - 1));
-                row.append(" |");
-                row.append(buildBarRow(rightHeights, y, rightBars));
-            }
-
-            System.out.println(row);
+            System.out.println(joinPair(scaleRow(y, leftHeights, leftBars, leftBlock),
+                    right != null ? scaleRow(y, rightHeights, rightBars, rightBlock) : null));
         }
 
-        // axis row (one dash wider than the block so it lines up with the
-        // scale rows, which carry the y value + " |" separator)
-        StringBuilder axisRow = new StringBuilder();
-        axisRow.append(" -+");
-        axisRow.append(repeat('-', leftBlock - SCALE_WIDTH + 1));
-        if (right != null) {
-            axisRow.append("-+ ");
-            axisRow.append(repeat(' ', SCALE_WIDTH - 1));
-            axisRow.append("+");
-            axisRow.append(repeat('-', rightBlock - SCALE_WIDTH + 1));
-            axisRow.append("-+");
-        }
-        System.out.println(axisRow);
+        // axis row (dashes exactly over the bar area)
+        System.out.println(joinPair(axisRow(leftBlock, leftContentWidth),
+                right != null ? axisRow(rightBlock, rightContentWidth) : null));
 
         // label rows (up to 2 rows for long names)
-        int maxBars = Math.max(leftBars, rightBars);
         String[][] leftLabels = wrapLabels(left.getBars());
         String[][] rightLabels = (right != null) ? wrapLabels(right.getBars()) : new String[0][];
 
@@ -164,27 +122,48 @@ public class ReportGraph {
                 rightLabels.length > 0 ? rightLabels[0].length : 0);
 
         for (int lr = 0; lr < labelRows; lr++) {
-            StringBuilder labelRow = new StringBuilder();
-
-            // left labels
-            labelRow.append(repeat(' ', SCALE_WIDTH + 1));
-            for (int i = 0; i < leftBars; i++) {
-                String lbl = (lr < leftLabels[i].length) ? leftLabels[i][lr] : "";
-                labelRow.append(padCenter(lbl, BAR_PITCH));
-            }
-
-            // right labels
-            if (right != null) {
-                labelRow.append(" | ");
-                labelRow.append(repeat(' ', SCALE_WIDTH + 1));
-                for (int i = 0; i < rightBars; i++) {
-                    String lbl = (lr < rightLabels[i].length) ? rightLabels[i][lr] : "";
-                    labelRow.append(padCenter(lbl, BAR_PITCH));
-                }
-            }
-
-            System.out.println(labelRow);
+            System.out.println(joinPair(labelRow(leftLabels, leftBars, leftBlock, lr),
+                    right != null ? labelRow(rightLabels, rightBars, rightBlock, lr) : null));
         }
+    }
+
+    // joins two block rows with the fixed separator; single chart = left only
+    private static String joinPair(String left, String right) {
+        return right == null ? left : left + " | " + right;
+    }
+
+    // caret marks the y-axis column (SCALE_WIDTH - 1) of its block
+    private static String caretRow(int blockWidth) {
+        return repeat(' ', SCALE_WIDTH - 1) + "^" + repeat(' ', blockWidth - SCALE_WIDTH);
+    }
+
+    // y value (2 chars) + '|' at column SCALE_WIDTH - 1, then bar slots
+    private static String scaleRow(int y, int[] heights, int count, int blockWidth) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(rightPad(String.valueOf(y), SCALE_WIDTH - 1));
+        sb.append('|');
+        sb.append(buildBarRow(heights, y, count));
+        return rightPad(sb.toString(), blockWidth);
+    }
+
+    // '+' at the y-axis column, dashes exactly over the bar area
+    private static String axisRow(int blockWidth, int contentWidth) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(repeat(' ', SCALE_WIDTH - 1));
+        sb.append('+');
+        sb.append(repeat('-', contentWidth));
+        return rightPad(sb.toString(), blockWidth);
+    }
+
+    // label slots start at column SCALE_WIDTH, directly under the bars
+    private static String labelRow(String[][] labels, int count, int blockWidth, int rowIndex) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(repeat(' ', SCALE_WIDTH));
+        for (int i = 0; i < count; i++) {
+            String lbl = (rowIndex < labels[i].length) ? labels[i][rowIndex] : "";
+            sb.append(padCenter(lbl, BAR_PITCH));
+        }
+        return rightPad(sb.toString(), blockWidth);
     }
 
     // -------------------- helpers --------------------
@@ -268,9 +247,11 @@ public class ReportGraph {
         if (breakAt > 0 && plain.length() - breakAt - 1 <= BAR_PITCH) {
             return new String[] { plain.substring(0, breakAt), plain.substring(breakAt + 1) };
         }
-        // hard split into 2 rows of up to BAR_PITCH chars
-        String row1 = plain.substring(0, BAR_PITCH);
-        String remainder = plain.substring(BAR_PITCH);
+        // hard split into 2 rows; split evenly so both rows stay readable
+        // (Supervisor -> Super/visor, Receptionist -> Recept/ionist)
+        int half = plain.length() / 2;
+        String row1 = plain.substring(0, half);
+        String remainder = plain.substring(half);
         String row2 = remainder.length() <= BAR_PITCH ? remainder : remainder.substring(0, BAR_PITCH);
         return new String[] { row1, row2 };
     }

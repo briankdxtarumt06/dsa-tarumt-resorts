@@ -481,8 +481,6 @@ public class HousekeepingController {
 
     // -------------------- private helpers --------------------
 
-    // numeric suffix of an id like "STF000000000001"; 0 on null/malformed ids
-    // so a single bad record can never crash the whole module
     private int parseIdSuffix(String id) {
         if (id == null || id.length() <= 3) {
             return 0;
@@ -656,6 +654,7 @@ public class HousekeepingController {
                     break;
                 case 4:
                     ui.listAllAssignments(assignmentListToTable(getAssignmentsByTask(task.getTaskId())));
+                    ui.pressEnterToContinue();
                     break;
                 case 5:
                     if (rollbackTaskStatus(task.getTaskId())) {
