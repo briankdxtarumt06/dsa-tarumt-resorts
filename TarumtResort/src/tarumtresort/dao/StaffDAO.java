@@ -40,14 +40,4 @@ public class StaffDAO {
             return new LinkedList<>();
         }
     }
-
-    public Staff getStaffById(String staffId) {
-        LinkedListInterface<Staff> staffList = retrieveStaffList();
-        for (int i = 0; i < staffList.size(); i++) {
-            if (staffList.get(i).getStaffId().equals(staffId)) {
-                return staffList.get(i);
-            }
-        }
-        return null;
-    }
 }

@@ -49,4 +49,12 @@ public final class Ansi {
     public static String cyan(String text) {
         return color(CYAN, text);
     }
+
+    // removes all ANSI escape codes from text (useful for plain-text output)
+    public static String strip(String text) {
+        if (!ENABLED || text == null) {
+            return text;
+        }
+        return text.replaceAll("\u001B\\[[0-9;]*m", "");
+    }
 }

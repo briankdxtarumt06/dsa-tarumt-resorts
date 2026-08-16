@@ -20,15 +20,12 @@ import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
-import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.RoomStatus;
-import tarumtresort.report.ReportResult;
-import tarumtresort.report.RoomCleaningReport;
-import tarumtresort.report.RoomTurnoverReport;
-import tarumtresort.report.StaffProductivityReport;
-import tarumtresort.report.StaffWorkloadReport;
+import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.report.ReportMenu;
+import tarumtresort.report.ReportUI;
 
 /**
  *
@@ -152,7 +149,7 @@ public class HousekeepingController {
                         runAssignmentManagement();
                         break;
                     case 4:
-                        runReports();
+                        new ReportMenu(new ReportUI(new java.util.Scanner(System.in))).run();
                         break;
                     case 0:
                         ui.printExitMessage();
@@ -162,41 +159,8 @@ public class HousekeepingController {
                 }
             } while (choice != 0);
         } catch (Exception e) {
-            System.err.println("\n  ✗ An unexpected error occurred in Housekeeping module: " + e.getMessage());
+            ConsoleUtil.printError("An unexpected error occurred in Housekeeping module: " + e.getMessage());
         }
-    }
-
-    // entry point for the reports
-    public void runReports() {
-
-        int choice;
-
-        do {
-            choice = ui.getReportMenuChoice();
-
-            switch (choice) {
-                case 1:
-                    generateRoomCleaningReportMenu();
-                    break;
-                case 2:
-                    generateStaffWorkloadReportMenu();
-                    break;
-                case 3:
-                    generateRoomTurnoverReportMenu();
-                    break;
-                case 4:
-                    generateStaffProductivityReportMenu();
-                    break;
-                case 0:
-                    break;
-                default:
-                    ui.printInvalidChoice();
-            }
-
-            if (choice != 0) {
-                ui.pressEnterToContinue();
-            }
-        } while (choice != 0);
     }
 
     // entry point for staff management
@@ -646,21 +610,28 @@ public class HousekeepingController {
             switch (action) {
                 case 1: {
                     String[] details = ui.inputUpdateTaskDetails();
-                    if (updateTask(task.getTaskId(), details[0], details[1], TaskPriority.fromString(details[2]),
-                            ui.parseDateTime(details[3]))) {
+                    java.time.LocalDateTime parsedDateTime = ui.parseDateTime(details[3]);
+                    if (parsedDateTime == null) {
+                        ui.printTaskStatusDenied();
+                    } else if (updateTask(task.getTaskId(), details[0], details[1],
+                            TaskPriority.fromString(details[2]), parsedDateTime)) {
                         ui.printSuccess();
                     } else {
                         ui.printNotFound();
                     }
                     break;
                 }
-                case 2:
-                    if (updateTaskStatus(task.getTaskId(), ui.inputTaskStatus())) {
+                case 2: {
+                    String newStatus = ui.inputTaskStatus(task.getTaskStatus());
+                    if (newStatus == null) {
+                        ui.printTaskStatusDenied();
+                    } else if (updateTaskStatus(task.getTaskId(), newStatus)) {
                         ui.printSuccess();
                     } else {
                         ui.printTaskStatusDenied();
                     }
                     break;
+                }
                 case 3:
                     if (assignTaskToRoom(task.getTaskId(), ui.inputRoomId())) {
                         ui.printSuccess();
@@ -817,7 +788,7 @@ public class HousekeepingController {
                     if (current != null) {
                         task.getStatusHistory().removeFront(); // undo push
                     }
-                    System.err.println("  ✗ Status update failed during room/worker update: " + e.getMessage());
+                    ConsoleUtil.printError("Status update failed during room/worker update: " + e.getMessage());
                     return false;
                 }
 
@@ -890,7 +861,7 @@ public class HousekeepingController {
                     // room status update failed — undo the task status rollback
                     task.setTaskStatus(current);
                     stack.addFront(previous); // push back
-                    System.err.println("  ✗ Rollback failed during room status update: " + e.getMessage());
+                    ConsoleUtil.printError("Rollback failed during room status update: " + e.getMessage());
                     return false;
                 }
 
@@ -938,12 +909,13 @@ public class HousekeepingController {
         if (roomId == null || roomId.isBlank()) {
             return;
         }
-        LinkedListInterface<Room> rooms = roomDAO.retrieveRoomList();
+        LinkedListInterface<Room> rooms = new LinkedList<>();
+        roomDAO.loadFromFile(rooms);
         for (int i = 0; i < rooms.size(); i++) { // size() = current record count of the list
             Room room = rooms.get(i); // get(i) = record at index i
             if (room.getRoomId().equalsIgnoreCase(roomId)) {
                 room.setRoomStatus(status);
-                roomDAO.saveRoomList(rooms);
+                roomDAO.saveToFile(rooms);
                 return;
             }
         }
@@ -1410,8 +1382,9 @@ public class HousekeepingController {
      * for final approval (parent task is then completed via task status
      * update).
      * - Cancelled (drop / decline): if it was the only active worker, the
-     * parent task goes back to Pending and is auto-reassigned via the
-     * earliest-free-slot timetable.
+     * parent task is set back to Pending (bypassing the normal transition
+     * matrix — this is an internal system action) and auto-reassigned via
+     * the earliest-free-slot timetable.
      *
      * Returns: "NOT_FOUND", "UPDATED", "ALL_DONE" or "REASSIGNED".
      */
@@ -1534,97 +1507,14 @@ public class HousekeepingController {
     }
 
     public Room getRoomById(String roomId) {
-        return roomDAO.getRoomById(roomId);
-    }
-
-    // -------------------- reports --------------------
-
-    /**
-     * Room Cleaning Report (Room + Staff + Task + TaskAssignment).
-     * Filters: date range (task start), staff role, room type.
-     */
-    public ReportResult generateRoomCleaningReport(LocalDateTime from, LocalDateTime to,
-            String staffRole, RoomType roomType) {
-
-        LinkedListInterface<Room> rooms = roomDAO.retrieveRoomList();
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
-
-        return new RoomCleaningReport(rooms, staffs, tasks, assignments)
-                .generate(from, to, staffRole, roomType);
-    }
-
-    /**
-     * Staff Workload Report (Staff + Task + TaskAssignment).
-     * Filters: date range (date & time assigned), staff role, department.
-     */
-    public ReportResult generateStaffWorkloadReport(LocalDateTime from, LocalDateTime to,
-            String staffRole, String department) {
-
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
-
-        return new StaffWorkloadReport(staffs, tasks, assignments)
-                .generate(from, to, staffRole, department);
-    }
-
-    private void generateRoomCleaningReportMenu() {
-        LocalDateTime[] range = ui.inputOptionalDateTimeRange("task start");
-        String staffRole = ui.inputOptionalStaffRole();
-        RoomType roomType = ui.inputOptionalRoomType();
-        ui.printReport(generateRoomCleaningReport(range[0], range[1], staffRole, roomType));
-    }
-
-    private void generateStaffWorkloadReportMenu() {
-        LocalDateTime[] range = ui.inputOptionalDateTimeRange("date & time assigned");
-        String staffRole = ui.inputOptionalStaffRole();
-        String department = ui.inputOptionalDepartment();
-        ui.printReport(generateStaffWorkloadReport(range[0], range[1], staffRole, department));
-    }
-
-    /**
-     * Room Turnover &amp; Readiness Report (Room + Task + TaskAssignment +
-     * TaskAssignmentChange). Filters: date range (task start), task type
-     * Housekeeping. Turnover time = supervisor sign-off minus task start.
-     */
-    public ReportResult generateRoomTurnoverReport(LocalDateTime from, LocalDateTime to) {
-
-        LinkedListInterface<Room> rooms = roomDAO.retrieveRoomList();
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
-        LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
-
-        return new RoomTurnoverReport(rooms, staffs, tasks, assignments, changes)
-                .generate(from, to);
-    }
-
-    /**
-     * Staff Productivity &amp; Reassignment Report (Staff + TaskAssignment +
-     * TaskAssignmentChange). Filters: date range (date &amp; time assigned).
-     * Completion time = the cleaner's own finish (earliest COMPLETED change).
-     */
-    public ReportResult generateStaffProductivityReport(LocalDateTime from, LocalDateTime to) {
-
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
-        LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
-
-        return new StaffProductivityReport(staffs, tasks, assignments, changes)
-                .generate(from, to);
-    }
-
-    private void generateRoomTurnoverReportMenu() {
-        LocalDateTime[] range = ui.inputOptionalDateTimeRange("task start");
-        ui.printReport(generateRoomTurnoverReport(range[0], range[1]));
-    }
-
-    private void generateStaffProductivityReportMenu() {
-        LocalDateTime[] range = ui.inputOptionalDateTimeRange("date & time assigned");
-        ui.printReport(generateStaffProductivityReport(range[0], range[1]));
+        LinkedListInterface<Room> rooms = new LinkedList<>();
+        roomDAO.loadFromFile(rooms);
+        for (int i = 0; i < rooms.size(); i++) {
+            if (rooms.get(i).getRoomId().equals(roomId)) {
+                return rooms.get(i);
+            }
+        }
+        return null;
     }
 
     private void guestCleaningRequestMenu() {

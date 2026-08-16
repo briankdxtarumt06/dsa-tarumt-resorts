@@ -1,7 +1,6 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
-import tarumtresort.utility.Ansi;
 
 /**
  *
@@ -23,30 +22,45 @@ public class MainMenuUI {
         System.out.println("\n========================================");
         System.out.println("  TARUMT RESORT MANAGEMENT SYSTEM");
         System.out.println("========================================");
-        System.out.println("  1. Housekeeping Management");
+        System.out.println("  1. Reservation");
+        System.out.println("  2. VIP Reservation");
+        System.out.println("  3. Housekeeping");
+        System.out.println("  4. Front-Desk Service");
+        System.out.println("  5. Loyalty & Rewards");
         System.out.println("  0. Exit");
         System.out.println("========================================");
 
+        return getIntInput("Enter choice (0-5): ", 0, 5);
+    }
+
+    // TODO: turn into shared function
+    private int getIntInput(String prompt, int min, int max) {
         while (true) {
-            System.out.print("Enter choice (0-1): ");
-            String line = scanner.nextLine();
-            if (line.trim().isEmpty()) {
-                // ignore a bare Enter: re-prompt in place, no error, no advance
-                if (Ansi.ENABLED) {
-                    System.out.print("\u001B[1A\u001B[2K");
-                }
+            System.out.print(prompt);
+
+            String input = scanner.nextLine().trim();
+
+            if (input.isEmpty()) {
                 continue;
             }
+
             try {
-                int value = Integer.parseInt(line.trim());
-                if (value >= 0 && value <= 1) {
-                    System.out.println();
+                int value = Integer.parseInt(input);
+
+                if (value >= min && value <= max) {
                     return value;
                 }
+
+                System.out.printf(
+                    "  ✗ Please enter a number between %d and %d!%n",
+                    min, max
+                );
+
             } catch (NumberFormatException e) {
-                // fall through to the range error below
+                System.out.println(
+                    "  ✗ Invalid input! Please enter a valid number."
+                );
             }
-            System.out.println("  ✗ Please enter a number between 0 and 1!");
         }
     }
 
