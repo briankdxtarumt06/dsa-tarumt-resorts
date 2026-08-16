@@ -9,17 +9,19 @@ public class ReservationUI {
 
     // MENU
     public int getMenuChoice() {
-        System.out.println("  [ WALK-IN REGISTRATION & BOOKING MODULE ]");
+        System.out.println("  WALK-IN REGISTRATION & BOOKING MODULE");
         System.out.println("  1. Register Guest");
-        System.out.println("  2. Assign Room to Next Guest");
-        System.out.println("  3. Check In");
-        System.out.println("  4. Check Out");
-        System.out.println("  5. View Queue");
-        System.out.println("  6. Check Queue Position");
-        System.out.println("  7. Cancel Reservation");
-        System.out.println("  8. Reports");
+        System.out.println("  2. Book Room");
+        System.out.println("  3. Guest Arrival");
+        System.out.println("  4. Assign Room to Next Guest");
+        System.out.println("  5. Check In");
+        System.out.println("  6. Check Out");
+        System.out.println("  7. View Queue");
+        System.out.println("  8. Check Queue Position");
+        System.out.println("  9. Cancel Reservation");
+        System.out.println("  10. Reports");
         System.out.println("  0. Exit");
-        return inputIntChoice("Enter choice", 0, 8);
+        return inputIntChoice("\nEnter choice", 0, 10);
     }
 
     // INPUTS 
@@ -96,7 +98,7 @@ public class ReservationUI {
             System.out.println("  No reservations in queue.");
             return;
         }
-        // 等 table push 了改成 Table.printTable(data)
+        
         for (String[] row : data) {
             for (String col : row) {
                 System.out.printf("%-20s", col);
@@ -108,23 +110,23 @@ public class ReservationUI {
 
     // MESSAGE METHODS
     public void printSuccess() {
-        System.out.println("\n  ✓ Operation successful!");
+        System.out.println("\n  Operation successful!");
     }
 
     public void printNotFound() {
-        System.out.println("\n  ✗ Record not found!");
+        System.out.println("\n  Record not found!");
     }
 
     public void printCannotCheckIn() {
-        System.out.println("\n  ✗ Cannot check in. Expected check-in date not yet reached!");
+        System.out.println("\n  Cannot check in. Expected check-in date not yet reached!");
     }
 
     public void printRoomNotAvailable() {
-        System.out.println("\n  ✗ No available room for the requested room type!");
+        System.out.println("\n  No available room for the requested room type!");
     }
 
     public void printCancelled() {
-        System.out.println("\n  ✓ Reservation cancelled successfully!");
+        System.out.println("\n  Reservation cancelled successfully!");
     }
 
     public void printExitMessage() {
@@ -132,15 +134,15 @@ public class ReservationUI {
     }
 
     public void printInvalidChoice() {
-        System.out.println("\n  ✗ Invalid choice! Please try again.");
+        System.out.println("\n  Invalid choice! Please try again.");
     }
 
     public void printError(String message) {
-        System.out.println("\n  ✗ " + message);
+        System.out.println("\n  X " + message);
     }
 
     public void printCannotCancel(){
-        System.out.print(" ✗ Your reservation cannot be canceled.");
+        System.out.print(" Your reservation cannot be canceled.");
     }
     
     //others
@@ -169,9 +171,9 @@ public class ReservationUI {
                 choice = scanner.nextInt();
                 scanner.nextLine();
                 if (choice < min || choice > max)
-                    System.out.println("  ✗ Please enter a number between " + min + " and " + max + "!");
+                    System.out.println("Please enter a number between " + min + " and " + max + "!");
             } else {
-                System.out.println("  ✗ Invalid input! Please enter a number.");
+                System.out.println("Invalid input! Please enter a number.");
                 scanner.nextLine();
             }
         }
