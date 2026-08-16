@@ -8,6 +8,12 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private String memberId;
     private String rewardId;
     private String status;
+    /** Voucher code issued when an approved redemption is a voucher-type reward. */
+    private String voucherCode;
+    /** Cash value (RM) locked in at approval time for voucher-type rewards. */
+    private Double voucherValue;
+    /** Whether the voucher has already been used at payment. */
+    private boolean used;
 
     public RedemptionRecord() {
     }
@@ -58,6 +64,30 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getVoucherCode() {
+        return voucherCode;
+    }
+
+    public void setVoucherCode(String voucherCode) {
+        this.voucherCode = voucherCode;
+    }
+
+    public Double getVoucherValue() {
+        return voucherValue;
+    }
+
+    public void setVoucherValue(Double voucherValue) {
+        this.voucherValue = voucherValue;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
     }
 
     @Override

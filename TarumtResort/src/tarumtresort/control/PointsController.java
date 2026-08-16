@@ -1,6 +1,7 @@
 package tarumtresort.control;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
@@ -366,11 +367,96 @@ public class PointsController {
 
         recomputeBalance(member);
         record.setStatus("APPROVED");
+
+        // voucher-type rewards: issue a redeemable code and lock in the RM value
+        String voucherNote = "";
+        if (reward.getVoucherValue() != null && reward.getVoucherValue() > 0) {
+            record.setVoucherCode(generateVoucherCode(redemptionId));
+            record.setVoucherValue(reward.getVoucherValue());
+            voucherNote = " Voucher code: " + record.getVoucherCode()
+                    + " (worth RM" + String.format("%.2f", reward.getVoucherValue()) + ").";
+        }
         notifyMember(member, "REDEMPTION_APPROVED",
-                "Your redemption request " + redemptionId + " (" + reward.getName() + ") has been approved.", now);
+                "Your redemption request " + redemptionId + " (" + reward.getName() + ") has been approved."
+                        + voucherNote, now);
         persist();
         return "Approved " + redemptionId + " (" + reward.getName() + "):\n" + breakdown
+                + (voucherNote.isEmpty() ? "" : "  - voucher " + record.getVoucherCode()
+                        + " worth RM" + String.format("%.2f", record.getVoucherValue()) + "\n")
                 + "New balance for " + member.getMemberId() + ": " + member.getPoints();
+    }
+
+    /**
+     * Returns the member's unused, approved voucher redemptions - the vouchers
+     * that can be offered to the customer at payment time.
+     *
+     * @param memberId the member to look up
+     * @return approved, unused vouchers (empty list if none)
+     */
+    public LinkedListInterface<RedemptionRecord> getAvailableVouchers(String memberId) {
+        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
+        Member member = findMember(memberId);
+        if (member == null) {
+            return result;
+        }
+        LinkedListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
+        for (int i = 0; i < list.size(); i++) {
+            RedemptionRecord r = list.get(i);
+            if ("APPROVED".equals(r.getStatus())
+                    && !r.isUsed()
+                    && r.getVoucherCode() != null
+                    && r.getVoucherValue() != null && r.getVoucherValue() > 0) {
+                result.addBack(r);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Marks an approved, unused voucher as used. Called by the payment flow
+     * once the voucher value has been applied to the customer's bill.
+     *
+     * @param memberId     the member who owns the voucher
+     * @param redemptionId the redemption (voucher) to mark used
+     * @return a result message for the UI
+     */
+    public String useVoucher(String memberId, String redemptionId) {
+        Member member = findMember(memberId);
+        if (member == null) {
+            return "Member not found: " + memberId;
+        }
+        LinkedListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
+        for (int i = 0; i < list.size(); i++) {
+            RedemptionRecord r = list.get(i);
+            if (r.getRedemptionId().equals(redemptionId)) {
+                if (!"APPROVED".equals(r.getStatus())) {
+                    return "Voucher " + redemptionId + " is not approved ("
+                            + r.getStatus() + ").";
+                }
+                if (r.isUsed()) {
+                    return "Voucher " + redemptionId + " has already been used.";
+                }
+                if (r.getVoucherCode() == null) {
+                    return "Redemption " + redemptionId + " is not a voucher.";
+                }
+                r.setUsed(true);
+                persist();
+                return "Voucher " + r.getVoucherCode() + " (RM"
+                        + String.format("%.2f", r.getVoucherValue()) + ") marked as used.";
+            }
+        }
+        return "Voucher not found: " + redemptionId;
+    }
+
+    /** Generates a unique-looking voucher code, e.g. VCH-RR0001-8F3K. */
+    private String generateVoucherCode(String redemptionId) {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder("VCH-").append(redemptionId).append('-');
+        for (int i = 0; i < 4; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     public String rejectRedemption(String redemptionId, LocalDateTime now) {

@@ -79,10 +79,16 @@ public class PointsManagementUI {
             return null;
         }
         System.out.println();
+        String[][] rows = new String[rewards.size()][3];
         for (int i = 0; i < rewards.size(); i++) {
             Reward r = rewards.get(i);
-            System.out.printf(" %d. %-20s - %d pts%n", i + 1, r.getName(), r.getPointCost());
+            rows[i] = new String[] {
+                    String.valueOf(i + 1),
+                    r.getName(),
+                    r.getPointCost() + " pts"
+            };
         }
+        TablePrinter.displayTable(new String[] { "#", "Reward", "Points" }, rows);
         System.out.println(" 0. Cancel");
         int index = readInt("Select a reward") - 1;
         if (index < 0) {
