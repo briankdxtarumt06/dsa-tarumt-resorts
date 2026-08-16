@@ -51,9 +51,6 @@ public class RoomControl {
     }
 
     // count how many physical rooms exist for a given room type
-    // used by ReservationControl at booking time to check if enough rooms of
-    // this type exist for the requested date range (capacity check only,
-    // does NOT lock/reserve any specific room)
     public int countRoomsByType(RoomType roomType) {
         int count = 0;
         for (int i = 0; i < roomList.size(); i++) {
@@ -174,6 +171,16 @@ public class RoomControl {
         }
 
         return room.getPricePerNight();
+    }
+
+    public double getPriceByRoomType(RoomType roomType) {
+        for (int i = 0; i < roomList.size(); i++) {
+            Room room = roomList.get(i);
+            if (room.getRoomType() == roomType) {
+                return room.getPricePerNight();
+            }
+        }
+        return -1; 
     }
 
     public void saveRoomList() {
