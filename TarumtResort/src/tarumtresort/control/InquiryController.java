@@ -249,17 +249,24 @@ public class InquiryController {
     }
 
     public Payment searchPaymentByConfirmationNumber(String confirmationNumber) {
-        LinkedListInterface<Payment> paymentList = new LinkedList<>();
-        paymentDAO.loadFromFile(paymentList);
+    LinkedListInterface<Payment> paymentList = new LinkedList<>();
+    paymentDAO.loadFromFile(paymentList);
 
-        for (int i = 0; i < paymentList.size(); i++) {
-            Payment p = paymentList.get(i);
-            if (p.getReservationID().equals(confirmationNumber)) {
+    for (int i = 0; i < paymentList.size(); i++) {
+        Payment p = paymentList.get(i);
+        LinkedListInterface<String> confirmationNumbers = p.getConfirmationNumbers();
+        if (confirmationNumbers == null) {
+            continue;
+        }
+
+        for (int j = 0; j < confirmationNumbers.size(); j++) {
+            if (confirmationNumbers.get(j).equals(confirmationNumber)) {
                 return p;
             }
         }
-        return null;
     }
+    return null;
+}
 
     // check pending queue for an existing unresolved inquiry of the same type
     public Inquiry searchInquiryByConfirmationNumber(String confirmationNumber, InquiryType type) {
