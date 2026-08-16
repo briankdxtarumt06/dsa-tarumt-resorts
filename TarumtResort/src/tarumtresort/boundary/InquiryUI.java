@@ -218,7 +218,7 @@ public class InquiryUI {
     }
 
     public void printInvalidChoice() {
-        System.out.println("\n  ✗ Invalid choice! Please try again.");
+        System.out.println("\n Invalid choice! Please try again.");
     }
 
     public void pressEnterToContinue() {
@@ -241,7 +241,7 @@ public class InquiryUI {
             } catch (NumberFormatException e) {
                 // fall through to error below
             }
-            System.out.println("  ✗ Please enter a number between " + min + " and " + max + "!");
+            System.out.println("Please enter a number between " + min + " and " + max + "!");
         }
     }
 }

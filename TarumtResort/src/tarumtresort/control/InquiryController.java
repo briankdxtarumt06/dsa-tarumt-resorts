@@ -167,6 +167,13 @@ public class InquiryController {
 
     // case 4
     public void cancelInquiry() {
+        if (pendingInquiryList.isEmpty()) {
+            ui.printMessage("No pending inquiries to cancel.");
+            return;
+        }
+
+        ui.listAllInquiries(buildInquiryTableData(pendingInquiryList));
+        
         String inquiryId = ui.inputInquiryId();
 
         Inquiry target = getPendingInquiryById(inquiryId);
