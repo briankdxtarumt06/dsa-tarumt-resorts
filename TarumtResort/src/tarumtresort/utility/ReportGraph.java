@@ -13,8 +13,9 @@ import tarumtresort.report.ReportChart;
  */
 public class ReportGraph {
 
-    // bar slot: one bar char + 3 trailing spaces = 4 chars pitch
-    private static final int BAR_PITCH = 4;
+    // bar slot: bar glyph (4 chars) + 4 trailing spaces = 8 chars pitch,
+    // matching the 8-char label slots below so bars line up with labels
+    private static final int BAR_PITCH = 8;
     private static final int SCALE_WIDTH = 3;
 
     private ReportGraph() {
@@ -139,15 +140,16 @@ public class ReportGraph {
             System.out.println(row);
         }
 
-        // axis row
+        // axis row (one dash wider than the block so it lines up with the
+        // scale rows, which carry the y value + " |" separator)
         StringBuilder axisRow = new StringBuilder();
         axisRow.append(" -+");
-        axisRow.append(repeat('-', leftBlock - SCALE_WIDTH));
+        axisRow.append(repeat('-', leftBlock - SCALE_WIDTH + 1));
         if (right != null) {
             axisRow.append("-+ ");
             axisRow.append(repeat(' ', SCALE_WIDTH - 1));
             axisRow.append("+");
-            axisRow.append(repeat('-', rightBlock - SCALE_WIDTH));
+            axisRow.append(repeat('-', rightBlock - SCALE_WIDTH + 1));
             axisRow.append("-+");
         }
         System.out.println(axisRow);
@@ -192,7 +194,9 @@ public class ReportGraph {
             return 1;
         }
         if (maxValue <= 10) {
-            return (int) Math.ceil(maxValue);
+            // minimum 2 rows so small values (e.g. 0.5) stay visible and are
+            // not misread as a full-height bar on a 1-row scale
+            return Math.max(2, (int) Math.ceil(maxValue));
         }
         return 10;
     }
@@ -210,7 +214,8 @@ public class ReportGraph {
         for (int i = 0; i < n; i++) {
             double v = bars.get(i).getValue();
             if (maxVal <= scaleY) {
-                heights[i] = (int) Math.round(v);
+                // 1:1 scale: round up so no non-zero value disappears
+                heights[i] = v <= 0 ? 0 : (int) Math.ceil(v);
             } else {
                 heights[i] = (int) Math.round(v / maxVal * scaleY);
             }
@@ -223,19 +228,18 @@ public class ReportGraph {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < count; i++) {
             if (heights[i] >= y) {
-                sb.append(" █");
+                sb.append(" ██");
             } else {
-                sb.append("  ");
+                sb.append("    ");
             }
-            sb.append(" "); // pitch = 4 (bar 2 + space 1 + gap 1)
-            if (i < count - 1) {
-                // already handled by the loop
-            }
+            sb.append("    "); // pitch = 8 (bar 4 + gap 4)
         }
         return sb.toString();
     }
 
-    // wrap labels to max 2 rows of up to 5 chars each
+    // wrap labels to max 2 rows of up to 8 chars each; long enum names
+    // (STANDARD_SINGLE, MAINTENANCE) are split on '_' where possible so
+    // their identity survives the two-row budget
     private static String[][] wrapLabels(List<ReportChart.Bar> bars) {
         String[][] result = new String[bars.size()][];
         for (int i = 0; i < bars.size(); i++) {
@@ -249,13 +253,25 @@ public class ReportGraph {
             return new String[] { "" };
         }
         String plain = Ansi.strip(label);
-        if (plain.length() <= 5) {
+        if (plain.length() <= BAR_PITCH) {
             return new String[] { plain };
         }
-        // split into 2 rows: first 5 chars, remainder (max 5)
-        String row1 = plain.substring(0, 5);
-        String remainder = plain.substring(5);
-        String row2 = remainder.length() <= 5 ? remainder : remainder.substring(0, 5);
+        // prefer a split on '_' or ' ' inside the first row
+        int breakAt = -1;
+        for (int i = BAR_PITCH; i > 0; i--) {
+            char c = plain.charAt(i);
+            if (c == '_' || c == ' ') {
+                breakAt = i;
+                break;
+            }
+        }
+        if (breakAt > 0 && plain.length() - breakAt - 1 <= BAR_PITCH) {
+            return new String[] { plain.substring(0, breakAt), plain.substring(breakAt + 1) };
+        }
+        // hard split into 2 rows of up to BAR_PITCH chars
+        String row1 = plain.substring(0, BAR_PITCH);
+        String remainder = plain.substring(BAR_PITCH);
+        String row2 = remainder.length() <= BAR_PITCH ? remainder : remainder.substring(0, BAR_PITCH);
         return new String[] { row1, row2 };
     }
 

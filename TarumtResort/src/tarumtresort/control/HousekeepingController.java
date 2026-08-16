@@ -20,12 +20,12 @@ import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
+import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
-import tarumtresort.entity.enums.RoomStatus;
-import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.report.ReportMenu;
 import tarumtresort.report.ReportUI;
+import tarumtresort.utility.ConsoleUtil;
 
 /**
  *
@@ -133,6 +133,7 @@ public class HousekeepingController {
     // entry point for housekeeping module
     public void runHousekeeping() {
         try {
+            ConsoleUtil.clearScreen();
             int choice;
 
             do {
@@ -149,7 +150,7 @@ public class HousekeepingController {
                         runAssignmentManagement();
                         break;
                     case 4:
-                        new ReportMenu(new ReportUI(new java.util.Scanner(System.in))).run();
+                        new ReportMenu(new ReportUI(ui.getScanner())).run();
                         break;
                     case 0:
                         ui.printExitMessage();
@@ -166,21 +167,21 @@ public class HousekeepingController {
     // entry point for staff management
     public void runStaffManagement() {
 
-        String deptFilter = null;
-        String availFilter = null;
+        String departmentFilter = null;
+        String availabilityFilter = null;
         int page = 0;
 
         while (true) {
             LinkedListInterface<Staff> display;
-            if (deptFilter != null) {
-                display = getStaffsByDepartment(deptFilter);
-            } else if (availFilter != null) {
-                display = getStaffsByAvailability(availFilter);
+            if (departmentFilter != null) {
+                display = getStaffsByDepartment(departmentFilter);
+            } else if (availabilityFilter != null) {
+                display = getStaffsByAvailability(availabilityFilter);
             } else {
                 display = getAllStaffs();
             }
 
-            boolean hasFilter = deptFilter != null || availFilter != null;
+            boolean hasFilter = departmentFilter != null || availabilityFilter != null;
             int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
             if (page >= pageCount) {
                 page = pageCount - 1; // clamp after the list shrank
@@ -193,20 +194,18 @@ public class HousekeepingController {
                 break;
             }
 
-            // the numbering mirrors the Actions section in the UI: Next /
-            // Previous / Clear only occupy a number when they are shown
             int action = 1;
             if (choice == action++) { // 1. View Details
                 viewStaff(pageList);
             } else if (choice == action++) { // 2. Add New Staff
                 addStaffMenu();
             } else if (choice == action++) { // 3. Filter by Department
-                deptFilter = ui.inputDepartment();
-                availFilter = null;
+                departmentFilter = ui.inputDepartment();
+                availabilityFilter = null;
                 page = 0;
             } else if (choice == action++) { // 4. Filter by Availability
-                availFilter = ui.inputAvailabilityStatus();
-                deptFilter = null;
+                availabilityFilter = ui.inputAvailabilityStatus();
+                departmentFilter = null;
                 page = 0;
             } else {
                 boolean matched = false;
@@ -228,8 +227,8 @@ public class HousekeepingController {
                     matched = choice == action;
                     action++;
                     if (matched) {
-                        deptFilter = null;
-                        availFilter = null;
+                        departmentFilter = null;
+                        availabilityFilter = null;
                         page = 0;
                     }
                 }
@@ -241,6 +240,7 @@ public class HousekeepingController {
     private void viewStaff(LinkedListInterface<Staff> pageList) {
         if (pageList.isEmpty()) {
             ui.printNoRecords();
+            ui.pressEnterToContinue();
             return;
         }
         int num = ui.inputListIndex("staff", pageList.size());
@@ -264,15 +264,9 @@ public class HousekeepingController {
             }
 
             switch (action) {
-                case 1: {
-                    String[] details = ui.inputUpdateStaffDetails();
-                    if (updateStaff(staff.getStaffId(), details[0], details[1], details[2], details[3])) {
-                        ui.printSuccess();
-                    } else {
-                        ui.printNotFound();
-                    }
+                case 1:
+                    updateStaffFieldMenu(staff);
                     break;
-                }
                 case 2:
                     if (resignStaff(staff.getStaffId())) {
                         ui.printSuccess();
@@ -315,28 +309,46 @@ public class HousekeepingController {
         return staffId;
     }
 
-    public boolean updateStaff(String staffId,
-            String staffName,
-            String department,
-            String staffRole,
-            String availabilityStatus) {
+    // loop: pick a field, edit it, show updated details, until Back
+    private void updateStaffFieldMenu(Staff staff) {
+        String[] fields = {"Staff Name", "Department", "Staff Role", "Availability Status"};
+        while (true) {
+            int field = ui.inputFieldChoice(fields);
+            if (field == 0) {
+                return;
+            }
+            String value = switch (field) {
+                case 1 -> ui.inputStaffName();
+                case 2 -> ui.inputDepartment();
+                case 3 -> ui.inputStaffRole();
+                default -> ui.inputAvailabilityStatus();
+            };
+            if (updateStaffField(staff.getStaffId(), field, value)) {
+                ui.printSuccess();
+            } else {
+                ui.printNotFound();
+                return;
+            }
+            staff = getStaffById(staff.getStaffId()); // re-read so details stay fresh
+            ui.printStaffDetails(staff);
+        }
+    }
 
-        for (int i = 0; i < staffList.size(); i++) { // size() = current record count of the list
-            Staff staff = staffList.get(i); // get(i) = record at index i
-
+    // update only one chosen field of a staff record
+    public boolean updateStaffField(String staffId, int field, String value) {
+        for (int i = 0; i < staffList.size(); i++) {
+            Staff staff = staffList.get(i);
             if (staff.getStaffId().equals(staffId)) {
-
-                staff.setStaffName(staffName);
-                staff.setDepartment(department);
-                staff.setStaffRole(staffRole);
-                staff.setAvailabilityStatus(availabilityStatus);
-
+                switch (field) {
+                    case 1 -> staff.setStaffName(value);
+                    case 2 -> staff.setDepartment(value);
+                    case 3 -> staff.setStaffRole(value);
+                    default -> staff.setAvailabilityStatus(value);
+                }
                 staffDAO.saveStaffList(staffList);
-
                 return true;
             }
         }
-
         return false;
     }
 
@@ -460,7 +472,7 @@ public class HousekeepingController {
         String[] details = ui.inputStaffDetails();
         String staffId = createStaff(details[0], details[1], details[2], details[3]);
         if (staffId == null) {
-            ui.printDuplicateName();
+            ui.printDuplicateNameError();
         } else {
             ui.printStaffId(staffId);
             ui.printSuccess();
@@ -469,6 +481,19 @@ public class HousekeepingController {
 
     // -------------------- private helpers --------------------
 
+    // numeric suffix of an id like "STF000000000001"; 0 on null/malformed ids
+    // so a single bad record can never crash the whole module
+    private int parseIdSuffix(String id) {
+        if (id == null || id.length() <= 3) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(id.substring(3));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private String generateStaffId() {
 
         int max = 0;
@@ -476,7 +501,7 @@ public class HousekeepingController {
         for (int i = 0; i < staffList.size(); i++) { // size() = current record count of the list
             String staffId = staffList.get(i).getStaffId(); // get(i) = record at index i
 
-            int number = Integer.parseInt(staffId.substring(3));
+            int number = parseIdSuffix(staffId);
 
             if (number > max) {
                 max = number;
@@ -608,19 +633,9 @@ public class HousekeepingController {
             }
 
             switch (action) {
-                case 1: {
-                    String[] details = ui.inputUpdateTaskDetails();
-                    java.time.LocalDateTime parsedDateTime = ui.parseDateTime(details[3]);
-                    if (parsedDateTime == null) {
-                        ui.printTaskStatusDenied();
-                    } else if (updateTask(task.getTaskId(), details[0], details[1],
-                            TaskPriority.fromString(details[2]), parsedDateTime)) {
-                        ui.printSuccess();
-                    } else {
-                        ui.printNotFound();
-                    }
+                case 1:
+                    updateTaskFieldMenu(task);
                     break;
-                }
                 case 2: {
                     String newStatus = ui.inputTaskStatus(task.getTaskStatus());
                     if (newStatus == null) {
@@ -707,29 +722,94 @@ public class HousekeepingController {
         return taskId == null ? null : getTaskById(taskId);
     }
 
-    public boolean updateTask(String taskId,
-            String taskName,
-            String taskType,
-            TaskPriority taskPriority,
-            LocalDateTime startDateTime) {
+    // loop: pick a field, edit it, show updated details, until Back
+    private void updateTaskFieldMenu(Task task) {
+        String[] fields = {"Task Name", "Task Type", "Task Priority", "Start Date & Time"};
+        while (true) {
+            int field = ui.inputFieldChoice(fields);
+            if (field == 0) {
+                return;
+            }
+            String value = switch (field) {
+                case 1 -> ui.inputTaskName();
+                case 2 -> ui.inputTaskType();
+                case 3 -> ui.inputTaskPriority().name();
+                default -> {
+                    LocalDateTime parsedDateTime = ui.inputStartDateTime();
+                    if (!canRescheduleTask(task, parsedDateTime)) {
+                        ui.printScheduleConflict();
+                        yield null;
+                    }
+                    yield parsedDateTime.toString();
+                }
+            };
+            if (value == null) {
+                continue;
+            }
+            if (updateTaskField(task.getTaskId(), field, value)) {
+                ui.printSuccess();
+            } else {
+                ui.printNotFound();
+                return;
+            }
+            task = getTaskById(task.getTaskId()); // re-read so details stay fresh
+            ui.printTaskDetails(task);
+        }
+    }
 
-        for (int i = 0; i < taskList.size(); i++) { // size() = current record count of the list
-            Task task = taskList.get(i); // get(i) = record at index i
-
+    // update only one chosen field of a task record
+    public boolean updateTaskField(String taskId, int field, String value) {
+        for (int i = 0; i < taskList.size(); i++) {
+            Task task = taskList.get(i);
             if (task.getTaskId().equals(taskId)) {
-
-                task.setTaskName(taskName);
-                task.setTaskType(taskType);
-                task.setTaskPriority(taskPriority);
-                task.setStartDateTime(startDateTime);
-
+                switch (field) {
+                    case 1 -> task.setTaskName(value);
+                    case 2 -> task.setTaskType(value);
+                    case 3 -> task.setTaskPriority(TaskPriority.fromString(value));
+                    default -> task.setStartDateTime(LocalDateTime.parse(value));
+                }
                 taskDAO.saveTaskList(taskList);
-
                 return true;
             }
         }
-
         return false;
+    }
+
+    /**
+     * True when moving the task to newStart keeps every non-cancelled
+     * assignment free of overlaps with the staff's other tasks (and inside
+     * the shift boundaries). A task without assignments is always movable.
+     */
+    private boolean canRescheduleTask(Task task, LocalDateTime newStart) {
+        if (task == null || newStart == null || task.getStartDateTime() == null
+                || newStart.equals(task.getStartDateTime())) {
+            return true;
+        }
+
+        refreshTaskAssignments(); // always retrieve the latest records
+
+        LocalDateTime windowEnd = newStart.plusMinutes(CLEANING_DURATION_MINUTES);
+
+        for (int i = 0; i < taskAssignmentList.size(); i++) { // size() = current record count of the list
+            TaskAssignment assignment = taskAssignmentList.get(i); // get(i) = record at index i
+
+            if (!task.getTaskId().equals(assignment.getAssignedTaskId())
+                    || assignment.getAssignedStaffId() == null
+                    || "Cancelled".equalsIgnoreCase(assignment.getStatus())) {
+                continue;
+            }
+
+            Staff staff = getStaffById(assignment.getAssignedStaffId());
+            if (staff == null) {
+                continue;
+            }
+
+            if (!isStaffFreeForTask(staff, newStart, windowEnd, task.getTaskId(), taskAssignmentList)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public boolean updateTaskStatus(String taskId, String status) {
@@ -904,7 +984,6 @@ public class HousekeepingController {
         }
     }
 
-    // flips the RoomStatus of a room in rooms.json (no-op for unknown rooms)
     private void setRoomStatus(String roomId, RoomStatus status) {
         if (roomId == null || roomId.isBlank()) {
             return;
@@ -1056,7 +1135,7 @@ public class HousekeepingController {
         String taskId = createTask(details[0], details[1], TaskPriority.fromString(details[2]),
                 ui.parseDateTime(details[3]), null);
         if (taskId == null) {
-            ui.printDuplicateName();
+            ui.printDuplicateNameError();
         } else {
             ui.printTaskId(taskId);
             ui.printSuccess();
@@ -1072,7 +1151,7 @@ public class HousekeepingController {
         for (int i = 0; i < taskList.size(); i++) { // size() = current record count of the list
             String taskId = taskList.get(i).getTaskId(); // get(i) = record at index i
 
-            int number = Integer.parseInt(taskId.substring(3));
+            int number = parseIdSuffix(taskId);
 
             if (number > max) {
                 max = number;
@@ -1312,13 +1391,20 @@ public class HousekeepingController {
 
         StaffAndSlot best = findEarliestFreeSlot(requestedStart, CLEANING_DURATION_MINUTES, null);
 
+        if (best == null) {
+            // no housekeeping staff is available: keep the task unassigned
+            // (a null-staff "Pending" assignment could never be resolved)
+            updateTaskStartDateTime(taskId, requestedStart);
+            return getTaskById(taskId);
+        }
+
         // set task start to the scheduled slot (deferred if staff are busy)
-        LocalDateTime scheduledStart = best == null ? requestedStart : best.slotStart;
+        LocalDateTime scheduledStart = best.slotStart;
         updateTaskStartDateTime(taskId, scheduledStart);
 
         insertAssignment(generateAssignmentId(),
                 "Pending", scheduledStart,
-                best == null ? null : best.staff,
+                best.staff,
                 getTaskById(taskId));
 
         return getTaskById(taskId);
@@ -1541,7 +1627,13 @@ public class HousekeepingController {
         Task assigned = autoAssignTask(task.getTaskId(), requestedStart, roomId);
 
         ui.printTaskDetails(assigned == null ? task : assigned);
-        ui.printSuccess();
+
+        // no staff was available: the task stays Pending for manual assignment
+        if (assigned != null && assigned.getTaskAssignments().isEmpty()) {
+            ui.printNoStaffFreeForTask();
+        } else {
+            ui.printSuccess();
+        }
     }
 
     // rooms: currently free-form text; see FUTURE INTEGRATION note above
@@ -1964,7 +2056,7 @@ public class HousekeepingController {
                 continue;
             }
 
-            int number = Integer.parseInt(assignmentId.substring(3));
+            int number = parseIdSuffix(assignmentId);
 
             if (number > max) {
                 max = number;
@@ -2093,6 +2185,11 @@ public class HousekeepingController {
         boolean deferred = task.getStartDateTime() != null && task.getStartDateTime().isAfter(checkoutTime);
 
         ui.printGuestCheckoutTask(task, staff, assignment, deferred);
+
+        // no staff was available: the task stays Pending for manual assignment
+        if (task.getTaskAssignments().isEmpty()) {
+            ui.printNoStaffFreeForTask();
+        }
     }
 
     private void viewChangeHistoryMenu() {
@@ -2253,7 +2350,7 @@ public class HousekeepingController {
                 continue;
             }
 
-            int number = Integer.parseInt(changeId.substring(3));
+            int number = parseIdSuffix(changeId);
 
             if (number > max) {
                 max = number;

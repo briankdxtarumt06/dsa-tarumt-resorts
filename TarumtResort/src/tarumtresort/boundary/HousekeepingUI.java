@@ -40,31 +40,66 @@ public class HousekeepingUI {
         this.scanner = scanner;
     }
 
+    public Scanner getScanner() {
+        return scanner;
+    }
+
+    private static final int BANNER_WIDTH = 32;
+    private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+
+    public static void printBanner(String title) {
+        System.out.println("\n" + BANNER_LINE);
+        System.out.println(center(title, BANNER_WIDTH));
+        System.out.println(BANNER_LINE);
+    }
+
+    public static void printSeparator() {
+        System.out.println(BANNER_LINE);
+    }
+
+    public static void printSection(String text) {
+        if (text == null) {
+            text = "";
+        }
+        if (text.isEmpty()) {
+            System.out.println("\n" + BANNER_LINE);
+            return;
+        }
+        String core = " " + text + " ";
+        int available = BANNER_WIDTH - core.length();
+        int left = available / 2;
+        System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+    }
+
+    private static String center(String text, int width) {
+        if (text == null) {
+            text = "";
+        }
+        if (text.length() >= width) {
+            return text;
+        }
+        int pad = width - text.length();
+        int left = pad / 2;
+        return " ".repeat(left) + text + " ".repeat(pad - left);
+    }
+
     // MODULE MENU
     public int getMenuChoice() {
-        System.out.println("\n========================================");
-        System.out.println("  HOUSEKEEPING MODULE");
-        System.out.println("========================================");
+        printBanner("HOUSEKEEPING MODULE");
         System.out.println("  1. Staff Management");
         System.out.println("  2. Task Management");
         System.out.println("  3. Task Assignment Management");
         System.out.println("  4. Reports");
         System.out.println("  0. Exit");
-        System.out.println("========================================");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, 4);
     }
 
-    // STAFF SELECT-ENTITY LIST
-    // prints the numbered staff list plus the extra options; returns the choice
-    // STAFF SELECT-ENTITY LIST (paged; the Actions section is separate from
-    // the rows, so a row is never chosen directly - use "View Details")
     public int printStaffListMenu(LinkedListInterface<Staff> pageList, int page, int pageCount, boolean hasFilter) {
         clearScreen();
-        System.out.println("\n========================================");
-        System.out.println("  STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
-        System.out.println("========================================");
+        printBanner("STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
         if (pageList.isEmpty()) {
-            System.out.println("  (no staff records)");
+            System.out.println("  (No staff records)");
         } else {
             String[] header = new String[] { "No.", "Staff ID", "Name", "Role", "Availability" };
             String[][] rows = new String[pageList.size()][5];
@@ -77,7 +112,7 @@ public class HousekeepingUI {
             }
             TablePrinter.displayTable(header, rows);
         }
-        System.out.println("\n--- Actions ---");
+        printSection("Actions");
         int action = 1;
         System.out.println("  " + action++ + ". View Details");
         System.out.println("  " + action++ + ". Add New Staff");
@@ -93,26 +128,23 @@ public class HousekeepingUI {
             System.out.println("  " + action++ + ". Clear Filter");
         }
         System.out.println("  0. Back");
-        System.out.println("========================================");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
     public int getStaffActionChoice() {
-        System.out.println("\n--- Staff Actions ---");
+        printSection("Staff Actions");
         System.out.println("  1. Update Staff Info");
         System.out.println("  2. Resign Staff");
         System.out.println("  3. View Task Assignments");
         System.out.println("  0. Back to List");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, 3);
     }
 
-    // TASK SELECT-ENTITY LIST (paged; the Actions section is separate from
-    // the rows, so a row is never chosen directly - use "View Details")
     public int printTaskListMenu(LinkedListInterface<Task> pageList, int page, int pageCount, boolean hasFilter) {
         clearScreen();
-        System.out.println("\n========================================");
-        System.out.println("  TASK MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
-        System.out.println("========================================");
+        printBanner("TASK MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
         if (pageList.isEmpty()) {
             System.out.println("  (no task records)");
         } else {
@@ -128,7 +160,7 @@ public class HousekeepingUI {
             }
             TablePrinter.displayTable(header, rows);
         }
-        System.out.println("\n--- Actions ---");
+        printSection("Actions");
         int action = 1;
         System.out.println("  " + action++ + ". View Details");
         System.out.println("  " + action++ + ". Add New Task");
@@ -144,12 +176,12 @@ public class HousekeepingUI {
             System.out.println("  " + action++ + ". Clear Filter");
         }
         System.out.println("  0. Back");
-        System.out.println("========================================");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
     public int getTaskActionChoice() {
-        System.out.println("\n--- Task Actions ---");
+        printSection("Task Actions");
         System.out.println("  1. Update Task Info");
         System.out.println("  2. Update Task Status");
         System.out.println("  3. Assign Task to Room");
@@ -157,16 +189,13 @@ public class HousekeepingUI {
         System.out.println("  5. Rollback Task Status");
         System.out.println("  6. Remove Task");
         System.out.println("  0. Back to List");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, 6);
     }
 
-    // ASSIGNMENT SELECT-ENTITY LIST (paged; the Actions section is separate
-    // from the rows, so a row is never chosen directly - use "View Details")
     public int printAssignmentListMenu(String[] lines, int page, int pageCount, boolean hasFilter) {
         clearScreen();
-        System.out.println("\n========================================");
-        System.out.println("  ASSIGNMENTS & SCHEDULING (Page " + (page + 1) + " of " + pageCount + ")");
-        System.out.println("========================================");
+        printBanner("ASSIGNMENTS & SCHEDULING (Page " + (page + 1) + " of " + pageCount + ")");
         if (lines.length == 0) {
             System.out.println("  (no assignment records)");
         } else {
@@ -184,7 +213,7 @@ public class HousekeepingUI {
             }
             TablePrinter.displayTable(header, rows);
         }
-        System.out.println("\n--- Actions ---");
+        printSection("Actions");
         int action = 1;
         System.out.println("  " + action++ + ". View Details");
         System.out.println("  " + action++ + ". + New Assignment");
@@ -204,16 +233,17 @@ public class HousekeepingUI {
             System.out.println("  " + action++ + ". Clear Filter");
         }
         System.out.println("  0. Back");
-        System.out.println("========================================");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
     public int getAssignmentActionChoice() {
-        System.out.println("\n--- Assignment Actions ---");
+        printSection("Assignment Actions");
         System.out.println("  1. Update Assignment Status (Worker)");
         System.out.println("  2. Reassign Staff / Task");
         System.out.println("  3. View Change History");
         System.out.println("  0. Back to List");
+        printSeparator();
         return inputIntChoice("Enter choice", 0, 3);
     }
 
@@ -249,7 +279,7 @@ public class HousekeepingUI {
     }
 
     public String inputStaffRole() {
-        System.out.println("\nSelect Staff Role:");
+        System.out.println("Select Staff Role:");
         for (int i = 0; i < STAFF_ROLES.length; i++) {
             System.out.println("  " + (i + 1) + ". " + STAFF_ROLES[i]);
         }
@@ -265,7 +295,8 @@ public class HousekeepingUI {
     }
 
     public String[] inputStaffDetails() {
-        System.out.println("\n--- Add New Staff ---");
+        ConsoleUtil.clearScreen();
+        printSection("Add New Staff");
         String staffName = inputStaffName();
         String department = inputDepartment();
         String staffRole = inputStaffRole();
@@ -274,14 +305,14 @@ public class HousekeepingUI {
         return new String[]{staffName, department, staffRole, availabilityStatus};
     }
 
-    public String[] inputUpdateStaffDetails() {
-        System.out.println("\n--- Update Staff Information ---");
-        String staffName = inputStaffName();
-        String department = inputDepartment();
-        String staffRole = inputStaffRole();
-        String availabilityStatus = inputAvailabilityStatus();
-        System.out.println();
-        return new String[]{staffName, department, staffRole, availabilityStatus};
+    // generic "which field to edit" prompt; returns 0 = Back
+    public int inputFieldChoice(String[] fields) {
+        printSection("Select Field to Edit");
+        for (int i = 0; i < fields.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + fields[i]);
+        }
+        System.out.println("  0. Back");
+        return inputIntChoice("Enter choice", 0, fields.length);
     }
 
     // INPUT METHODS (task)
@@ -335,7 +366,7 @@ public class HousekeepingUI {
         try {
             return LocalDateTime.parse(value);
         } catch (DateTimeParseException e) {
-            ConsoleUtil.printError("Invalid date & time format! Please use yyyy-MM-dd HH:mm.");
+            ConsoleUtil.printError("Invalid date & time format! Please use yyyy-MM-ddTHH:mm (ISO format).");
             return null;
         }
     }
@@ -367,17 +398,7 @@ public class HousekeepingUI {
     }
 
     public String[] inputTaskDetails() {
-        System.out.println("\n--- Add New Task ---");
-        String taskName = inputTaskName();
-        String taskType = inputTaskType();
-        TaskPriority taskPriority = inputTaskPriority();
-        LocalDateTime startDateTime = inputStartDateTime();
-        System.out.println();
-        return new String[]{taskName, taskType, taskPriority.name(), startDateTime.toString()};
-    }
-
-    public String[] inputUpdateTaskDetails() {
-        System.out.println("\n--- Update Task Information ---");
+        printSection("Add New Task");
         String taskName = inputTaskName();
         String taskType = inputTaskType();
         TaskPriority taskPriority = inputTaskPriority();
@@ -460,16 +481,14 @@ public class HousekeepingUI {
 
     private LocalDateTime inputDateTimeWithQuickOptions(String prompt) {
         while (true) {
-            System.out.println("\n========================================");
-            System.out.println("  " + prompt.toUpperCase());
-            System.out.println("========================================");
+            printBanner(prompt.toUpperCase());
             System.out.println("  1. Now");
             System.out.println("  2. 30 Minutes Later");
             System.out.println("  3. 1 Hour Later");
             System.out.println("  4. 2 Hours Later");
             System.out.println("  5. Next Shift Start (08:00)");
             System.out.println("  6. Custom (type manually)");
-            System.out.println("========================================");
+            printSeparator();
             int choice = inputIntChoice("Enter option", 1, 6);
 
             switch (choice) {
@@ -485,7 +504,7 @@ public class HousekeepingUI {
 
     private LocalDateTime nextShiftStart() {
         LocalDateTime shift = LocalDateTime.of(LocalDate.now(), DEFAULT_SHIFT_START);
-        return shift.isAfter(LocalDateTime.now()) ? shift : shift.plusDays(1);
+        return shift.isBefore(LocalDateTime.now()) ? shift.plusDays(1) : shift;
     }
 
     private LocalDateTime inputCustomDateTime(String prompt) {
@@ -515,13 +534,13 @@ public class HousekeepingUI {
             }
         }
 
-        System.out.println("\n--- Details ---");
+        printSection("Details");
         for (String[] pair : details) {
             System.out.println(String.format("%-" + (keyWidth + 3) + "s: %s",
                     pair[0] == null ? "" : pair[0],
                     pair.length > 1 && pair[1] != null ? pair[1] : "-"));
         }
-        System.out.println("----------------------------");
+        printSeparator();
     }
 
     public void printStaffDetails(Staff staff) {
@@ -535,7 +554,7 @@ public class HousekeepingUI {
     }
 
     public void listAllStaffs(String[][] data) {
-        System.out.println("\n--- Staff List ---");
+        printSection("Staff List");
         if (data.length <= 1) {
             System.out.println("  No staff records found.");
             return;
@@ -564,7 +583,7 @@ public class HousekeepingUI {
     }
 
     public void listAllTasks(String[][] data) {
-        System.out.println("\n--- Task List ---");
+        printSection("Task List");
         if (data.length <= 1) {
             System.out.println("  No task records found.");
             return;
@@ -594,9 +613,10 @@ public class HousekeepingUI {
     }
 
     public void listAllAssignments(String[][] data) {
-        System.out.println("\n--- Assignment List ---");
+        printSection("Assignment List");
         if (data.length <= 1) {
             System.out.println("  No assignment records found.");
+            pressEnterToContinue();
             return;
         }
         String[] header = data[0];
@@ -606,7 +626,7 @@ public class HousekeepingUI {
     }
 
     public void listAllChanges(String[][] data) {
-        System.out.println("\n--- Change History ---");
+        printSection("Change History");
         if (data.length <= 1) {
             System.out.println("  No change records found.");
             return;
@@ -643,7 +663,6 @@ public class HousekeepingUI {
         ConsoleUtil.printSuccess("New Assignment ID: " + assignmentId);
     }
 
-    // MESSAGE METHODS
     public void printSuccess() {
         ConsoleUtil.printSuccess("Operation successful!");
     }
@@ -652,7 +671,7 @@ public class HousekeepingUI {
         ConsoleUtil.printError("Record not found!");
     }
 
-    public void printDuplicateName() {
+    public void printDuplicateNameError() {
         ConsoleUtil.printError("Name already exists!");
     }
 
@@ -671,6 +690,11 @@ public class HousekeepingUI {
     public void printWindowOverlap() {
         ConsoleUtil.printError("Staff already has another task in this 60-minute window!");
         ConsoleUtil.printError("A staff can only take the next task after the current one is done.");
+    }
+
+    public void printScheduleConflict() {
+        ConsoleUtil.printError("Reschedule rejected: the new start time overlaps a task");
+        ConsoleUtil.printError("already assigned to this task's staff!");
     }
 
     public void printTaskAlreadyExists() {
@@ -709,16 +733,12 @@ public class HousekeepingUI {
         ConsoleUtil.printError("No records to view!");
     }
 
-    // view flow prompt: which row of the current page to open (0 = cancel)
     public int inputListIndex(String entityLabel, int max) {
-        return inputIntChoice("Enter " + entityLabel + " number (0 = cancel)", 0, max);
+        return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
     }
 
-    // STAFF PICKER (manual assignment / reassign): lists the eligible staff
-    // (built by the controller) as numbered options; returns the choice,
-    // 0 = cancel
     public int printEligibleStaffMenu(LinkedListInterface<Staff> staffList) {
-        System.out.println("\n--- Select Staff to Assign ---");
+        printSection("Select Staff to Assign");
         if (staffList.isEmpty()) {
             System.out.println("  (no eligible staff)");
         } else {
@@ -745,32 +765,29 @@ public class HousekeepingUI {
         ConsoleUtil.printError("Invalid choice! Please try again.");
     }
 
-    // HELPER METHODS
     private int inputIntChoice(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt + " (" + min + "-" + max + "): ");
-            String line = scanner.nextLine();
-            if (line.trim().isEmpty()) {
-                // ignore a bare Enter: re-prompt in place, no error, no advance
+            String line = scanner.nextLine().trim();
+            if (line.isEmpty()) {
                 if (Ansi.ENABLED) {
                     System.out.print("\u001B[1A\u001B[2K");
                 }
                 continue;
             }
             try {
-                int value = Integer.parseInt(line.trim());
+                int value = Integer.parseInt(line);
                 if (value >= min && value <= max) {
                     System.out.println();
                     return value;
                 }
             } catch (NumberFormatException e) {
-                // fall through to the range error below
+                // continue retry until integer input
             }
             ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
         }
     }
 
-    // clears the console screen (delegates to ConsoleUtil)
     private void clearScreen() {
         ConsoleUtil.clearScreen();
     }

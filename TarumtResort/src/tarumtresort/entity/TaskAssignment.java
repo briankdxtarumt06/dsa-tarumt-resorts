@@ -74,6 +74,29 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof TaskAssignment)) {
+            return false;
+        }
+        TaskAssignment other = (TaskAssignment) obj;
+        if (this.taskAssignmentId == null && other.taskAssignmentId == null) {
+            return true;
+        }
+        if (this.taskAssignmentId == null || other.taskAssignmentId == null) {
+            return false;
+        }
+        return this.taskAssignmentId.equals(other.taskAssignmentId);
+    }
+
+    @Override
+    public int hashCode() {
+        return taskAssignmentId == null ? 0 : taskAssignmentId.hashCode();
+    }
+
+    @Override
     public int compareTo(TaskAssignment other) {
         // null checks to avoid NullPointerException
         if (other == null) {

@@ -103,7 +103,7 @@ public class ReportUI {
         YearMonth ym = YearMonth.now();
         return new LocalDateTime[]{
             ym.atDay(1).atStartOfDay(),
-            ym.atEndOfMonth().atTime(23, 59)
+            ym.atEndOfMonth().atTime(23, 59, 59, 999_999_999)
         };
     }
 
@@ -111,7 +111,7 @@ public class ReportUI {
         YearMonth ym = YearMonth.now().minusMonths(1);
         return new LocalDateTime[]{
             ym.atDay(1).atStartOfDay(),
-            ym.atEndOfMonth().atTime(23, 59)
+            ym.atEndOfMonth().atTime(23, 59, 59, 999_999_999)
         };
     }
 
@@ -144,7 +144,7 @@ public class ReportUI {
         YearMonth ym = YearMonth.of(year, month);
         return new LocalDateTime[]{
             ym.atDay(1).atStartOfDay(),
-            ym.atEndOfMonth().atTime(23, 59)
+            ym.atEndOfMonth().atTime(23, 59, 59, 999_999_999)
         };
     }
 
@@ -154,7 +154,7 @@ public class ReportUI {
         LocalDate sunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
         return new LocalDateTime[]{
             monday.atStartOfDay(),
-            sunday.atTime(23, 59)
+            sunday.atTime(23, 59, 59, 999_999_999)
         };
     }
 

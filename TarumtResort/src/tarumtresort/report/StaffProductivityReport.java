@@ -91,11 +91,15 @@ public class StaffProductivityReport {
                 }
 
                 // every status transition of this assignment (drop / decline /
-                // reassignment counts as churn)
+                // reassignment counts as churn); only changes inside the
+                // report period are counted
                 for (int k = 0; k < changeList.size(); k++) {
                     TaskAssignmentChange change = changeList.get(k);
                     if (change.getTaskAssignmentId() == null
                             || !change.getTaskAssignmentId().equals(assignment.getTaskAssignmentId())) {
+                        continue;
+                    }
+                    if (!inRange(change.getChangedAt(), from, to)) {
                         continue;
                     }
                     if (change.getStatus() != null && isReassignedStatus(change.getStatus())) {
@@ -104,8 +108,12 @@ public class StaffProductivityReport {
                 }
             }
 
-            totalAssignments += row.assignments;
-            totalReassigned += row.reassigned;
+            // summary totals only count active staff so the denominator
+            // matches the "Total Active Staff" figure
+            if (!"Resigned".equalsIgnoreCase(staff.getAvailabilityStatus())) {
+                totalAssignments += row.assignments;
+                totalReassigned += row.reassigned;
+            }
             rows.add(row);
         }
 
@@ -149,6 +157,8 @@ public class StaffProductivityReport {
      * Cleaner's own finish time: the EARLIEST COMPLETED change of the
      * assignment. The supervisor's task-level sign-off happens later and also
      * references the same assignment, so the earliest one is the worker's.
+     * The cleaner may finish via "Completed", "Work Finished" or "Inspected"
+     * (see HousekeepingController.isTaskFullyFinished).
      */
     private LocalDateTime earliestCompletedChange(String taskAssignmentId) {
         LocalDateTime earliest = null;
@@ -158,7 +168,7 @@ public class StaffProductivityReport {
                     || !change.getTaskAssignmentId().equals(taskAssignmentId)) {
                 continue;
             }
-            if (change.getStatus() == null || !"Completed".equalsIgnoreCase(change.getStatus())) {
+            if (change.getStatus() == null || !isCompletedStatus(change.getStatus())) {
                 continue;
             }
             if (change.getChangedAt() != null && (earliest == null || change.getChangedAt().isBefore(earliest))) {
@@ -166,6 +176,12 @@ public class StaffProductivityReport {
             }
         }
         return earliest;
+    }
+
+    private boolean isCompletedStatus(String status) {
+        return "Completed".equalsIgnoreCase(status)
+                || "Work Finished".equalsIgnoreCase(status)
+                || "Inspected".equalsIgnoreCase(status);
     }
 
     private boolean isReassignedStatus(String status) {
@@ -223,6 +239,8 @@ public class StaffProductivityReport {
     }
 
     // a staff is "utilized" when holding at least one active assignment
+    // (assignments finished via "Work Finished" / "Inspected" are terminal
+    // and no longer count as active work)
     private boolean isCurrentlyUtilized(Staff staff) {
         for (int i = 0; i < assignmentList.size(); i++) {
             TaskAssignment assignment = assignmentList.get(i);
@@ -230,8 +248,10 @@ public class StaffProductivityReport {
                     || !assignment.getAssignedStaffId().equals(staff.getStaffId())) {
                 continue;
             }
-            if ("Cancelled".equalsIgnoreCase(assignment.getStatus())
-                    || "Completed".equalsIgnoreCase(assignment.getStatus())) {
+            if (assignment.getStatus() != null && isCompletedStatus(assignment.getStatus())) {
+                continue;
+            }
+            if ("Cancelled".equalsIgnoreCase(assignment.getStatus())) {
                 continue;
             }
             return true;

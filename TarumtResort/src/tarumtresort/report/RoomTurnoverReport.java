@@ -12,12 +12,12 @@ import java.util.Set;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Room;
-import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
+import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.utility.Ansi;
 
 /**
@@ -50,16 +50,14 @@ public class RoomTurnoverReport {
     private static final int ATTENTION_MINUTES = 45;
 
     private final LinkedListInterface<Room> roomList;
-    private final LinkedListInterface<Staff> staffList;
     private final LinkedListInterface<Task> taskList;
     private final LinkedListInterface<TaskAssignment> assignmentList;
     private final LinkedListInterface<TaskAssignmentChange> changeList;
 
-    public RoomTurnoverReport(LinkedListInterface<Room> roomList, LinkedListInterface<Staff> staffList,
+    public RoomTurnoverReport(LinkedListInterface<Room> roomList,
             LinkedListInterface<Task> taskList, LinkedListInterface<TaskAssignment> assignmentList,
             LinkedListInterface<TaskAssignmentChange> changeList) {
         this.roomList = roomList == null ? new LinkedList<>() : roomList;
-        this.staffList = staffList == null ? new LinkedList<>() : staffList;
         this.taskList = taskList == null ? new LinkedList<>() : taskList;
         this.assignmentList = assignmentList == null ? new LinkedList<>() : assignmentList;
         this.changeList = changeList == null ? new LinkedList<>() : changeList;
@@ -139,8 +137,15 @@ public class RoomTurnoverReport {
      * Supervisor sign-off: the latest COMPLETED change belonging to the task.
      * Both the worker's "Completed" and the supervisor's task-level
      * "Completed" changes carry the task id; the sign-off is always last.
+     * A room counts as ready only when the TASK itself has been signed off
+     * (task status COMPLETED): a worker's own "Completed" mark without
+     * supervisor approval leaves the room "In progress".
      */
     private LocalDateTime latestCompletedChange(String taskId) {
+        Task task = findTask(taskId);
+        if (task == null || task.getTaskStatus() != TaskStatus.COMPLETED) {
+            return null;
+        }
         LocalDateTime latest = null;
         for (int i = 0; i < changeList.size(); i++) {
             TaskAssignmentChange change = changeList.get(i);
@@ -157,19 +162,43 @@ public class RoomTurnoverReport {
         return latest;
     }
 
-    // first non-cancelled worker of the task
-    private String assignedStaffId(Task task) {
-        for (int i = 0; i < assignmentList.size(); i++) {
-            TaskAssignment assignment = assignmentList.get(i);
-            if (assignment.getAssignedTaskId() == null || !assignment.getAssignedTaskId().equals(task.getTaskId())) {
-                continue;
+    private Task findTask(String taskId) {
+        if (taskId == null) {
+            return null;
+        }
+        for (int i = 0; i < taskList.size(); i++) {
+            if (taskList.get(i).getTaskId().equalsIgnoreCase(taskId)) {
+                return taskList.get(i);
             }
-            if ("Cancelled".equalsIgnoreCase(assignment.getStatus())) {
-                continue;
-            }
-            return assignment.getAssignedStaffId();
         }
         return null;
+    }
+
+    // most recent non-cancelled worker of the task (skips dropped/declined
+    // assignments and records without a staff id)
+    private String assignedStaffId(Task task) {
+        TaskAssignment latest = null;
+        for (int i = 0; i < assignmentList.size(); i++) {
+            TaskAssignment assignment = assignmentList.get(i);
+            if (assignment.getAssignedTaskId() == null
+                    || !assignment.getAssignedTaskId().equals(task.getTaskId())) {
+                continue;
+            }
+            if (assignment.getAssignedStaffId() == null
+                    || "Cancelled".equalsIgnoreCase(assignment.getStatus())) {
+                continue;
+            }
+            if (latest == null || isAfter(assignment, latest)) {
+                latest = assignment;
+            }
+        }
+        return latest == null ? null : latest.getAssignedStaffId();
+    }
+
+    private boolean isAfter(TaskAssignment candidate, TaskAssignment current) {
+        return candidate.getDateTimeAssigned() != null
+                && (current.getDateTimeAssigned() == null
+                        || candidate.getDateTimeAssigned().isAfter(current.getDateTimeAssigned()));
     }
 
     private String[][] toTable(List<TaskRow> rows) {
@@ -297,7 +326,9 @@ public class RoomTurnoverReport {
         if (row.room == null) {
             return row.task.getRoomId() == null ? "-" : row.task.getRoomId();
         }
-        return row.room.getRoomId() + " (" + row.room.getRoomNumber() + " " + row.room.getRoomType() + ")";
+        String roomNumber = row.room.getRoomNumber() == null ? "-" : row.room.getRoomNumber();
+        String roomType = row.room.getRoomType() == null ? "-" : row.room.getRoomType().name();
+        return row.room.getRoomId() + " (" + roomNumber + " " + roomType + ")";
     }
 
     private static class TaskRow {

@@ -13,7 +13,6 @@ import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
-import tarumtresort.utility.ConsoleUtil;
 
 /**
  *
@@ -52,8 +51,6 @@ public class ReportMenu {
                     break;
                 case 0:
                     break;
-                default:
-                    ConsoleUtil.printError("Invalid choice! Please try again.");
             }
 
             if (choice != 0) {
@@ -71,12 +68,11 @@ public class ReportMenu {
 
         LinkedListInterface<Room> rooms = new LinkedList<>();
         roomDAO.loadFromFile(rooms);
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
         LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
         LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
         LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
 
-        ReportResult result = new RoomTurnoverReport(rooms, staffs, tasks, assignments, changes)
+        ReportResult result = new RoomTurnoverReport(rooms, tasks, assignments, changes)
                 .generate(range[0], range[1]);
         ui.printReport(result, "ROOM TURNOVER & READINESS REPORT");
     }

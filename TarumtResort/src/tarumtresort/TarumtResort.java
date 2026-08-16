@@ -6,6 +6,7 @@ import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.MainMenuUI;
 import tarumtresort.control.HousekeepingController;
 import tarumtresort.control.ReservationControl;
+import tarumtresort.utility.ConsoleUtil;
 
 /**
  *
@@ -16,7 +17,7 @@ public class TarumtResort {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        try {
+        try (scanner) {
             MainMenuUI menu = new MainMenuUI(scanner);
 
             int choice;
@@ -61,9 +62,7 @@ public class TarumtResort {
                 }
             } while (choice != 0);
         } catch (Exception e) {
-            System.err.println("\n  ✗ An unexpected error occurred: " + e.getMessage());
-        } finally {
-            scanner.close();
+            ConsoleUtil.printError("\n  ✗ An unexpected error occurred: " + e.getMessage());
         }
     }
 }
