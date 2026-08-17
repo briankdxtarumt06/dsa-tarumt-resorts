@@ -36,7 +36,31 @@ public class PointsController {
         rewardList = rewardDAO.retrieveFromFile();
         guestList = new GuestControl().getAllGuests();
         pointsUI = new PointsManagementUI(scanner);
+        if (memberList.isEmpty() || rewardList.isEmpty()) {
+            seedSampleData();
+        }
         reconcileTiersOnLoad();
+    }
+
+    /**
+     * First-run fallback: when no data files exist yet, seed the points
+     * module with realistic sample data (members, rewards, guests) and
+     * persist it so later runs load normally from the JSON files.
+     */
+    private void seedSampleData() {
+        PointsManagementUI.SampleData sample = PointsManagementUI.generateSampleData();
+        if (memberList.isEmpty()) {
+            memberList = sample.getMembers();
+            memberDAO.saveToFile(memberList);
+        }
+        if (rewardList.isEmpty()) {
+            rewardList = sample.getRewards();
+            rewardDAO.saveToFile(rewardList);
+        }
+        if (guestList.isEmpty()) {
+            guestList = sample.getGuests();
+            guestDAO.saveToFile(guestList);
+        }
     }
 
 
