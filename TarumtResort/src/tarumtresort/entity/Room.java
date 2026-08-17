@@ -39,7 +39,7 @@ public class Room implements Comparable<Room>{
     public void setPricePerNight(double pricePerNight) { this.pricePerNight = pricePerNight; }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "Room{" +
                 "roomId='" + roomId + '\'' +
                 ", roomNumber='" + roomNumber + '\'' +
