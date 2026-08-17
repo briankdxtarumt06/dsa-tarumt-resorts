@@ -1,7 +1,11 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Reservation;
+import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
 public class ReservationUI {
 
@@ -9,42 +13,73 @@ public class ReservationUI {
 
     // MENU
     public int getMenuChoice() {
-        System.out.println("  [ WALK-IN REGISTRATION & BOOKING MODULE ]");
+        ConsoleUtil.clearScreen();
+        System.out.println("========================================");
+        System.out.println("   WALK-IN REGISTRATION & BOOKING ");
+        System.out.println("========================================");
         System.out.println("  1. Register Guest");
-        System.out.println("  2. Assign Room to Next Guest");
-        System.out.println("  3. Check In");
-        System.out.println("  4. Check Out");
-        System.out.println("  5. View Queue");
-        System.out.println("  6. Check Queue Position");
-        System.out.println("  7. Cancel Reservation");
-        System.out.println("  8. Reports");
+        System.out.println("  2. Book Room");
+        System.out.println("  3. Guest Arrival");
+        System.out.println("  4. Assign Room to Next Guest");
+        System.out.println("  5. Check In");
+        System.out.println("  6. Check Out");
+        System.out.println("  7. View Queue");
+        System.out.println("  8. Check Queue Position");
+        System.out.println("  9. Cancel Reservation");
+        System.out.println("  10. Reports");
         System.out.println("  0. Exit");
-        return inputIntChoice("Enter choice", 0, 8);
+        return inputIntChoice("\nEnter choice", 0, 10);
     }
 
     // INPUTS 
     public int inputRoomTypeChoice() {
+        String[] header = {"No.", "Room Type"};
+        String[][] rows = {
+            {"1", "STANDARD SINGLE"},
+            {"2", "STANDARD DOUBLE"},
+            {"3", "STANDARD TRIPLE"},
+            {"4", "DELUXE SINGLE"},
+            {"5", "DELUXE DOUBLE"},
+            {"6", "DELUXE TRIPLE"},
+            {"7", "SUITE"},
+            {"0", "Back"}
+        };
+
         System.out.println("\nSelect Room Type:");
-        System.out.println("1. STANDARD SINGLE");
-        System.out.println("2. STANDARD DOUBLE");
-        System.out.println("3. STANDARD TRIPLE");
-        System.out.println("4. DELUXE SINGLE");
-        System.out.println("5. DELUXE DOUBLE");
-        System.out.println("6. DELUXE TRIPLE");
-        System.out.println("7. SUITE");
-        System.out.println("0. Back");
-        System.out.print("Enter choice: ");
-        return Integer.parseInt(scanner.nextLine().trim());
+        TablePrinter.displayTable(header, rows);
+
+        return inputIntChoice("Enter choice", 0, 7);
     }
 
     public int inputNumberOfGuests() {
-        System.out.print("Number of guests in room: ");
-        return Integer.parseInt(scanner.nextLine().trim());
+        while (true) {
+            System.out.print("Number of guests in room: ");
+            try {
+                int value = Integer.parseInt(scanner.nextLine().trim());
+                if (value >= 1) {
+                    return value;
+                }
+                System.out.println("Must be at least 1!");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input! Please enter a number.");
+            }
+        }
     }
 
     public int inputNumberOfNights() {
-        System.out.print("Number of nights: ");
-        return Integer.parseInt(scanner.nextLine().trim());
+        while (true) {
+            ConsoleUtil.clearScreen();
+            System.out.print("Number of nights: ");
+            try {
+                int value = Integer.parseInt(scanner.nextLine().trim());
+                if (value >= 1) {
+                    return value;
+                }
+                System.out.println("Must be at least 1!");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input! Please enter a number.");
+            }
+        }
     }
 
     public String inputDate(String prompt) {
@@ -70,94 +105,128 @@ public class ReservationUI {
     // PRINT TABLE
     // print reservation details aftre finish reservation 
     public void printReservationDetails(Reservation r) {
-        System.out.println("\n[Reservation Details]");
-        System.out.println("Reservation ID     : " + r.getReservationId());
-        System.out.println("Confirmation No.   : " + r.getConfirmationNumber());
-        System.out.println("Guest ID           : " + r.getGuestId());
-        System.out.println("Room Type          : " + r.getRoomTypeRequested());
-        System.out.println("No. of Guests      : " + r.getNumberOfGuests());
-        System.out.println("No. of Nights      : " + r.getNumberOfNights());
-        System.out.println("Reservation Type   : " + r.getReservationType());
-        System.out.println("Status             : " + r.getStatus());
-        System.out.println("Registered At      : " + r.getTimestamps().getRegistrationTimestamp());
-        System.out.println("Expected Check-In  : " + r.getTimestamps().getExpectedCheckInDate());
-        System.out.println("Expected Check-Out : " + r.getTimestamps().getExpectedCheckOutDate());
-        if (r.getTimestamps().getAssignedTime() != null)
-            System.out.println("Assigned At        : " + r.getTimestamps().getAssignedTime());
-        if (r.getTimestamps().getActualCheckInTime() != null)
-            System.out.println("Checked In At      : " + r.getTimestamps().getActualCheckInTime());
-        if (r.getTimestamps().getActualCheckOutTime() != null)
-            System.out.println("Checked Out At     : " + r.getTimestamps().getActualCheckOutTime());
+        String[] header = {
+            "Reservation ID", "Conf. No.", "Guest ID", "Room Type",
+            "Guests", "Nights", "Type", "Status",
+            "Registered At", "Expected Check-In", "Expected Check-Out",
+            "Assigned At", "Checked In At", "Checked Out At"
+        };
+
+        String[][] rows = {
+            {
+                r.getReservationId(),
+                r.getConfirmationNumber(),
+                r.getGuestId(),
+                r.getRoomTypeRequested().toString(),
+                String.valueOf(r.getNumberOfGuests()),
+                String.valueOf(r.getNumberOfNights()),
+                r.getReservationType().toString(),
+                r.getStatus().toString(),
+                String.valueOf(r.getTimestamps().getRegistrationTimestamp()),
+                String.valueOf(r.getTimestamps().getExpectedCheckInDate()),
+                String.valueOf(r.getTimestamps().getExpectedCheckOutDate()),
+                r.getTimestamps().getAssignedTime() != null ? r.getTimestamps().getAssignedTime().toString() : "-",
+                r.getTimestamps().getActualCheckInTime() != null ? r.getTimestamps().getActualCheckInTime().toString() : "-",
+                r.getTimestamps().getActualCheckOutTime() != null ? r.getTimestamps().getActualCheckOutTime().toString() : "-"
+            }
+        };
+
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public void printReservationDetails(LinkedListInterface<Reservation> reservations) {
+        if (reservations.size() == 0) {
+            System.out.println("\nNo reservations found.");
+            return;
+        }
+
+        String[] header = {
+            "No.", "Conf. No.", "Room Type", "Guests", "Nights",
+            "Type", "Status", "Expected Check-In", "Expected Check-Out"
+        };
+
+        String[][] rows = new String[reservations.size()][9];
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            rows[i] = new String[]{
+                String.valueOf(i + 1),
+                r.getConfirmationNumber(),
+                r.getRoomTypeRequested().toString(),
+                String.valueOf(r.getNumberOfGuests()),
+                String.valueOf(r.getNumberOfNights()),
+                r.getReservationType().toString(),
+                r.getStatus().toString(),
+                String.valueOf(r.getTimestamps().getExpectedCheckInDate()),
+                String.valueOf(r.getTimestamps().getExpectedCheckOutDate())
+            };
+        }
+
+        TablePrinter.displayTable(header, rows);
     }
 
     public void printWaitingQueueTable(String[][] data) {
-        System.out.println("\n[Waiting Queue]");
+        System.out.println("\nWaiting Queue");
         if (data.length <= 1) {
             System.out.println("  No reservations in queue.");
             return;
         }
-        // 等 table push 了改成 Table.printTable(data)
-        for (String[] row : data) {
-            for (String col : row) {
-                System.out.printf("%-20s", col);
-            }
-            System.out.println();
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
         }
+
+        TablePrinter.displayTable(header, rows);
         System.out.println("Total: " + (data.length - 1) + " reservation(s)");
     }
 
     // MESSAGE METHODS
     public void printSuccess() {
-        System.out.println("\n  ✓ Operation successful!");
+        ConsoleUtil.printSuccess("\n  Operation successful!");
     }
 
     public void printNotFound() {
-        System.out.println("\n  ✗ Record not found!");
+        ConsoleUtil.printWarning("\n  Record not found!");
     }
 
     public void printCannotCheckIn() {
-        System.out.println("\n  ✗ Cannot check in. Expected check-in date not yet reached!");
+        ConsoleUtil.printError("\n  Cannot check in. Expected check-in date not yet reached!");
     }
 
     public void printRoomNotAvailable() {
-        System.out.println("\n  ✗ No available room for the requested room type!");
+        ConsoleUtil.printWarning("\n  No available room for the requested room type!");
     }
 
     public void printCancelled() {
-        System.out.println("\n  ✓ Reservation cancelled successfully!");
+        ConsoleUtil.printSuccess("\n  Reservation cancelled successfully!");
     }
 
     public void printExitMessage() {
-        System.out.println("\n  Exiting Walk-In Registration & Booking Module. Goodbye!");
+        ConsoleUtil.printSuccess("\n  Exiting Walk-In Registration & Booking Module. Goodbye!");
     }
 
     public void printInvalidChoice() {
-        System.out.println("\n  ✗ Invalid choice! Please try again.");
+        ConsoleUtil.printError("\n  Invalid choice! Please try again.");
     }
 
     public void printError(String message) {
-        System.out.println("\n  ✗ " + message);
+        ConsoleUtil.printError("\n  " + message);
     }
 
     public void printCannotCancel(){
-        System.out.print(" ✗ Your reservation cannot be canceled.");
+        ConsoleUtil.printError(" Your reservation cannot be canceled.");
     }
     
     //others
     public int showSubMenu(String title, String[][] options) {
+        String[] header = {"No.", "Option"};
+
         System.out.println("\n" + title);
-        for (int i = 0; i < options.length; i++) {
-            System.out.println(options[i][0] + ". " + options[i][1]);
-        }
-        System.out.print("Enter choice: ");
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("  ✗ Invalid input!");
-                System.out.print("Enter choice: ");
-            }
-        }
+        TablePrinter.displayTable(header, options);
+
+        int maxChoice = options.length - 1;
+        return inputIntChoice("Enter choice", 0, maxChoice);
     }
 
     // HELPER METHODS
@@ -169,9 +238,9 @@ public class ReservationUI {
                 choice = scanner.nextInt();
                 scanner.nextLine();
                 if (choice < min || choice > max)
-                    System.out.println("  ✗ Please enter a number between " + min + " and " + max + "!");
+                    System.out.println("Please enter a number between " + min + " and " + max + "!");
             } else {
-                System.out.println("  ✗ Invalid input! Please enter a number.");
+                System.out.println("Invalid input! Please enter a number.");
                 scanner.nextLine();
             }
         }
@@ -190,7 +259,7 @@ public class ReservationUI {
             System.out.println("[Y] YES - " + yesMessage);
             System.out.println("[N] NO - " + noMessage);
             System.out.println();
-            System.out.print("Your choice (y/n)\n> ");
+            System.out.print("Your choice (y/n): ");
 
             String line = scanner.nextLine().trim();
             userInput = line.isEmpty() ? ' ' : Character.toLowerCase(line.charAt(0));

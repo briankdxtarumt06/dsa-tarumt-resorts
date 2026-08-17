@@ -1,31 +1,54 @@
 package tarumtresort.control;
 
 import tarumtresort.dao.GuestDAO;
+import tarumtresort.dao.NationalityDAO;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.GuestUI;
 import tarumtresort.entity.Guest;
+import tarumtresort.utility.ConsoleUtil;
 
 public class GuestControl {
 
+    private static final String[] DEFAULT_NATIONALITIES = {
+        "Malaysian", "Singaporean", "Indonesian", "Chinese", "Indian",
+        "Thai", "Korean", "Japanese", "American", "British", "Saudi Arabian"
+    };
+
     // list declared
     private LinkedListInterface<Guest> guestList = new LinkedList<>();
-    
+    private LinkedListInterface<String> customNationalities = new LinkedList<>();
+
     // dao 
     private static final GuestDAO guestDAO = new GuestDAO();
-    
+    private static final NationalityDAO nationalityDAO = new NationalityDAO();
+  
     // 
     private GuestUI guestUI = new GuestUI();
 
     // Constructor
     public GuestControl() {
         guestDAO.loadFromFile(guestList);
+
+        String[] loaded = nationalityDAO.loadCustomNationalities();
+        for (String n : loaded) {
+            customNationalities.addBack(n);
+        }
     }
 
     // case 1: register a new guest - continue with menu/ room booking
     public Guest registerGuest() {
+        ConsoleUtil.clearScreen();
         String name = capitalizeName(guestUI.inputName());
-        String nationality = guestUI.inputNationality();
+        if (name.equals("0")) return null;
+        
+        while (isDuplicateName(name)) {
+            guestUI.printInvalidInput("Guest with this name already exists!");
+            name = capitalizeName(guestUI.inputName());
+        }
+        
+        String nationality = guestUI.inputNationality(getNationalityOptions());
+        addNationalityIfNew(nationality);
 
         String icOrPassport;
         if (nationality.equalsIgnoreCase("Malaysian")) {
@@ -139,6 +162,34 @@ public class GuestControl {
         return null;
     }
 
+    public String[] getNationalityOptions() {
+        String[] result = new String[DEFAULT_NATIONALITIES.length + customNationalities.size()];
+        System.arraycopy(DEFAULT_NATIONALITIES, 0, result, 0, DEFAULT_NATIONALITIES.length);
+        for (int i = 0; i < customNationalities.size(); i++) {
+            result[DEFAULT_NATIONALITIES.length + i] = customNationalities.get(i);
+        }
+        return result;
+    }
+
+    public void addNationalityIfNew(String nationality) {
+        for (String d : DEFAULT_NATIONALITIES) {
+            if (d.equalsIgnoreCase(nationality)) return;
+        }
+        for (int i = 0; i < customNationalities.size(); i++) {
+            if (customNationalities.get(i).equalsIgnoreCase(nationality)) return;
+        }
+        customNationalities.addBack(nationality);
+        saveCustomNationalities();
+    }
+
+    private void saveCustomNationalities() {
+        String[] arr = new String[customNationalities.size()];
+        for (int i = 0; i < customNationalities.size(); i++) {
+            arr[i] = customNationalities.get(i);
+        }
+        nationalityDAO.saveCustomNationalities(arr);
+    }
+
     // get all guests
     public LinkedListInterface<Guest> getAllGuests() {
         return guestList;
@@ -193,12 +244,14 @@ public class GuestControl {
         while (true) {
             value = guestUI.inputIc();  // call UI to get input
             if (value == null) continue;
-            String digits = value.replace("-", "").trim();
+            String trimmed = value.trim();
 
-            if (digits.length() != 12 || !digits.chars().allMatch(Character::isDigit)) {
-                guestUI.printInvalidInput("Invalid IC format!");
+            if (trimmed.length() != 12 || !trimmed.chars().allMatch(Character::isDigit)) {
+                guestUI.printInvalidInput("Invalid IC format! Must be 12 digits, no dashes (e.g. 060322140562)");
                 continue;
             }
+
+            String digits = trimmed;
 
             int mm = Integer.parseInt(digits.substring(2, 4));
             int dd = Integer.parseInt(digits.substring(4, 6));
@@ -276,6 +329,16 @@ public class GuestControl {
         return false;
     }
 
+    // check if name repeated
+    public boolean isDuplicateName(String name) {
+        for (int i = 0; i < guestList.size(); i++) {
+            if (guestList.get(i).getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //OTHERS
     public String capitalizeName(String name) {
         String[] guestName = name.trim().split(" ");
@@ -294,4 +357,7 @@ public class GuestControl {
         return result;
     }
 
+    public void saveGuestList() {
+        guestDAO.saveToFile(guestList);
+    }
 }

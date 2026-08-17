@@ -1,5 +1,6 @@
 package tarumtresort.entity;
 
+import java.time.LocalDate;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.*;
@@ -51,5 +52,21 @@ public class Room implements Comparable<Room>{
     @Override
     public int compareTo(Room other) {
         return this.roomId.compareTo(other.roomId);
+    }
+
+    public boolean isAvailableForDateRange(LocalDate checkIn, LocalDate checkOut) {
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+
+            LocalDate existingCheckIn = r.getTimestamps().getExpectedCheckInDate();
+            LocalDate existingCheckOut = r.getTimestamps().getExpectedCheckOutDate();
+
+            boolean overlap = checkIn.isBefore(existingCheckOut) && checkOut.isAfter(existingCheckIn);
+
+            if (overlap) {
+                return false;
+            }
+        }
+        return true;
     }
 }
