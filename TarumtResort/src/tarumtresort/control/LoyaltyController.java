@@ -5,9 +5,11 @@ import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.boundary.MemberManagementUI;
 import tarumtresort.boundary.PointsManagementUI;
-import tarumtresort.dao.MemberDAO;
+import tarumtresort.boundary.RewardManagementUI;
 import tarumtresort.dao.GuestDAO;
+import tarumtresort.dao.MemberDAO;
 import tarumtresort.dao.RewardDAO;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
@@ -17,7 +19,14 @@ import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
 
-public class PointsController {
+/**
+ * Combined controller for the loyalty module: member management, reward
+ * catalogue management, points earning/expiry, and redemption requests.
+ * Previously split across PointsController, MemberController and
+ * RewardController; merged so all loyalty data is loaded once and shared.
+ */
+public class LoyaltyController {
+
     private LinkedListInterface<Member> memberList = new LinkedList<>();
     private LinkedListInterface<Reward> rewardList = new LinkedList<>();
     private LinkedListInterface<Guest> guestList = new LinkedList<>();
@@ -25,46 +34,88 @@ public class PointsController {
     private MemberDAO memberDAO = new MemberDAO();
     private RewardDAO rewardDAO = new RewardDAO();
     private GuestDAO guestDAO = new GuestDAO();
+
+    private MemberManagementUI memberUI;
+    private RewardManagementUI rewardUI;
     private PointsManagementUI pointsUI;
 
-    public PointsController() {
+    public LoyaltyController() {
         this(new Scanner(System.in));
     }
 
-    public PointsController(Scanner scanner) {
+    public LoyaltyController(Scanner scanner) {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
         guestList = new GuestControl().getAllGuests();
+        memberUI = new MemberManagementUI(scanner);
+        rewardUI = new RewardManagementUI(scanner);
         pointsUI = new PointsManagementUI(scanner);
-        if (memberList.isEmpty() || rewardList.isEmpty()) {
-            seedSampleData();
-        }
         reconcileTiersOnLoad();
     }
 
-    /**
-     * First-run fallback: when no data files exist yet, seed the points
-     * module with realistic sample data (members, rewards, guests) and
-     * persist it so later runs load normally from the JSON files.
-     */
-    private void seedSampleData() {
-        PointsManagementUI.SampleData sample = PointsManagementUI.generateSampleData();
-        if (memberList.isEmpty()) {
-            memberList = sample.getMembers();
-            memberDAO.saveToFile(memberList);
-        }
-        if (rewardList.isEmpty()) {
-            rewardList = sample.getRewards();
-            rewardDAO.saveToFile(rewardList);
-        }
-        if (guestList.isEmpty()) {
-            guestList = sample.getGuests();
-            guestDAO.saveToFile(guestList);
-        }
+    // ======================= MENU ENTRY POINTS =======================
+
+    /** Member management menu (was MemberController.run). */
+    public void runMemberMenu() {
+        int choice;
+        do {
+            choice = memberUI.getMenuChoice();
+            switch (choice) {
+                case 1:
+                    addMemberFlow();
+                    break;
+                case 2:
+                    updateMemberFlow();
+                    break;
+                case 3:
+                    removeMemberFlow();
+                    break;
+                case 4:
+                    memberUI.displayMembers(memberList);
+                    memberUI.pause();
+                    break;
+                case 5:
+                    viewProfileFlow();
+                    break;
+                case 6:
+                    memberUI.showMessage("Returning to main menu...");
+                    break;
+                default:
+                    memberUI.showError("Invalid choice. Please enter 1 - 6.");
+            }
+        } while (choice != 6);
     }
 
+    /** Reward catalogue menu (was RewardController.run). */
+    public void runRewardMenu() {
+        int choice;
+        do {
+            choice = rewardUI.getMenuChoice();
+            switch (choice) {
+                case 1:
+                    addRewardFlow();
+                    break;
+                case 2:
+                    removeRewardFlow();
+                    break;
+                case 3:
+                    updateRewardFlow();
+                    break;
+                case 4:
+                    rewardUI.displayRewards(rewardList);
+                    rewardUI.pause();
+                    break;
+                case 5:
+                    rewardUI.showMessage("Returning to main menu...");
+                    break;
+                default:
+                    rewardUI.showError("Invalid choice. Please enter 1 - 5.");
+            }
+        } while (choice != 5);
+    }
 
-    public void run() {
+    /** Points, redemption and notification menu (was PointsController.run). */
+    public void runPointsMenu() {
         String alert = generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
             pointsUI.show(alert);
@@ -107,6 +158,263 @@ public class PointsController {
                     pointsUI.showError("Invalid choice. Please enter 1 - 10.");
             }
         } while (choice != 10);
+    }
+
+    // ======================= MEMBER MANAGEMENT =======================
+
+    private void addMemberFlow() {
+        String guestId = new GuestControl().generateGuestId();
+        Member member = memberUI.inputNewMember(nextMemberId(), guestId);
+        if (member == null) {
+            memberUI.showMessage("Operation cancelled.");
+            return;
+        }
+        memberUI.showMessage(addMember(member));
+    }
+
+    private void updateMemberFlow() {
+        String memberId = memberUI.selectMember(memberList, "Select a member to update");
+        if (memberId == null) {
+            return;
+        }
+        Member member = findMember(memberId);
+        memberUI.show("Current tier: " + member.getTier());
+        Tier tier = memberUI.selectTier();
+        if (tier == null) {
+            return;
+        }
+        memberUI.showMessage(updateMember(memberId, tier));
+    }
+
+    private void removeMemberFlow() {
+        String memberId = memberUI.selectMember(memberList, "Select a member to remove");
+        if (memberId == null) {
+            return;
+        }
+        memberUI.showMessage(removeMember(memberId));
+    }
+
+    private void viewProfileFlow() {
+        String memberId = memberUI.selectMember(memberList, "Select a member");
+        if (memberId == null) {
+            return;
+        }
+        memberUI.displayProfile(findMember(memberId));
+        memberUI.pause();
+    }
+
+    public LinkedListInterface<Member> getMembers() {
+        return memberList;
+    }
+
+    public Member findMember(String memberId) {
+        for (int i = 0; i < memberList.size(); i++) {
+            if (memberList.get(i).getMemberId().equals(memberId)) {
+                return memberList.get(i);
+            }
+        }
+        return null;
+    }
+
+    public String addMember(Member member) {
+        if (member == null || member.getMemberId() == null) {
+            return "Member cannot be null and must have an id.";
+        }
+        if (findMember(member.getMemberId()) != null) {
+            return "Member id already exists: " + member.getMemberId();
+        }
+        memberList.addSorted(member);
+        persistMembers();
+        return "Member added: " + member.getMemberId() + " (Tier: " + member.getTier() + ").";
+    }
+
+    public String removeMember(String memberId) {
+        Member member = findMember(memberId);
+        if (member == null) {
+            return "Member not found: " + memberId;
+        }
+        LinkedListInterface<Member> kept = new LinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            if (!memberList.get(i).getMemberId().equals(memberId)) {
+                kept.addBack(memberList.get(i));
+            }
+        }
+        memberList.clear();
+        for (int i = 0; i < kept.size(); i++) {
+            memberList.addBack(kept.get(i));
+        }
+        persistMembers();
+        return "Member removed: " + memberId + ".";
+    }
+
+    public String updateMember(String memberId, Tier tier) {
+        Member member = findMember(memberId);
+        if (member == null) {
+            return "Member not found: " + memberId;
+        }
+        member.setTier(tier);
+        persistMembers();
+        return "Member " + memberId + " updated to tier " + tier + ".";
+    }
+
+    public String nextMemberId() {
+        try {
+            int max = 0;
+            for (int i = 0; i < memberList.size(); i++) {
+                String mid = memberList.get(i).getMemberId();
+                if (mid != null && mid.matches("M\\d+")) {
+                    int n = Integer.parseInt(mid.substring(1));
+                    if (n > max) {
+                        max = n;
+                    }
+                }
+            }
+            return String.format("M%03d", max + 1);
+        } catch (RuntimeException e) {
+            return String.format("M%03d", memberList.size() + 1);
+        }
+    }
+
+    // ======================= REWARD MANAGEMENT =======================
+
+    private void addRewardFlow() {
+        Reward reward = rewardUI.inputNewReward(nextRewardId());
+        if (reward == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        rewardUI.showMessage(addReward(reward));
+    }
+
+    private void removeRewardFlow() {
+        String rewardId = rewardUI.selectRewardId(rewardList, "Select a reward to remove");
+        if (rewardId == null) {
+            return;
+        }
+        rewardUI.showMessage(removeReward(rewardId));
+    }
+
+    private void updateRewardFlow() {
+        String rewardId = rewardUI.selectRewardId(rewardList, "Select a reward to update");
+        if (rewardId == null) {
+            return;
+        }
+        Reward reward = findReward(rewardId);
+        String name = rewardUI.promptWithDefault("New name", reward.getName());
+        if (name == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        String description = rewardUI.promptWithDefault("New description", reward.getDescription());
+        if (description == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        Integer cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
+        if (cost == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        rewardUI.showMessage(updateReward(rewardId, name, description, cost));
+    }
+
+    public LinkedListInterface<Reward> getRewards() {
+        return rewardList;
+    }
+
+    public Reward findReward(String rewardId) {
+        for (int i = 0; i < rewardList.size(); i++) {
+            if (rewardList.get(i).getRewardId().equals(rewardId)) {
+                return rewardList.get(i);
+            }
+        }
+        return null;
+    }
+
+    public String addReward(Reward reward) {
+        if (reward == null || reward.getRewardId() == null) {
+            return "Reward cannot be null and must have an id.";
+        }
+        if (findReward(reward.getRewardId()) != null) {
+            return "Reward id already exists: " + reward.getRewardId();
+        }
+        rewardList.addSorted(reward);
+        persistRewards();
+        return "Reward added: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
+    }
+
+    public String removeReward(String rewardId) {
+        Reward reward = findReward(rewardId);
+        if (reward == null) {
+            return "Reward not found: " + rewardId;
+        }
+        LinkedListInterface<Reward> kept = new LinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {
+            if (!rewardList.get(i).getRewardId().equals(rewardId)) {
+                kept.addBack(rewardList.get(i));
+            }
+        }
+        rewardList.clear();
+        for (int i = 0; i < kept.size(); i++) {
+            rewardList.addBack(kept.get(i));
+        }
+        persistRewards();
+        return "Reward removed: " + reward.getName() + " (" + rewardId + ").";
+    }
+
+    public String updateReward(String rewardId, String name, String description, int pointCost) {
+        Reward reward = findReward(rewardId);
+        if (reward == null) {
+            return "Reward not found: " + rewardId;
+        }
+        reward.setName(name);
+        reward.setDescription(description);
+        reward.setPointCost(pointCost);
+        LinkedListInterface<Reward> reordered = new LinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {
+            reordered.addSorted(rewardList.get(i));
+        }
+        rewardList.clear();
+        for (int i = 0; i < reordered.size(); i++) {
+            rewardList.addBack(reordered.get(i));
+        }
+        persistRewards();
+        return "Reward updated: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
+    }
+
+    public String nextRewardId() {
+        try {
+            int max = 0;
+            for (int i = 0; i < rewardList.size(); i++) {
+                String rid = rewardList.get(i).getRewardId();
+                if (rid != null && rid.matches("R\\d+")) {
+                    int n = Integer.parseInt(rid.substring(1));
+                    if (n > max) {
+                        max = n;
+                    }
+                }
+            }
+            return String.format("R%03d", max + 1);
+        } catch (RuntimeException e) {
+            return String.format("R%03d", rewardList.size() + 1);
+        }
+    }
+
+    // ======================= POINTS & REDEMPTION =======================
+
+    private void reconcileTiersOnLoad() {
+        boolean changed = false;
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            Tier correct = tierFor(getCumulativeEarned(m.getMemberId()));
+            if (m.getTier() != correct) {
+                m.setTier(correct);
+                changed = true;
+            }
+        }
+        if (changed) {
+            memberDAO.saveToFile(memberList);
+        }
     }
 
     private void viewBalanceFlow() {
@@ -213,25 +521,6 @@ public class PointsController {
         }
     }
 
-    private void reconcileTiersOnLoad() {
-        boolean changed = false;
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
-            Tier correct = tierFor(getCumulativeEarned(m.getMemberId()));
-            if (m.getTier() != correct) {
-                m.setTier(correct);
-                changed = true;
-            }
-        }
-        if (changed) {
-            memberDAO.saveToFile(memberList);
-        }
-    }
-
-    public LinkedListInterface<Member> getMembers() {
-        return memberList;
-    }
-
     public LinkedListInterface<PointTransaction> getPointTransactions() {
         LinkedListInterface<PointTransaction> result = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
@@ -252,19 +541,6 @@ public class PointsController {
             }
         }
         return result;
-    }
-
-    public LinkedListInterface<Reward> getRewards() {
-        return rewardList;
-    }
-
-    public Member findMember(String memberId) {
-        for (int i = 0; i < memberList.size(); i++) {
-            if (memberList.get(i).getMemberId().equals(memberId)) {
-                return memberList.get(i);
-            }
-        }
-        return null;
     }
 
     public LinkedListInterface<PointTransaction> getTransactions(String memberId) {
@@ -302,7 +578,7 @@ public class PointsController {
 
         recomputeBalance(member);
         if (totalExpired > 0) {
-            persist();
+            persistMembers();
             return totalExpired + " point(s) expired and removed from " + memberId + "'s balance:\n" + report;
         }
         return "No points expired for " + memberId + ".";
@@ -325,7 +601,7 @@ public class PointsController {
         member.getPointTransactionList().addSorted(t);
         recomputeBalance(member);
         recomputeTier(member, date);
-        persist();
+        persistMembers();
         return amount + " pts earned by " + memberId + " (expires " + expiry.toLocalDate() + "). New balance: "
                 + member.getPoints();
     }
@@ -346,7 +622,7 @@ public class PointsController {
                     + member.getPoints() + ".";
         }
         member.getRedemptionRecordList().addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId));
-        persist();
+        persistMembers();
         return "Redemption requested: " + reward.getName() + " (" + cost + " pts) for " + memberId
                 + " - pending approval.";
     }
@@ -403,7 +679,7 @@ public class PointsController {
         notifyMember(member, "REDEMPTION_APPROVED",
                 "Your redemption request " + redemptionId + " (" + reward.getName() + ") has been approved."
                         + voucherNote, now);
-        persist();
+        persistMembers();
         return "Approved " + redemptionId + " (" + reward.getName() + "):\n" + breakdown
                 + (voucherNote.isEmpty() ? "" : "  - voucher " + record.getVoucherCode()
                         + " worth RM" + String.format("%.2f", record.getVoucherValue()) + "\n")
@@ -464,7 +740,7 @@ public class PointsController {
                     return "Redemption " + redemptionId + " is not a voucher.";
                 }
                 r.setUsed(true);
-                persist();
+                persistMembers();
                 return "Voucher " + r.getVoucherCode() + " (RM"
                         + String.format("%.2f", r.getVoucherValue()) + ") marked as used.";
             }
@@ -499,7 +775,7 @@ public class PointsController {
             notifyMember(member, "REDEMPTION_REJECTED",
                     "Your redemption request " + redemptionId + " (" + rewardName + ") has been rejected.", now);
         }
-        persist();
+        persistMembers();
         return "Rejected redemption request " + redemptionId + ".";
     }
 
@@ -546,17 +822,12 @@ public class PointsController {
         member.setPoints(sum);
     }
 
-    private Reward findReward(String rewardId) {
-        for (int i = 0; i < rewardList.size(); i++) {
-            if (rewardList.get(i).getRewardId().equals(rewardId)) {
-                return rewardList.get(i);
-            }
-        }
-        return null;
+    private void persistMembers() {
+        memberDAO.saveToFile(memberList);
     }
 
-    private void persist() {
-        memberDAO.saveToFile(memberList);
+    private void persistRewards() {
+        rewardDAO.saveToFile(rewardList);
     }
 
     private String nextTransactionId() {
@@ -788,7 +1059,7 @@ public class PointsController {
         }
         return line;
     }
-    
+
     private void notifyMember(Member member, String type, String message, LocalDateTime now) {
         if (member == null || member.getGuestId() == null) {
             return;
@@ -800,5 +1071,4 @@ public class PointsController {
         guest.addNotification(new Notification(nextNotificationId(), type, message, now, false));
         guestDAO.saveToFile(guestList);
     }
-
 }
