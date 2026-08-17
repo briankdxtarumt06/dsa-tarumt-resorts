@@ -11,11 +11,12 @@ public class Reservation implements Comparable<Reservation>{
     private int numberOfGuests;
     private int numberOfNights;
     private ReservationType reservationType;
-    private ReservationStatus status;
+    private ReservationStatus status;     
+    private boolean isNoShow;        
     private ReservationTimestamps timestamps;
 
     //constructors
-    public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId, RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType, ReservationStatus status, ReservationTimestamps timestamps) {
+    public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId, RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType, ReservationStatus status, boolean isNoShow, ReservationTimestamps timestamps) {
         this.reservationId = reservationId;
         this.confirmationNumber = confirmationNumber;
         this.guestId = guestId;
@@ -25,6 +26,7 @@ public class Reservation implements Comparable<Reservation>{
         this.numberOfNights = numberOfNights;
         this.reservationType = reservationType;
         this.status = status;
+        this.isNoShow = isNoShow;
         this.timestamps = timestamps;
     }
 
@@ -38,6 +40,7 @@ public class Reservation implements Comparable<Reservation>{
     public void setNumberOfNights(int numberOfNights) { this.numberOfNights = numberOfNights; }
     public void setReservationType(ReservationType reservationType) { this.reservationType = reservationType; }
     public void setStatus(ReservationStatus status) { this.status = status; }
+    public void serIsNoShow(boolean isNoShow){ this.isNoShow = isNoShow; }
     public void setTimestamps(ReservationTimestamps timestamps) { this.timestamps = timestamps; }
 
     //getters
@@ -50,6 +53,7 @@ public class Reservation implements Comparable<Reservation>{
     public int getNumberOfNights() { return numberOfNights; }
     public ReservationType getReservationType() { return reservationType; }
     public ReservationStatus getStatus() { return status; }
+    public boolean getIsNoShow(){ return isNoShow; }
     public ReservationTimestamps getTimestamps() { return timestamps; }
 
     // toString
