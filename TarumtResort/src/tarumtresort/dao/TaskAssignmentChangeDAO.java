@@ -31,15 +31,4 @@ public class TaskAssignmentChangeDAO {
             return new LinkedList<>();
         }
     }
-
-    // get a full entity by id (loads the latest records from disk)
-    public TaskAssignmentChange getTaskAssignmentChangeById(String changeId) {
-        LinkedListInterface<TaskAssignmentChange> changeList = retrieveTaskAssignmentChangeList();
-        for (int i = 0; i < changeList.size(); i++) {
-            if (changeList.get(i).getChangeId().equals(changeId)) {
-                return changeList.get(i);
-            }
-        }
-        return null;
-    }
 }

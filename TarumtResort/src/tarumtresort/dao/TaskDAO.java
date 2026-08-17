@@ -40,14 +40,4 @@ public class TaskDAO {
             return new LinkedList<>();
         }
     }
-
-    public Task getTaskById(String taskId) {
-        LinkedListInterface<Task> taskList = retrieveTaskList();
-        for (int i = 0; i < taskList.size(); i++) {
-            if (taskList.get(i).getTaskId().equals(taskId)) {
-                return taskList.get(i);
-            }
-        }
-        return null;
-    }
 }

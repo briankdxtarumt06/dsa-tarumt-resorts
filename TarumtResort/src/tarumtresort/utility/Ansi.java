@@ -5,12 +5,10 @@ package tarumtresort.utility;
  * @author Brian
  *
  * Small ANSI escape code helper for colored console output.
- * Colors can be switched off globally with -Dtarumtresort.nocolor=true
- * (e.g. when piping output to a file or an old terminal).
  */
 public final class Ansi {
 
-    public static final boolean ENABLED = !Boolean.getBoolean("tarumtresort.nocolor");
+    public static final boolean ENABLED = true;
 
     public static final String RESET = "\u001B[0m";
     public static final String BOLD = "\u001B[1m";
@@ -48,5 +46,13 @@ public final class Ansi {
 
     public static String cyan(String text) {
         return color(CYAN, text);
+    }
+
+    // remove all ANSI code
+    public static String strip(String text) {
+        if (!ENABLED || text == null) {
+            return text;
+        }
+        return text.replaceAll("\u001B\\[[0-9;]*m", "");
     }
 }
