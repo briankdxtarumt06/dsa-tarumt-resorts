@@ -5,6 +5,8 @@ import tarumtresort.boundary.HousekeepingUI;
 import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.MainMenuUI;
 import tarumtresort.control.HousekeepingController;
+import tarumtresort.control.InquiryController;
+import tarumtresort.control.PriorityReservationController;
 import tarumtresort.control.ReservationControl;
 import tarumtresort.utility.ConsoleUtil;
 
@@ -33,8 +35,7 @@ public class TarumtResort {
 
                     // VIP Reservation module
                     case 2:
-                        System.out.println("\n  ⚠ VIP Reservation module not yet integrated.");
-                        menu.pressEnterToContinue();
+                        new PriorityReservationController().run(null);
                         break;
 
                     // Housekeeping module
@@ -44,8 +45,7 @@ public class TarumtResort {
 
                     // Front-Desk Service module
                     case 4:
-                        System.out.println("\n  ⚠ Front-Desk Service module not yet integrated.");
-                        menu.pressEnterToContinue();
+                        new InquiryController().runInquiryModule();
                         break;
 
                     // Loyalty & Rewards module
