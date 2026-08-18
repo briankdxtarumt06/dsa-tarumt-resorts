@@ -6,7 +6,6 @@ import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.GuestUI;
 import tarumtresort.entity.Guest;
-import tarumtresort.utility.ConsoleUtil;
 
 public class GuestControl {
 

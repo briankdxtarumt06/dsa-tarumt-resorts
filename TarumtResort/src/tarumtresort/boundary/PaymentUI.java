@@ -1,43 +1,49 @@
 package tarumtresort.boundary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Payment;
+import tarumtresort.utility.Ansi;
 import tarumtresort.utility.TablePrinter;
 
 public class PaymentUI {
-    
+
     public void printBill(double roomCharge, double serviceCharge, double tax, double lateFee, double total) {
-        printBillTable(buildBillTableData(roomCharge, serviceCharge, tax, lateFee, total));
+        printBillHeader();
+        printBillTable(roomCharge, serviceCharge, tax, lateFee, total);
+        System.out.println("  " + Ansi.green("Thank you for choosing TARUMT Resort!"));
+        System.out.println();
     }
 
-    private String[][] buildBillTableData(double roomCharge, double serviceCharge, double tax, double lateFee, double total) {
-        boolean hasLateFee = lateFee > 0;
-        int rowCount = hasLateFee ? 6 : 5;
-
-        String[][] data = new String[rowCount][2];
-        data[0] = new String[]{"Description", "Amount (RM)"};
-        data[1] = new String[]{"Room Charge", String.format("%.2f", roomCharge)};
-        data[2] = new String[]{"Service Charge", String.format("%.2f", serviceCharge)};
-        data[3] = new String[]{"Tax", String.format("%.2f", tax)};
-
-        if (hasLateFee) {
-            data[4] = new String[]{"Late Checkout Fee", String.format("%.2f", lateFee)};
-            data[5] = new String[]{"Total", String.format("%.2f", total)};
-        } else {
-            data[4] = new String[]{"Total", String.format("%.2f", total)};
-        }
-
-        return data;
+    private void printBillHeader() {
+        System.out.println();
+        System.out.println("========================================");
+        System.out.println("          PAYMENT BILL");
+        System.out.println("========================================");
+        System.out.println();
     }
 
-    private void printBillTable(String[][] data) {
-        System.out.println("\n[Bill]");
-        for (String[] row : data) {
-            for (String col : row) {
-                System.out.printf("%-20s", col);
-            }
-            System.out.println();
+    private void printBillTable(double roomCharge, double serviceCharge, double tax, double lateFee, double total) {
+        String[] header = {"Description", "Amount (RM)"};
+
+        List<String[]> rows = new ArrayList<>();
+        rows.add(new String[]{"Room Charge", String.format("%.2f", roomCharge)});
+        rows.add(new String[]{"Service Charge (10%)", String.format("%.2f", serviceCharge)});
+        rows.add(new String[]{"Tax (6%)", String.format("%.2f", tax)});
+
+        if (lateFee > 0) {
+            rows.add(new String[]{"Late Checkout Fee", String.format("%.2f", lateFee)});
         }
+
+        // highlight the total row
+        rows.add(new String[]{
+            Ansi.bold("TOTAL"),
+            Ansi.bold("RM " + String.format("%.2f", total))
+        });
+
+        TablePrinter.displayTable(header, rows.toArray(new String[0][]));
     }
 
     public void printPaymentRecords(LinkedListInterface<Payment> payments) {
