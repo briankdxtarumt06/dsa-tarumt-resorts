@@ -32,7 +32,7 @@ public class MemberManagementUI {
         System.out.println(" 4. List Members");
         System.out.println(" 5. View Member Profile");
         System.out.println(" 6. Exit");
-        System.out.println("----------------------------------------");
+        System.out.println("===========================");
         return readInt("Enter your choice");
     }
 
