@@ -1,5 +1,9 @@
 package tarumtresort.boundary;
 
+import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.Payment;
+import tarumtresort.utility.TablePrinter;
+
 public class PaymentUI {
     
     public void printBill(double roomCharge, double serviceCharge, double tax, double lateFee, double total) {
@@ -34,5 +38,40 @@ public class PaymentUI {
             }
             System.out.println();
         }
+    }
+
+    public void printPaymentRecords(LinkedListInterface<Payment> payments) {
+        if (payments == null || payments.size() == 0) {
+            System.out.println("\nNo payment records found.");
+            return;
+        }
+
+        String[] header = {"Payment ID", "Conf. No.(s)", "Total (RM)", "Refunded (RM)", "Refund At", "Status"};
+        String[][] rows = new String[payments.size()][6];
+        for (int i = 0; i < payments.size(); i++) {
+            Payment p = payments.get(i);
+
+            StringBuilder confs = new StringBuilder(p.getReservationID() == null ? "-" : p.getReservationID());
+            LinkedListInterface<String> numbers = p.getConfirmationNumbers();
+            if (numbers != null) {
+                for (int j = 0; j < numbers.size(); j++) {
+                    if (numbers.get(j) != null && !numbers.get(j).equals(p.getReservationID())) {
+                        confs.append(", ").append(numbers.get(j));
+                    }
+                }
+            }
+
+            rows[i] = new String[]{
+                p.getPaymentID(),
+                confs.toString(),
+                String.format("%.2f", p.getTotalAmount()),
+                String.format("%.2f", p.getRefundedAmount()),
+                p.getRefundDateTime() != null ? p.getRefundDateTime().toString() : "-",
+                p.getPaymentStatus().toString()
+            };
+        }
+
+        System.out.println("\nPayment & Refund Records");
+        TablePrinter.displayTable(header, rows);
     }
 }

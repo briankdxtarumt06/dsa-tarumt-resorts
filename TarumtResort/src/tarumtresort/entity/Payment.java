@@ -20,6 +20,8 @@ public class Payment implements Comparable<Payment> {
     private LocalDateTime paymentDateTime;
     private String reservationID;
     private LinkedListInterface<String> confirmationNumbers = new LinkedList<>();
+    private double refundedAmount;
+    private LocalDateTime refundDateTime;
 
     public Payment (String paymentID, double roomCharge, double serviceCharge,
                     double tax, double totalAmount, PaymentMethod paymentMehod,
@@ -114,6 +116,22 @@ public class Payment implements Comparable<Payment> {
 
     public void addConfirmationNumber(String confirmationNumber) {
         confirmationNumbers.addBack(confirmationNumber);
+    }
+
+    public double getRefundedAmount() {
+        return refundedAmount;
+    }
+
+    public void setRefundedAmount(double refundedAmount) {
+        this.refundedAmount = refundedAmount;
+    }
+
+    public LocalDateTime getRefundDateTime() {
+        return refundDateTime;
+    }
+
+    public void setRefundDateTime(LocalDateTime refundDateTime) {
+        this.refundDateTime = refundDateTime;
     }
     
     @Override

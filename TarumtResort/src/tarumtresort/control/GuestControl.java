@@ -204,10 +204,15 @@ public class GuestControl {
 
             String guestId = guestList.get(i).getGuestId();
 
-            int number = Integer.parseInt(guestId.substring(3));
-
-            if (number > max) {
-                max = number;
+            if (guestId != null && guestId.startsWith("GST")) {
+                try {
+                    int number = Integer.parseInt(guestId.substring(3));
+                    if (number > max) {
+                        max = number;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // malformed id - skip it instead of crashing
+                }
             }
         }
 

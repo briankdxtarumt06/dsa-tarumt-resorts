@@ -127,6 +127,76 @@ public class PaymentControl {
         return payment;
     }
 
+        // refund policy: 100% refund if cancelled at least 24 hours before the
+    // 12pm check-in moment; 0% refund if cancelled within the last 24 hours.
+    // Called from cancelReservation() after the reservation is removed.
+    public double refundReservation(Reservation r, RoomControl roomControl) {
+        if (r == null || r.getTimestamps() == null || r.getTimestamps().getExpectedCheckInDate() == null) {
+            return 0.0;
+        }
+
+        LocalDateTime checkInMoment = r.getTimestamps().getExpectedCheckInDate().atTime(12, 0);
+        if (!LocalDateTime.now().isBefore(checkInMoment.minusHours(24))) {
+            return 0.0; // cancelled within 24 hours of check-in - no refund
+        }
+
+        Payment payment = findPaymentByConfirmationNumber(r.getConfirmationNumber());
+        if (payment == null) {
+            return 0.0;
+        }
+
+        // recompute this room's share of the bill with the same formula used at booking
+        double roomCharge = roomControl.getPriceByRoomType(r.getRoomTypeRequested()) * r.getNumberOfNights();
+        double serviceCharge = roomCharge * 0.10;
+        double tax = (roomCharge + serviceCharge) * 0.06;
+        double share = roomCharge + serviceCharge + tax;
+
+        double remaining = payment.getTotalAmount() - payment.getRefundedAmount();
+        if (remaining < 0.005) {
+            return 0.0; // already fully refunded (within rounding tolerance)
+        }
+        double refund = Math.min(share, remaining);
+        if (refund < 0.005) {
+            return 0.0;
+        }
+
+        payment.setRefundedAmount(payment.getRefundedAmount() + refund);
+        payment.setRefundDateTime(LocalDateTime.now());
+        paymentDAO.saveToFile(paymentList);
+        return refund;
+    }
+
+    // true if any payment record covers this confirmation number
+    public boolean hasPaymentFor(String confirmationNumber) {
+        return findPaymentByConfirmationNumber(confirmationNumber) != null;
+    }
+
+    private Payment findPaymentByConfirmationNumber(String confirmationNumber) {
+        for (int i = 0; i < paymentList.size(); i++) {
+            Payment p = paymentList.get(i);
+            if (confirmationNumber.equals(p.getReservationID())) {
+                return p;
+            }
+            LinkedListInterface<String> numbers = p.getConfirmationNumbers();
+            if (numbers != null) {
+                for (int j = 0; j < numbers.size(); j++) {
+                    if (confirmationNumber.equals(numbers.get(j))) {
+                        return p;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public void displayPaymentRecords() {
+        paymentUI.printPaymentRecords(paymentList);
+    }
+
+    public LinkedListInterface<Payment> getPaymentList() {
+        return paymentList;
+    }
+
     public PaymentMethod askPaymentMethod(tarumtresort.boundary.ReservationUI reservationUI) {
         String[][] methodOptions = {
             {"1", "Cash"},

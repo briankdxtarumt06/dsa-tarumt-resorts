@@ -53,7 +53,12 @@ public class Guest implements Comparable<Guest> {
     public String getContactNumber() { return contactNumber; }
     public String getNationality() { return nationality; }
     public String getAddress() { return address; }
-    public LinkedListInterface<Reservation> getReservations(){ return reservations; }
+    public LinkedListInterface<Reservation> getReservations(){
+        if (reservations == null) {
+            reservations = new LinkedList<>();
+        }
+        return reservations;
+    }
 
     public LinkedListInterface<Notification> getNotificationList() {
         if (notificationList == null) {

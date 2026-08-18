@@ -65,6 +65,7 @@ public class ReservationControl {
                 case 8: checkQueuePosition(); break; // check a specific position for certain client by entering the confirmation number
                 case 9: cancelReservation(); break; // cancel reservation (constraint: status like waiting, advance, assigned can cancel reservation but check in and check out both cannot make cancelation)
                 case 10: generateReport(); break; // generate the two report 
+                case 11: viewPaymentRecords(); break; // view payment & refund records
                 default: break;
             }
         } while (choice != 0);
@@ -870,6 +871,7 @@ public class ReservationControl {
 
                 reservationDAO.saveGuestQueue(guestQueue);
                 reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+                handleRefund(r);
                 reservationUI.printCancelled();
                 reservationUI.pressEnterToContinue();
                 return;
@@ -903,6 +905,7 @@ public class ReservationControl {
 
                 reservationDAO.saveBookingList(bookingList);
                 reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+                handleRefund(r);
                 reservationUI.printCancelled();
                 reservationUI.pressEnterToContinue();
                 return;
@@ -949,6 +952,7 @@ public class ReservationControl {
                     roomControl.updateRoomStatus(r.getRoomId(), RoomStatus.AVAILABLE);
                     reservationDAO.saveAssignedList(assignedList);
                     reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+                    handleRefund(r);
                     reservationUI.printCancelled();
                 }
                 reservationUI.pressEnterToContinue();
@@ -957,6 +961,23 @@ public class ReservationControl {
         }
 
         reservationUI.printNotFound();
+        reservationUI.pressEnterToContinue();
+    }
+
+    // refund policy: 100% if cancelled >= 24h before the 12pm check-in moment, else 0%
+    private void handleRefund(Reservation r) {
+        double refund = paymentControl.refundReservation(r, roomControl);
+        if (refund > 0) {
+            reservationUI.printSuccess("Refunded: RM " + String.format("%.2f", refund));
+        } else if (paymentControl.hasPaymentFor(r.getConfirmationNumber())) {
+            reservationUI.printError("Cancelled within 24 hours of check-in - no refund applies.");
+        }
+    }
+
+    // case 11
+    public void viewPaymentRecords() {
+        ConsoleUtil.clearScreen();
+        paymentControl.displayPaymentRecords();
         reservationUI.pressEnterToContinue();
     }
 
@@ -972,31 +993,36 @@ public class ReservationControl {
         // check booking list
         for (int i = 0; i < bookingList.size(); i++) {
             String reservationId = bookingList.get(i).getReservationId();
-            int number = Integer.parseInt(reservationId.substring(3));
-            if (number > max) {
-                max = number;
-            }
+            max = maxIdFrom(reservationId, max);
         }
 
         // check waiting queue
         for (int i = 0; i < guestQueue.size(); i++) {
             String reservationId = guestQueue.get(i).getReservationId();
-            int number = Integer.parseInt(reservationId.substring(3));
-            if (number > max) {
-                max = number;
-            }
+            max = maxIdFrom(reservationId, max);
         }
 
         // check assigned list
         for (int i = 0; i < assignedList.size(); i++) {
             String reservationId = assignedList.get(i).getReservationId();
-            int number = Integer.parseInt(reservationId.substring(3));
-            if (number > max) {
-                max = number;
-            }
+            max = maxIdFrom(reservationId, max);
         }
 
         return String.format("RES%03d", max + 1);
+    }
+
+    // parse "RESxxx" suffix defensively - malformed ids are skipped, never crash
+    private int maxIdFrom(String reservationId, int max) {
+        if (reservationId != null && reservationId.startsWith("RES")) {
+            try {
+                int number = Integer.parseInt(reservationId.substring(3));
+                if (number > max) {
+                    return number;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return max;
     }
         
     // generate confirmation number
