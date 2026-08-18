@@ -300,6 +300,7 @@ public class ReservationControl {
 
         while (true) {
             forceCheckoutOverdueReservations();
+            detectNoShowReservations();
 
             LinkedListInterface<Reservation> sourceList;
             String currentListName;
@@ -387,6 +388,39 @@ public class ReservationControl {
             System.out.println("\n" + forcedOut.size() + " guest(s) were automatically checked out for exceeding the "
                 + FORCE_CHECKOUT_HOUR + ":00 checkout deadline.");
             reservationUI.printWaitingQueueTable(buildCheckOutSummaryTableData(forcedOut));
+            reservationUI.pressEnterToContinue();
+        }
+    }
+
+    // business rule: an advance booking past its expectedCheckInDate with no arrival is a no-show, treated as a cancellation  
+    private void detectNoShowReservations() {
+        LocalDate today = LocalDate.now();
+        LinkedListInterface<Reservation> noShows = new LinkedList<>();
+
+        for (int i = bookingList.size() - 1; i >= 0; i--) {
+            Reservation r = bookingList.get(i);
+            if (r.getStatus() != ReservationStatus.WAITING) continue;
+
+            if (today.isAfter(r.getTimestamps().getExpectedCheckInDate())) {
+                bookingList.removeIndex(i);
+
+                Guest guest = getGuestById(r.getGuestId());
+                if (guest != null) {
+                    removeReservationFromGuest(guest, r);
+                }
+
+                handleRefund(r);
+                noShows.addBack(r);
+            }
+        }
+
+        if (noShows.size() > 0) {
+            reservationDAO.saveBookingList(bookingList);
+            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+            saveGuestList();
+
+            System.out.println("\n" + noShows.size() + " advance booking(s) auto-cancelled as no-show (guest never arrived on the expected check-in date).");
+            reservationUI.printWaitingQueueTable(buildNoShowTableData(noShows));
             reservationUI.pressEnterToContinue();
         }
     }
@@ -514,7 +548,6 @@ public class ReservationControl {
                 numberOfNights,
                 reservationType,
                 ReservationStatus.WAITING,
-                false,
                 timestamps
             );
 
@@ -1462,6 +1495,24 @@ public class ReservationControl {
     }
 
     private String[][] buildArrivalListTableData(LinkedListInterface<Reservation> list) {
+        String[][] data = new String[list.size() + 1][6];
+        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In"};
+        for (int i = 0; i < list.size(); i++) {
+            Reservation r = list.get(i);
+            String guestName = getGuestName(r.getGuestId());
+            data[i + 1] = new String[]{
+                String.valueOf(i + 1),
+                r.getConfirmationNumber(),
+                r.getGuestId(),
+                guestName != null ? guestName : "-",
+                r.getRoomTypeRequested().toString(),
+                r.getTimestamps().getExpectedCheckInDate().toString()
+            };
+        }
+        return data;
+    }
+
+    private String[][] buildNoShowTableData(LinkedListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
         data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In"};
         for (int i = 0; i < list.size(); i++) {
