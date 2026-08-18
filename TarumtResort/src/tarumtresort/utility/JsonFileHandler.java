@@ -3,19 +3,24 @@ package tarumtresort.utility;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.io.IOError;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +34,7 @@ public class JsonFileHandler {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
-            .registerTypeAdapterFactory(new LinkedListTypeAdapterFactory())
+            .registerTypeHierarchyAdapter(LinkedListInterface.class, new LinkedListInterfaceAdapter())
             .create();
 
     private JsonFileHandler() { 
@@ -92,7 +96,6 @@ public class JsonFileHandler {
                 result.addBack(GSON.fromJson(element, elementType));
             }
         } catch (IOError | RuntimeException e) {
-            System.err.println("Failed to parse " + file + ": " + e.getMessage());
             return new LinkedList<>();
         }
         return result;
@@ -199,7 +202,6 @@ public class JsonFileHandler {
                 result.addBack(entity);
             }
         } catch (IOError | RuntimeException e) {
-            System.err.println("Failed to parse " + file + ": " + e.getMessage());
             return new LinkedList<>();
         }
         return result;
@@ -227,25 +229,40 @@ public class JsonFileHandler {
         }
     }
 
-    // Gson adapter for java.time.LocalDate
-    private static class LocalDateAdapter extends TypeAdapter<LocalDate> {
+    // Gson adapter for LinkedListInterface
+    private static class LinkedListInterfaceAdapter
+            implements JsonSerializer<LinkedListInterface<?>>, JsonDeserializer<LinkedListInterface<?>> {
 
         @Override
-        public void write(JsonWriter out, LocalDate value) throws IOException {
-            if (value == null) {
-                out.nullValue();
-                return;
+        public JsonElement serialize(LinkedListInterface<?> src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonArray array = new JsonArray();
+            if (src != null) {
+                for (int i = 0; i < src.size(); i++) {
+                    array.add(context.serialize(src.get(i)));
+                }
             }
-            out.value(value.toString());
+            return array;
         }
 
         @Override
-        public LocalDate read(JsonReader in) throws IOException {
-            if (in.peek() == JsonToken.NULL) {
-                in.nextNull();
-                return null;
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public LinkedListInterface<?> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            LinkedList result = new LinkedList();
+            if (!json.isJsonArray()) {
+                return result;
             }
-            return LocalDate.parse(in.nextString());
+            Type elementType = String.class;
+            if (typeOfT instanceof ParameterizedType) {
+                elementType = ((ParameterizedType) typeOfT).getActualTypeArguments()[0];
+            }
+            for (JsonElement element : json.getAsJsonArray()) {
+                if (element.isJsonNull()) {
+                    continue;
+                }
+                result.addBack(context.deserialize(element, elementType));
+            }
+            return result;
         }
     }
 }
