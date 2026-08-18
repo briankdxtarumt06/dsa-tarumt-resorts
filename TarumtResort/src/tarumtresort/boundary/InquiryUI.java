@@ -5,10 +5,12 @@ import tarumtresort.entity.Guest;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Payment;
 import tarumtresort.entity.Task;
+import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.report.ReportResult;
+import tarumtresort.utility.TablePrinter;
 
 /**
  *
@@ -33,11 +35,12 @@ public class InquiryUI {
         System.out.println("  2. Process Next Inquiry");
         System.out.println("  3. View Pending Queue");
         System.out.println("  4. Cancel Inquiry");
-        System.out.println("  5. Report");
+        System.out.println("  5. View All Inquiries");
+        System.out.println("  6. Generate Report");
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
-        return readIntInRange("Enter choice (0-5): ", 0, 5);
-    }
+        return readIntInRange("Enter choice (0-6): ", 0, 6);
+}
 
     public int getReportMenuChoice() {
         System.out.println("\n--- Reports ---");
@@ -76,6 +79,17 @@ public class InquiryUI {
         System.out.println("  0. All Types");
         int choice = readIntInRange("Enter choice (0-" + types.length + "): ", 0, types.length);
         return choice == 0 ? null : types[choice - 1];
+    }
+
+    public InquiryStatus inputInquiryStatusFilter() {
+        System.out.println("Filter by Status:");
+        InquiryStatus[] statuses = InquiryStatus.values();
+        for (int i = 0; i < statuses.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + statuses[i]);
+        }
+        System.out.println("  0. All Statuses");
+        int choice = readIntInRange("Enter choice (0-" + statuses.length + "): ", 0, statuses.length);
+        return choice == 0 ? null : statuses[choice - 1];
     }
 
     public RoomType inputRoomTypeFilter() {
@@ -117,9 +131,24 @@ public class InquiryUI {
         }
 
         if (extra instanceof Guest) {
-            System.out.println(extra);
+            Guest guest = (Guest) extra;
+            System.out.println("Guest ID       : " + guest.getGuestId());
+            System.out.println("Name           : " + guest.getName());
+            System.out.println("IC/Passport    : " + guest.getIcOrPassport());
+            System.out.println("Contact Number : " + guest.getContactNumber());
+            System.out.println("Nationality    : " + guest.getNationality());
+            System.out.println("Address        : " + guest.getAddress());
         } else if (extra instanceof Payment) {
-            System.out.println(extra);
+            Payment payment = (Payment) extra;
+            System.out.println("Payment ID     : " + payment.getPaymentID());
+            System.out.println("Reservation ID : " + payment.getReservationID());
+            System.out.println("Room Charge    : RM " + String.format("%.2f", payment.getRoomCharge()));
+            System.out.println("Service Charge : RM " + String.format("%.2f", payment.getServiceCharge()));
+            System.out.println("Tax            : RM " + String.format("%.2f", payment.getTax()));
+            System.out.println("Total Amount   : RM " + String.format("%.2f", payment.getTotalAmount()));
+            System.out.println("Payment Method : " + payment.getPaymentMethod());
+            System.out.println("Payment Status : " + payment.getPaymentStatus());
+            System.out.println("Payment Date   : " + payment.getPaymentDateTime());
         } else if (extra instanceof Task) {
             Task task = (Task) extra;
             System.out.println("Housekeeping Task Created: " + task.getTaskId());
@@ -147,7 +176,7 @@ public class InquiryUI {
         }
 
         System.out.println();
-        printTable(report.getTable());
+        printDelimitedTable(report.getTable());
 
         for (String line : report.getSummary()) {
             System.out.println(line);
@@ -182,19 +211,23 @@ public class InquiryUI {
     }
 
     private void printTable(String[][] data) {
-        int[] widths = new int[data[0].length];
-        for (String[] row : data) {
-            for (int c = 0; c < row.length; c++) {
-                widths[c] = Math.max(widths[c], row[c] == null ? 0 : row[c].length());
-            }
+        if (data.length == 0) {
+            return;
         }
-        for (String[] row : data) {
-            StringBuilder sb = new StringBuilder();
-            for (int c = 0; c < row.length; c++) {
-                sb.append(String.format("%-" + (widths[c] + 2) + "s", row[c]));
-            }
-            System.out.println(sb.toString());
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        System.arraycopy(data, 1, rows, 0, data.length - 1);
+        TablePrinter.displayTable(header, rows);
+    }
+
+    private void printDelimitedTable(String[][] data) {
+        if (data.length == 0) {
+            return;
         }
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        System.arraycopy(data, 1, rows, 0, data.length - 1);
+        TablePrinter.displayDelimitedTable(header, rows);
     }
 
     public void printMessage(String message) {
