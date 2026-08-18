@@ -2,52 +2,158 @@ package tarumtresort.boundary;
 
 import java.util.Scanner;
 
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Guest;
+import tarumtresort.entity.Reservation;
 import tarumtresort.utility.*;
 
 public class GuestUI {
 
     Scanner scanner = new Scanner(System.in);
 
+    public int printGuestListMenu(LinkedListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  GUEST MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+        if (pageList.isEmpty()) {
+            System.out.println("  (No guest records)");
+        } else {
+            String[] header = {"No.", "Guest ID", "Name", "Nationality", "Contact"};
+            String[][] rows = new String[pageList.size()][5];
+            for (int i = 0; i < pageList.size(); i++) {
+                Guest g = pageList.get(i);
+                rows[i] = new String[]{
+                    String.valueOf(i + 1), g.getGuestId(), g.getName(),
+                    g.getNationality(), g.getContactNumber()
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+
+        System.out.println("==========Actions==========");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Register New Guest");
+        System.out.println("  " + action++ + ". Filter by Nationality");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int getGuestActionChoice() {
+        System.err.println();
+        System.out.print("==========Actions==========");
+        System.out.println("\n  1. View Reservation History");
+        System.out.println("  0. Back to List");
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, 1);
+    }
+
+    public void printNoRecords() {
+        ConsoleUtil.printError("No records to view!");
+    }
+
+    public int inputListIndex(String entityLabel, int max) {
+        return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
+    }
+
+    private int inputIntChoice(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt + " (" + min + "-" + max + "): ");
+            String line = scanner.nextLine().trim();
+            if (line.isEmpty()) {
+                ConsoleUtil.printError("Input cannot be empty! Please enter a number.");
+                continue;
+            }
+            try {
+                int value = Integer.parseInt(line);
+                if (value >= min && value <= max) {
+                    System.out.println();
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                // retry
+            }
+            ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+        }
+    }
+
+    public void printGuestReservationHistory(LinkedListInterface<Reservation> reservations) {
+        if (reservations.size() == 0) {
+            System.out.println("\nNo reservations found.");
+            return;
+        }
+
+        String[] header = {
+            "No.", "Conf. No.", "Room Type", "Guests", "Nights",
+            "Type", "Status", "Expected Check-In", "Expected Check-Out"
+        };
+
+        String[][] rows = new String[reservations.size()][9];
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            rows[i] = new String[]{
+                String.valueOf(i + 1),
+                r.getConfirmationNumber(),
+                r.getRoomTypeRequested().toString(),
+                String.valueOf(r.getNumberOfGuests()),
+                String.valueOf(r.getNumberOfNights()),
+                r.getReservationType().toString(),
+                r.getStatus().toString(),
+                String.valueOf(r.getTimestamps().getExpectedCheckInDate()),
+                String.valueOf(r.getTimestamps().getExpectedCheckOutDate())
+            };
+        }
+
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public void pressEnterToContinue() {
+        ConsoleUtil.pressEnterToContinue(scanner);
+    }
+
     // INPUTS
     public String inputName() {
-        return SharedServices.askNonEmptyInput(scanner, "Name (Enter '0' to go back)");
+        return SharedServices.askNonEmptyInput(scanner, "Name (0 = cancel)");
     }
 
     public String inputNationality(String[] nationalityOptions) {
         int otherChoice = nationalityOptions.length + 1;
 
-        String[] header = {"No.", "Nationality"};
-        String[][] rows = new String[otherChoice][2];
+        System.out.println();
+        System.out.println("==========Nationality==========");
+
         for (int i = 0; i < nationalityOptions.length; i++) {
-            rows[i] = new String[]{String.valueOf(i + 1), nationalityOptions[i]};
+            System.out.println("  " + (i + 1) + ". " + nationalityOptions[i]);
         }
-        rows[nationalityOptions.length] = new String[]{String.valueOf(otherChoice), "Other"};
 
-        System.out.println("\nNationality:");
-        TablePrinter.displayTable(header, rows);
+        System.out.println("  "+ otherChoice + ". Other");
 
-        int choice;
-        while (true) {
-            System.out.print("Enter choice: ");
-            try {
-                choice = Integer.parseInt(scanner.nextLine().trim());
-                if (choice >= 1 && choice <= otherChoice) {
-                    break;
-                }
-                System.out.println("Error: Invalid choice! Please try again.");
-            } catch (NumberFormatException e) {
-                System.out.println("Error: Please enter a number.");
-            }
-        }
+        System.out.println("==============================");
+
+        int choice = inputIntChoice("Enter Choice", 1, otherChoice);
 
         if (choice == otherChoice) {
-            String typed = SharedServices.askNonEmptyInput(scanner, "Please specify nationality");
+            String typed = SharedServices.askNonEmptyInput(
+                scanner, 
+                "Please specify nationality"
+            );
 
-            // check if it actually matches one of the fixed options  
+            // Check if it matches one of the fixed options
             for (int i = 0; i < nationalityOptions.length; i++) {
                 if (nationalityOptions[i].equalsIgnoreCase(typed.trim())) {
-                    return nationalityOptions[i]; // reuse the exact spelling already in the list
+                    return nationalityOptions[i];
                 }
             }
 
@@ -86,7 +192,7 @@ public class GuestUI {
 
     // PRINT TABLE
     public void printGuestDetails(Guest guest) {
-        String[] header = {" ", "Guest Information"};
+        String[] header = {"Field", "Value"};
         String[][] rows = {
             {"Guest ID", guest.getGuestId()},
             {"Name", guest.getName()},

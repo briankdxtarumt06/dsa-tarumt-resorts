@@ -36,9 +36,129 @@ public class GuestControl {
         }
     }
 
+    private static final int PAGE_SIZE = 20;
+
+    // entry point for guest management (replaces old registerGuest-only flow)
+    public void runGuestManagement() {
+        String nationalityFilter = null;
+        int page = 0;
+
+        while (true) {
+            LinkedListInterface<Guest> display;
+            if (nationalityFilter != null) {
+                display = getGuestsByNationality(nationalityFilter);
+            } else {
+                display = guestList;
+            }
+
+            boolean hasFilter = nationalityFilter != null;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+
+            LinkedListInterface<Guest> pageList = pageOf(display, page);
+            int choice = guestUI.printGuestListMenu(pageList, page, pageCount, hasFilter);
+
+            if (choice == 0) {
+                break;
+            }
+
+            int action = 1;
+            if (choice == action++) { // 1. View Details
+                viewGuest(pageList);
+            } else if (choice == action++) { // 2. Register New Guest
+                registerGuest();
+            } else if (choice == action++) { // 3. Filter by Nationality
+                nationalityFilter = guestUI.inputNationality(getNationalityOptions());
+                page = 0;
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) {
+                    matched = choice == action;
+                    action++;
+                    if (matched) page++;
+                }
+                if (!matched && page > 0) {
+                    matched = choice == action;
+                    action++;
+                    if (matched) page--;
+                }
+                if (!matched && hasFilter) {
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        nationalityFilter = null;
+                        page = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    private LinkedListInterface<Guest> pageOf(LinkedListInterface<Guest> source, int page) {
+        LinkedListInterface<Guest> result = new LinkedList<>();
+        int startIndex = page * PAGE_SIZE;
+        int endIndex = Math.min(startIndex + PAGE_SIZE, source.size());
+        for (int i = startIndex; i < endIndex; i++) {
+            result.addBack(source.get(i));
+        }
+        return result;
+    }
+
+    public LinkedListInterface<Guest> getGuestsByNationality(String nationality) {
+        LinkedListInterface<Guest> result = new LinkedList<>();
+        for (int i = 0; i < guestList.size(); i++) {
+            if (guestList.get(i).getNationality().equalsIgnoreCase(nationality)) {
+                result.addBack(guestList.get(i));
+            }
+        }
+        return result;
+    }
+
+    // view flow: pick a record from the current page, then run its action menu
+    private void viewGuest(LinkedListInterface<Guest> pageList) {
+        if (pageList.isEmpty()) {
+            guestUI.printNoRecords();
+            guestUI.pressEnterToContinue();
+            return;
+        }
+        int num = guestUI.inputListIndex("guest", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        Guest guest = pageList.get(num - 1);
+        if (guest != null) {
+            handleGuestActions(guest);
+        }
+    }
+
+    // select-entity action loop: details -> action -> details, until Back
+    private void handleGuestActions(Guest guest) {
+        while (true) {
+            guestUI.printGuestDetails(guest);
+
+            int action = guestUI.getGuestActionChoice();
+            if (action == 0) {
+                return;
+            }
+
+            switch (action) {
+                case 1:
+                    guestUI.printGuestReservationHistory(guest.getReservations());
+                    guestUI.pressEnterToContinue();
+                    System.err.println();
+                    break;
+                default:
+                    break;
+            }
+
+            guest = getGuestById(guest.getGuestId()); 
+        }
+    }
+
     // case 1: register a new guest - continue with menu/ room booking
     public Guest registerGuest() {
-        ConsoleUtil.clearScreen();
         String name = capitalizeName(guestUI.inputName());
         if (name.equals("0")) return null;
         
@@ -72,6 +192,10 @@ public class GuestControl {
         guestList.addBack(guest);
         guestDAO.saveToFile(guestList);
 
+        guestUI.printGuestDetails(guest);
+        guestUI.printSuccess();
+        guestUI.pressEnterToContinue();
+
         return guest;
     }
 
@@ -83,38 +207,27 @@ public class GuestControl {
                             String nationality,
                             String address) {
 
-        // IC / Passport cannot be duplicated
-        for (int i = 0; i < guestList.size(); i++) {
-
-            Guest otherGuest = guestList.get(i);
-
-            if (!otherGuest.getGuestId().equals(guestId)
-                    && otherGuest.getIcOrPassport().equals(icOrPassport)) {
-
-                return false;
-            }
+        // IC / Passport cannot be duplicated with another guest
+        Guest owner = getGuestByIcOrPassport(icOrPassport);
+        if (owner != null && !owner.getGuestId().equals(guestId)) {
+            return false;
         }
 
         // update guest information
-        for (int i = 0; i < guestList.size(); i++) {
-
-            Guest guest = guestList.get(i);
-
-            if (guest.getGuestId().equals(guestId)) {
-
-                guest.setName(name);
-                guest.setIcOrPassport(icOrPassport);
-                guest.setContactNumber(contactNumber);
-                guest.setNationality(nationality);
-                guest.setAddress(address);
-
-                //guestDAO.saveGuestList(guestList);
-
-                return true;
-            }
+        Guest guest = getGuestById(guestId);
+        if (guest == null) {
+            return false;
         }
 
-        return false;
+        guest.setName(name);
+        guest.setIcOrPassport(icOrPassport);
+        guest.setContactNumber(contactNumber);
+        guest.setNationality(nationality);
+        guest.setAddress(address);
+
+        //guestDAO.saveGuestList(guestList);
+
+        return true;
     }
 
     // get guest by guest id
@@ -326,12 +439,7 @@ public class GuestControl {
 
     // check if the ic or passport repeated
     public boolean isDuplicateIc(String icOrPassport) {
-        for (int i = 0; i < guestList.size(); i++) {
-            if (guestList.get(i).getIcOrPassport().equals(icOrPassport)) {
-                return true;
-            }
-        }
-        return false;
+        return guestExistsByIcOrPassport(icOrPassport);
     }
 
     // check if name repeated
