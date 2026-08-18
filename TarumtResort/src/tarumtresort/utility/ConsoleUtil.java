@@ -25,14 +25,41 @@ public class ConsoleUtil {
     }
 
     public static void clearScreen() {
-        try {
-            if (System.getProperty("os.name").contains("Windows")) {
-                new ProcessBuilder("cmd", "/c", "cls < NUL").inheritIO().start().waitFor();
-            } else {
-                new ProcessBuilder("clear").inheritIO().start().waitFor();
-            }
-        } catch (Exception e) {
-            printError("Could not clear the screen.");
+        // manual override: -Dtarumtresort.clearScreen=ansi   or   =lines
+        String override = System.getProperty("tarumtresort.clearScreen", "");
+        if (override.equalsIgnoreCase("ansi")) {
+            ansiClear();
+        } else if (override.equalsIgnoreCase("lines")) {
+            lineClear();
+        } else if (isAnsiTerminal()) {
+            ansiClear();
+        } else {
+            lineClear();
+        }
+    }
+
+    /**
+     * ANSI-capable terminals set TERM_PROGRAM (VS Code, iTerm2),
+     * WT_SESSION (Windows Terminal) or TERM (xterm-256color etc.).
+     * NetBeans' Output window sets none of these, so it gets the
+     * blank-line fallback.
+     */
+    private static boolean isAnsiTerminal() {
+        return System.getenv("TERM_PROGRAM") != null
+                || System.getenv("WT_SESSION") != null
+                || System.getenv("TERM") != null;
+    }
+
+    /** Real clear: cursor home + clear screen - next output appears at the TOP. */
+    private static void ansiClear() {
+        System.out.print("\u001B[2J\u001B[H");
+        System.out.flush();
+    }
+
+    /** Scroll-away fallback for IDE output windows that ignore ANSI codes. */
+    private static void lineClear() {
+        for (int i = 0; i < 50; i++) {
+            System.out.println();
         }
     }
 
