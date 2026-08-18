@@ -25,6 +25,7 @@ public class ReservationControl {
     private RoomControl roomControl = new RoomControl();
     private GuestControl guestControl = new GuestControl();
     private PaymentControl paymentControl = new PaymentControl();
+    private PriorityReservationController priorityReservationController = new PriorityReservationController();
     
     // list declared
     private LinkedListInterface <Reservation> bookingList = new LinkedList<>();
@@ -292,6 +293,9 @@ public class ReservationControl {
                 guestQueue.addSorted(reservation);
                 reservationDAO.saveGuestQueue(guestQueue);
                 reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+
+                priorityReservationController.addPriorityReservation(
+                        reservation.getReservationId(), reservation.getGuestId());
             } else {
                 bookingList.addSorted(reservation);
                 reservationDAO.saveBookingList(bookingList);
@@ -380,6 +384,9 @@ public class ReservationControl {
         bookingList.removeElement(found);
         found.getTimestamps().setRegistrationTimestamp(LocalDateTime.now());
         guestQueue.addSorted(found);
+
+        priorityReservationController.addPriorityReservation(
+                found.getReservationId(), found.getGuestId());
         
         // save both lists
         reservationDAO.saveBookingList(bookingList);
@@ -431,24 +438,42 @@ public class ReservationControl {
 
         // find first guest in queue matching room type
         Reservation found = null;
-        int foundIndex = -1;
-        for (int i = 0; i < guestQueue.size(); i++) {
-            Reservation r = guestQueue.get(i);
+
+        LinkedListInterface<Reservation> vipQueue =
+                priorityReservationController.generateVIPQueue(guestQueue);
+
+        for (int i = 0; i < vipQueue.size(); i++) {
+            Reservation r = vipQueue.get(i);
             if (r.getRoomTypeRequested() == roomType) {
                 found = r;
-                foundIndex = i;
                 break;
             }
         }
-        
+
+        if (found == null) {
+            for (int i = 0; i < guestQueue.size(); i++) {
+                Reservation r = guestQueue.get(i);
+                if (r.getRoomTypeRequested() == roomType) {
+                    found = r;
+                    break;
+                }
+            }
+        }
+
         if (found == null) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
-        
+
         // assign room
-        guestQueue.removeIndex(foundIndex);
+        int queueIndex = guestQueue.indexOf(found);
+        if (queueIndex >= 0) {
+            guestQueue.removeIndex(queueIndex);
+        }
+
+        priorityReservationController.removeById(found.getReservationId());
+
         found.setRoomId(availableRoom.getRoomId());
         found.setStatus(ReservationStatus.ASSIGNED);
         found.getTimestamps().setAssignedTime(LocalDateTime.now());

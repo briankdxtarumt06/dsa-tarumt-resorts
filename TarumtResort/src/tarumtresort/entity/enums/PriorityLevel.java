@@ -2,12 +2,11 @@ package tarumtresort.entity.enums;
 
 public enum PriorityLevel {
     PENALTY(0),
-    STANDARD(10),
-    ELITE(20),
-    DIAMOND(30),
-    PLATINUM(40),
-    VIP_OVERRIDE(50),
-    EMERGENCY(60);
+    SLIVER(10),
+    GOLD(20),
+    PLATINUM(30),
+    DIAMOND(40),
+    EMERGENCY(50);
 
     private final int rank;
 
@@ -20,12 +19,11 @@ public enum PriorityLevel {
     }
 
     public static PriorityLevel convertTierToPriority(Tier tier) {
-        if (tier == null)
-            return STANDARD;
         return switch (tier) {
-            case PLATINUM -> PLATINUM;
             case DIAMOND -> DIAMOND;
-            default -> STANDARD;
+            case PLATINUM -> PLATINUM;
+            case GOLD -> GOLD;
+            default -> SLIVER;
         };
     }
 }

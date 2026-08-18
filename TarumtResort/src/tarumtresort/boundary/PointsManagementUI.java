@@ -40,7 +40,7 @@ public class PointsManagementUI {
         System.out.println(" 8. View Notifications");
         System.out.println(" 9. Process Redemption Requests");
         System.out.println("10. Exit");
-        System.out.println("----------------------------------------");
+        System.out.println("===========================");
         return readInt("Enter your choice");
     }
 

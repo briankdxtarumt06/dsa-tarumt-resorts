@@ -28,7 +28,7 @@ public class RewardManagementUI {
         System.out.println(" 3. Update Reward");
         System.out.println(" 4. List Rewards");
         System.out.println(" 5. Exit");
-        System.out.println("----------------------------------------");
+        System.out.println("===========================");
         return readInt("Enter your choice");
     }
 

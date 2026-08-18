@@ -68,7 +68,7 @@ public class ReservationUI {
         return inputIntChoice("Enter choice", 0, 4);
     }
 
-    // INPUTS 
+    // INPUTS
     public int inputRoomTypeChoice() {
         System.out.println();
         System.out.println("==========Room Type==========");
@@ -137,7 +137,7 @@ public class ReservationUI {
     // OUTPUTS
 
     // PRINT TABLE
-    // print reservation details aftre finish reservation 
+    // print reservation details aftre finish reservation
     public void printReservationDetails(Reservation r) {
         String[] header = {"Field", "Value"};
         String[][] rows = {
@@ -268,8 +268,8 @@ public class ReservationUI {
     public void printCannotCancel(){
         ConsoleUtil.printError(" Your reservation cannot be canceled.");
     }
-    
-    //others
+
+    // others
     public int showSubMenu(String title, String[][] options) {
 
         System.out.println("\n==========" + title + "==========");
