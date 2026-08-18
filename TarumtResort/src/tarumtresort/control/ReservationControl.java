@@ -7,7 +7,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.boundary.GuestUI;
 import tarumtresort.boundary.PaymentUI;
 import tarumtresort.boundary.ReservationUI;
 import tarumtresort.dao.PaymentDAO;
