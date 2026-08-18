@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
@@ -30,8 +31,7 @@ public class MemberManagementUI {
         System.out.println(" 2. Update Member Tier");
         System.out.println(" 3. Remove Member");
         System.out.println(" 4. List Members");
-        System.out.println(" 5. View Member Profile");
-        System.out.println(" 6. Exit");
+        System.out.println(" 5. Exit");
         System.out.println("----------------------------------------");
         return readInt("Enter your choice");
     }
@@ -41,7 +41,7 @@ public class MemberManagementUI {
         System.out.println("Guest id (auto-generated): " + guestId);
         Tier tier = selectTier();
         if (tier == null) {
-            tier = Tier.SILVER;
+            return null;
         }
         return new Member(memberId, 0, tier, LocalDateTime.now(), guestId);
     }
@@ -72,33 +72,123 @@ public class MemberManagementUI {
         return members.get(index).getMemberId();
     }
 
-    public void displayMembers(LinkedListInterface<Member> members) {
-        if (members.isEmpty()) {
-            System.out.println("No members registered yet.");
-            return;
-        }
+    /**
+ * Displays members in pages of 20. The user can page back/forward and pick a
+ * member (by its on-screen number) to view the full profile. Returns the chosen
+ * member id, or {@code null} if the user chose to go back.
+ */
+public String displayMembersPaginated(LinkedListInterface<Member> members,
+        java.util.function.Function<String, Guest> guestResolver) {
+    if (members.isEmpty()) {
+        System.out.println("No members registered yet.");
+        pause();
+        return null;
+    }
+    final int PAGE_SIZE = 20;
+    int totalPages = (members.size() + PAGE_SIZE - 1) / PAGE_SIZE;
+    int page = 0;
+    while (true) {
+        ConsoleUtil.clearScreen();
+        int start = page * PAGE_SIZE;
+        int end = Math.min(start + PAGE_SIZE, members.size());
         System.out.println();
-        String[][] rows = new String[members.size()][4];
-        for (int i = 0; i < members.size(); i++) {
+        System.out.println("========================================");
+        System.out.println("   MEMBERS  (page " + (page + 1) + "/" + totalPages
+                + ", showing " + (start + 1) + "-" + end + " of " + members.size() + ")");
+        System.out.println("========================================");
+        String[][] rows = new String[end - start][7];
+        for (int i = start; i < end; i++) {
             Member m = members.get(i);
-            rows[i] = new String[] {
+            Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
+            rows[i - start] = new String[] {
+                    String.valueOf(i - start + 1),
                     m.getMemberId(),
+                    g != null && g.getName() != null ? g.getName() : "-",
+                    g != null && g.getContactNumber() != null ? g.getContactNumber() : "-",
                     m.getTier().name(),
                     String.valueOf(m.getPoints()),
                     m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)
             };
         }
         TablePrinter.displayTable(
-                new String[] { "Member ID", "Tier", "Points", "Enrolled" }, rows);
-    }
-
-    public void displayProfile(Member m) {
+                new String[] { "#", "Member ID", "Name", "Phone", "Tier", "Points", "Enrolled" }, rows);
         System.out.println();
+        StringBuilder nav = new StringBuilder("Enter [number] to view that member's profile");
+        if (page > 0) {
+            nav.append("   |   [p] Previous");
+        }
+        if (page < totalPages - 1) {
+            nav.append("   |   [n] Next");
+        }
+        nav.append("   |   [0] Back to menu");
+        System.out.println(nav.toString());
+        String cmd = readLine("Choice");
+        if (cmd == null) {
+            return null;
+        }
+        cmd = cmd.trim();
+        if (cmd.equals("0")) {
+            return null;
+        }
+        if (cmd.equalsIgnoreCase("n")) {
+            if (page < totalPages - 1) {
+                page++;
+            } else {
+                ConsoleUtil.printError("Already on the last page.");
+                pause();
+            }
+            continue;
+        }
+        if (cmd.equalsIgnoreCase("p")) {
+            if (page > 0) {
+                page--;
+            } else {
+                ConsoleUtil.printError("Already on the first page.");
+                pause();
+            }
+            continue;
+        }
+        try {
+            int sel = Integer.parseInt(cmd) - 1;
+            if (sel >= 0 && sel < (end - start)) {
+                return members.get(start + sel).getMemberId();
+            }
+        } catch (NumberFormatException e) {
+            // fall through to invalid message
+        }
+        ConsoleUtil.printError("Invalid choice. Enter a number shown, n, p, or 0.");
+        pause();
+    }
+}
+
+private String readLine(String prompt) {
+    System.out.print(prompt + ": ");
+    if (!scanner.hasNextLine()) {
+        return null;
+    }
+    return scanner.nextLine().trim();
+}
+
+    public void displayProfile(Member m, Guest g) {
+        System.out.println();
+        if (m == null) {
+            System.out.println("Member not found.");
+            return;
+        }
         System.out.println("Member id     : " + m.getMemberId());
         System.out.println("Tier          : " + m.getTier());
         System.out.println("Discount      : " + m.getTier().getDiscountPercent() + "% off stays & dining");
         System.out.println("Points        : " + m.getPoints());
         System.out.println("Guest id      : " + m.getGuestId());
+        if (g != null) {
+            System.out.println("Name          : " + g.getName());
+            System.out.println("IC / Passport : " + g.getIcOrPassport());
+            System.out.println("Phone         : " + g.getContactNumber());
+            System.out.println("Nationality   : " + g.getNationality());
+            System.out.println("Address       : " + g.getAddress());
+        } else {
+            System.out.println("Guest record  : (not found for this member)");
+        }
         System.out.println("Enrolled      : " + (m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)));
     }
 
@@ -111,7 +201,6 @@ public class MemberManagementUI {
         int index = readInt("Select a tier") - 1;
         Tier[] tiers = Tier.values();
         if (index < 0) {
-            System.out.println("Operation cancelled.");
         ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }

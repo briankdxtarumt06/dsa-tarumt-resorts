@@ -71,19 +71,15 @@ public class LoyaltyController {
                     removeMemberFlow();
                     break;
                 case 4:
-                    memberUI.displayMembers(memberList);
-                    memberUI.pause();
+                    listMembersFlow();
                     break;
                 case 5:
-                    viewProfileFlow();
-                    break;
-                case 6:
                     memberUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    memberUI.showError("Invalid choice. Please enter 1 - 6.");
+                    memberUI.showError("Invalid choice. Please enter 1 - 5.");
             }
-        } while (choice != 6);
+        } while (choice != 5);
     }
 
     /** Reward catalogue menu (was RewardController.run). */
@@ -194,13 +190,20 @@ public class LoyaltyController {
         memberUI.showMessage(removeMember(memberId));
     }
 
-    private void viewProfileFlow() {
-        String memberId = memberUI.selectMember(memberList, "Select a member");
-        if (memberId == null) {
-            return;
+    /** Paginated member list; selecting a member opens its full profile. */
+    private void listMembersFlow() {
+        while (true) {
+            String memberId = memberUI.displayMembersPaginated(memberList, this::findGuest);
+            if (memberId == null) {
+                return;
+            }
+            Member member = findMember(memberId);
+            if (member == null) {
+                continue;
+            }
+            memberUI.displayProfile(member, findGuest(member.getGuestId()));
+            memberUI.pause();
         }
-        memberUI.displayProfile(findMember(memberId));
-        memberUI.pause();
     }
 
     public LinkedListInterface<Member> getMembers() {
@@ -989,7 +992,7 @@ public class LoyaltyController {
         }
     }
 
-    private Guest findGuest(String guestId) {
+    public Guest findGuest(String guestId) {
         for (int i = 0; i < guestList.size(); i++) {
             if (guestList.get(i).getGuestId().equals(guestId)) {
                 return guestList.get(i);
