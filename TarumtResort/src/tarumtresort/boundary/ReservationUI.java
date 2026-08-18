@@ -27,12 +27,13 @@ public class ReservationUI {
         System.out.println("  8. Check Queue Position");
         System.out.println("  9. Cancel Reservation");
         System.out.println("  10. Reports");
-        System.out.println("  11. View Payment / Refund Records");
+        System.out.println("  11. Priority Reservations");
+        System.out.println("  12. View Payment / Refund Records");
         System.out.println("  0. Exit");
-        return inputIntChoice("\nEnter choice", 0, 11);
+        return inputIntChoice("\nEnter choice", 0, 12);
     }
 
-    // INPUTS 
+    // INPUTS
     public int inputRoomTypeChoice() {
         String[] header = {"No.", "Room Type"};
         String[][] rows = {
@@ -88,12 +89,12 @@ public class ReservationUI {
         return scanner.nextLine();
     }
 
-    public String inputIcOrPassport(){
+    public String inputIcOrPassport() {
         System.out.print("Enter guest's IC or Passport: ");
         return scanner.nextLine();
     }
 
-    public String inputConfirmationNumber(){
+    public String inputConfirmationNumber() {
         System.out.print("Enter confirmation number: ");
         return scanner.nextLine();
     }
@@ -104,7 +105,7 @@ public class ReservationUI {
     // OUTPUTS
 
     // PRINT TABLE
-    // print reservation details aftre finish reservation 
+    // print reservation details aftre finish reservation
     public void printReservationDetails(Reservation r) {
         String[] header = {
             "Reservation ID", "Conf. No.", "Guest ID", "Room Type",
@@ -222,8 +223,8 @@ public class ReservationUI {
     public void printCannotCancel(){
         ConsoleUtil.printError(" Your reservation cannot be canceled.");
     }
-    
-    //others
+
+    // others
     public int showSubMenu(String title, String[][] options) {
         String[] header = {"No.", "Option"};
 

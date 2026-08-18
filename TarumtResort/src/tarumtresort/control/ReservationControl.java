@@ -28,6 +28,7 @@ public class ReservationControl {
     private RoomControl roomControl = new RoomControl();
     private GuestControl guestControl = new GuestControl();
     private PaymentControl paymentControl = new PaymentControl();
+    private PriorityReservationController priorityReservationController = new PriorityReservationController();
     
     // list declared
     private LinkedListInterface <Reservation> bookingList = new LinkedList<>();
@@ -65,7 +66,8 @@ public class ReservationControl {
                 case 8: checkQueuePosition(); break; // check a specific position for certain client by entering the confirmation number
                 case 9: cancelReservation(); break; // cancel reservation (constraint: status like waiting, advance, assigned can cancel reservation but check in and check out both cannot make cancelation)
                 case 10: generateReport(); break; // generate the two report 
-                case 11: viewPaymentRecords(); break; // view payment & refund records
+                case 11: priorityReservationController.run(guestQueue); break; // priority reservations (from main)
+                case 12: viewPaymentRecords(); break; // view payment & refund records
                 default: break;
             }
         } while (choice != 0);
@@ -260,6 +262,8 @@ public class ReservationControl {
                 Reservation r = sessionBookings.get(i);
                 if (r.getReservationType() == ReservationType.WALK_IN) {
                     guestQueue.addSorted(r);
+                    priorityReservationController.addPriorityReservation(
+                            r.getReservationId(), r.getGuestId());
                 } else {
                     bookingList.addSorted(r);
                 }
@@ -346,6 +350,9 @@ public class ReservationControl {
         bookingList.removeIndex(foundIndex);
         found.getTimestamps().setRegistrationTimestamp(LocalDateTime.now());
         guestQueue.addSorted(found);
+
+        priorityReservationController.addPriorityReservation(
+                found.getReservationId(), found.getGuestId());
         
         // save both lists
         reservationDAO.saveBookingList(bookingList);
@@ -396,26 +403,43 @@ public class ReservationControl {
             return;
         }
         
-        // find first guest in queue matching room type
         Reservation found = null;
-        int foundIndex = -1;
-        for (int i = 0; i < guestQueue.size(); i++) {
-            Reservation r = guestQueue.get(i);
+
+        LinkedListInterface<Reservation> vipQueue =
+                priorityReservationController.generateVIPQueue(guestQueue);
+
+        for (int i = 0; i < vipQueue.size(); i++) {
+            Reservation r = vipQueue.get(i);
             if (r.getRoomTypeRequested() == roomType) {
                 found = r;
-                foundIndex = i;
                 break;
             }
         }
-        
+
+        if (found == null) {
+            for (int i = 0; i < guestQueue.size(); i++) {
+                Reservation r = guestQueue.get(i);
+                if (r.getRoomTypeRequested() == roomType) {
+                    found = r;
+                    break;
+                }
+            }
+        }
+
         if (found == null) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
-        
+
         // assign room
-        guestQueue.removeIndex(foundIndex);
+        int queueIndex = guestQueue.indexOf(found);
+        if (queueIndex >= 0) {
+            guestQueue.removeIndex(queueIndex);
+        }
+
+        priorityReservationController.removeById(found.getReservationId());
+
         found.setRoomId(availableRoom.getRoomId());
         found.setStatus(ReservationStatus.ASSIGNED);
         found.getTimestamps().setAssignedTime(LocalDateTime.now());
@@ -860,6 +884,8 @@ public class ReservationControl {
                 
                 guestQueue.removeIndex(i);
 
+                priorityReservationController.removeById(r.getReservationId());
+
                 // remove from guest's own reservation list too
                 for (int j = 0; j < guest.getReservations().size(); j++) {
                     if (guest.getReservations().get(j).getReservationId().equals(r.getReservationId())) {
@@ -894,6 +920,8 @@ public class ReservationControl {
                 
                 bookingList.removeIndex(i);
 
+                priorityReservationController.removeById(r.getReservationId());
+
                 // remove from guest's own reservation list too
                 for (int j = 0; j < guest.getReservations().size(); j++) {
                     if (guest.getReservations().get(j).getReservationId().equals(r.getReservationId())) {
@@ -926,6 +954,8 @@ public class ReservationControl {
                         return;
                     }
                     assignedList.removeIndex(i);
+
+                    priorityReservationController.removeById(r.getReservationId());
 
                     // remove from guest's own reservation list too
                     for (int j = 0; j < guest.getReservations().size(); j++) {

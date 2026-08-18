@@ -1,11 +1,9 @@
 package tarumtresort.entity;
 
+import java.time.LocalDate;
+import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.*;
-
-import java.time.LocalDate;
-
-import tarumtresort.adt.LinkedList;
 
 public class Room implements Comparable<Room>{
     private String roomId;
@@ -41,7 +39,7 @@ public class Room implements Comparable<Room>{
     public void setPricePerNight(double pricePerNight) { this.pricePerNight = pricePerNight; }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "Room{" +
                 "roomId='" + roomId + '\'' +
                 ", roomNumber='" + roomNumber + '\'' +
