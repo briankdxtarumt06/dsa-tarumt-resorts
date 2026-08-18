@@ -22,9 +22,9 @@ public interface LinkedListInterface<T extends Comparable<T>> {
 
     T removeBack();
 
-    T getFirst();
+    T getFront();
 
-    T getLast();
+    T getBack();
 
     T get(int index);
 

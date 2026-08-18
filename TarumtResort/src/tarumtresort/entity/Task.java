@@ -21,6 +21,9 @@ public class Task implements Comparable<Task> {
     private String roomId;
     private LinkedListInterface<TaskAssignment> taskAssignments;
     private LinkedListInterface<TaskStatus> statusHistory;
+    // update task status -> push (addFront)
+    // rollback task status -> pop (removeFront)
+    // get current status -> peek (getFront)
 
     public Task() {
     }

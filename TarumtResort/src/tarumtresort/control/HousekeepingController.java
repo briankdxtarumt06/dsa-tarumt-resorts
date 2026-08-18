@@ -2176,7 +2176,7 @@ public class HousekeepingController {
         Staff staff = null;
         TaskAssignment assignment = null;
         if (!task.getTaskAssignments().isEmpty()) {
-            assignment = task.getTaskAssignments().getFirst();
+            assignment = task.getTaskAssignments().getFront();
             staff = assignment.getAssignedStaffId() == null ? null
                     : getStaffById(assignment.getAssignedStaffId());
         }

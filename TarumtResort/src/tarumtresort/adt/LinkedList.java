@@ -84,12 +84,12 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
     }
 
     @Override
-    public T getFirst() {
+    public T getFront() {
         return isEmpty() ? null : head.getData();
     }
 
     @Override
-    public T getLast() {
+    public T getBack() {
         return isEmpty() ? null : tail.getData();
     }
 
@@ -125,6 +125,7 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
         return removeNode(nodeAt(index));
     }
 
+    // combine 2 sorted list into 1 sorted list
     @Override
     public boolean merge(LinkedListInterface<T> other) {
         if (other == null || other.isEmpty() || !isSorted() || !other.isSorted()) {
@@ -196,6 +197,8 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
         return -1;
     }
 
+    // condition to check if list is sorted or not
+    // reason: list can become unsorted if addFront or addBack is called
     @Override
     public boolean isSorted() {
         Node<T> current = head;
