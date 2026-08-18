@@ -27,9 +27,8 @@ public class ReservationUI {
         System.out.println("  8. Check Queue Position");
         System.out.println("  9. Cancel Reservation");
         System.out.println("  10. Reports");
-        System.out.println("  11. Priority Reservations");
         System.out.println("  0. Exit");
-        return inputIntChoice("\nEnter choice", 0, 11);
+        return inputIntChoice("\nEnter choice", 0, 10);
     }
 
     // INPUTS

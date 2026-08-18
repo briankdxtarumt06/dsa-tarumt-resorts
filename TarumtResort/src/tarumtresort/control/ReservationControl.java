@@ -65,7 +65,6 @@ public class ReservationControl {
                 case 8: checkQueuePosition(); break; // check a specific position for certain client by entering the confirmation number
                 case 9: cancelReservation(); break; // cancel reservation (constraint: status like waiting, advance, assigned can cancel reservation but check in and check out both cannot make cancelation)
                 case 10: generateReport(); break; // generate the two report 
-                case 11:priorityReservationController.run(guestQueue); break;
                 default: break;
             }
         } while (choice != 0);
