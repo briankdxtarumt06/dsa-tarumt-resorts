@@ -25,14 +25,8 @@ public class ConsoleUtil {
     }
 
     public static void clearScreen() {
-        try {
-            if (System.getProperty("os.name").contains("Windows")) {
-                new ProcessBuilder("cmd", "/c", "cls < NUL").inheritIO().start().waitFor();
-            } else {
-                new ProcessBuilder("clear").inheritIO().start().waitFor();
-            }
-        } catch (Exception e) {
-            printError("Could not clear the screen.");
+        for(int i = 0; i<100; i++){
+            System.out.println("\n");
         }
     }
 

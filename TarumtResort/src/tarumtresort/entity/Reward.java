@@ -5,15 +5,25 @@ public class Reward implements Comparable<Reward> {
     private String name;
     private String description;
     private int pointCost;
+    /**
+     * Cash value in RM for voucher-type rewards (e.g. RM20 Dining Voucher = 20.0).
+     * Null means this reward is NOT a voucher (experience rewards etc.).
+     */
+    private Double voucherValue;
 
     public Reward() {
     }
 
     public Reward(String rewardId, String name, String description, int pointCost) {
+        this(rewardId, name, description, pointCost, null);
+    }
+
+    public Reward(String rewardId, String name, String description, int pointCost, Double voucherValue) {
         this.rewardId = rewardId;
         this.name = name;
         this.description = description;
         this.pointCost = pointCost;
+        this.voucherValue = voucherValue;
     }
 
     public String getRewardId() {
@@ -46,6 +56,18 @@ public class Reward implements Comparable<Reward> {
 
     public void setPointCost(int pointCost) {
         this.pointCost = pointCost;
+    }
+
+    /**
+     * @return the RM value of this reward if it is a voucher, or null if it is not.
+     */
+    public Double getVoucherValue() {
+        return voucherValue;
+    }
+
+    /** Sets the RM value for voucher-type rewards; null means not a voucher. */
+    public void setVoucherValue(Double voucherValue) {
+        this.voucherValue = voucherValue;
     }
 
     @Override
