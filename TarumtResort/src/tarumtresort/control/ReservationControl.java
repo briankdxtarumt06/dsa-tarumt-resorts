@@ -5,8 +5,8 @@ import tarumtresort.entity.enums.RoomType;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 import tarumtresort.entity.Guest;
+import tarumtresort.entity.Payment;
 import tarumtresort.entity.Reservation;
-import tarumtresort.entity.enums.PaymentMethod;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import tarumtresort.entity.ReservationTimestamps;
 import tarumtresort.entity.Room;
 
@@ -186,8 +187,11 @@ public class ReservationControl {
             if (roomType == null) break; 
 
             // check whether enough rooms of this type exist for the requested date range
+            // (also count the session's own in-memory bookings so multiple rooms
+            // booked in one session do not double-book the same inventory)
             int totalRoomsOfType = roomControl.countRoomsByType(roomType);
-            int overlappingReservations = countOverlappingReservations(roomType, expectedCheckInDate, expectedCheckOutDate);
+            int overlappingReservations = countOverlappingReservations(roomType, expectedCheckInDate, expectedCheckOutDate)
+                                        + countOverlapInList(sessionBookings, roomType, expectedCheckInDate, expectedCheckOutDate);
 
             if (overlappingReservations >= totalRoomsOfType) {
                 reservationUI.printRoomNotAvailable();
@@ -222,22 +226,8 @@ public class ReservationControl {
                 timestamps
             );
 
-            // save to correct list
-            if (reservationType == ReservationType.WALK_IN) {
-                guestQueue.addSorted(reservation);
-                reservationDAO.saveGuestQueue(guestQueue);
-                reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
-            } else {
-                bookingList.addSorted(reservation);
-                reservationDAO.saveBookingList(bookingList);
-                reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
-            }
-
-            Guest guest = guestControl.getGuestById(guestId);
-            if (guest != null) {
-                guest.getReservations().addBack(reservation);
-                guestControl.saveGuestList();
-            }
+            // NOTE: reservation is NOT saved yet - it is committed only after
+            // the guest pays for the whole session (see commit block below)
 
             reservationUI.printReservationDetails(reservation);
             reservationUI.printSuccess();
@@ -254,6 +244,36 @@ public class ReservationControl {
 
         if (sessionBookings.size() > 0) {
             reservationUI.printWaitingQueueTable(buildBookingSummaryTableData(sessionBookings));
+
+            // ONE payment for the whole session (all rooms, mixed types allowed)
+            Payment payment = paymentControl.processBookingPayment(sessionBookings, roomControl);
+            if (payment == null) {
+                reservationUI.printError("Payment cancelled. No rooms were booked.");
+                reservationUI.pressEnterToContinue();
+                return;
+            }
+
+            // payment succeeded - commit the session: save reservations + link into guest record
+            Guest guest = guestControl.getGuestById(guestId);
+            for (int i = 0; i < sessionBookings.size(); i++) {
+                Reservation r = sessionBookings.get(i);
+                if (r.getReservationType() == ReservationType.WALK_IN) {
+                    guestQueue.addSorted(r);
+                } else {
+                    bookingList.addSorted(r);
+                }
+                if (guest != null) {
+                    guest.getReservations().addBack(r);
+                }
+            }
+            reservationDAO.saveBookingList(bookingList);
+            reservationDAO.saveGuestQueue(guestQueue);
+            reservationDAO.saveAssignedList(assignedList);
+            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+            if (guest != null) {
+                guestControl.saveGuestList();
+            }
+
             reservationUI.printSuccess();
         }
 
@@ -628,22 +648,6 @@ public class ReservationControl {
             reservationUI.printReservationDetails(toCheckOut.get(i));
         }
 
-        boolean isLateCheckout = false;
-        for (int i = 0; i < toCheckOut.size(); i++) {
-            LocalDate expectedCheckOutDate = toCheckOut.get(i).getTimestamps().getExpectedCheckOutDate();
-            LocalDateTime checkoutDeadline = expectedCheckOutDate.atTime(11, 0);
-            if (now.isAfter(checkoutDeadline)) {
-                isLateCheckout = true;
-                break;
-            }
-        }
-
-        PaymentMethod method = paymentControl.askPaymentMethod(reservationUI);
-        if (method == null) {
-            reservationUI.pressEnterToContinue();
-            return; // guest cancelled payment
-        }
-
         if (!reservationUI.askConfirmation(
                 "Confirm check out for " + toCheckOut.size() + " room(s)?",
                 "- Selected room(s) will be checked out",
@@ -652,7 +656,26 @@ public class ReservationControl {
             return;
         }
 
-        paymentControl.processGroupCheckoutPayment(toCheckOut, roomControl, isLateCheckout, method);
+        // late check-out settlement: past the expected date, or after 11am on the expected date
+        LinkedListInterface<Reservation> lateRooms = new LinkedList<>();
+        for (int i = 0; i < toCheckOut.size(); i++) {
+            Reservation r = toCheckOut.get(i);
+            LocalDate expected = r.getTimestamps().getExpectedCheckOutDate();
+            long extraDays = ChronoUnit.DAYS.between(expected, now.toLocalDate());
+            boolean lateSameDay = extraDays == 0 && now.toLocalTime().isAfter(LocalTime.of(11, 0));
+            if (extraDays > 0 || lateSameDay) {
+                lateRooms.addBack(r);
+            }
+        }
+
+        if (lateRooms.size() > 0) {
+            reservationUI.printError("Late check-out detected for " + lateRooms.size() + " room(s). "
+                    + "Extra night(s) + RM50 fee per late room will be charged.");
+            Payment latePayment = paymentControl.processLateCheckoutPayment(lateRooms, roomControl);
+            if (latePayment == null) {
+                reservationUI.printError("Warning: late check-out fee was NOT paid.");
+            }
+        }
 
         for (int i = 0; i < toCheckOut.size(); i++) {
             Reservation r = toCheckOut.get(i);
