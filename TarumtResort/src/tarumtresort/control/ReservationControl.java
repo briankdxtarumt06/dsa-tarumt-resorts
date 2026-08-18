@@ -4,16 +4,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.ReservationUI;
 import tarumtresort.boundary.RoomUI;
 import tarumtresort.dao.ReservationDAO;
 import tarumtresort.entity.Guest;
+import tarumtresort.entity.Payment;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.ReservationTimestamps;
 import tarumtresort.entity.Room;
-import tarumtresort.entity.enums.PaymentMethod;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
@@ -257,8 +258,11 @@ public class ReservationControl {
             if (roomType == null) break;
 
             // check whether enough rooms of this type exist for the requested date range
+            // (also count the session's own in-memory bookings so multiple rooms
+            // booked in one session do not double-book the same inventory)
             int totalRoomsOfType = roomControl.countRoomsByType(roomType);
-            int overlappingReservations = countOverlappingReservations(roomType, expectedCheckInDate, expectedCheckOutDate);
+            int overlappingReservations = countOverlappingReservations(roomType, expectedCheckInDate, expectedCheckOutDate)
+                                        + countOverlapInList(sessionBookings, roomType, expectedCheckInDate, expectedCheckOutDate);
 
             if (overlappingReservations >= totalRoomsOfType) {
                 reservationUI.printRoomNotAvailable();
@@ -693,22 +697,6 @@ public class ReservationControl {
             reservationUI.printReservationDetails(toCheckOut.get(i));
         }
 
-        boolean isLateCheckout = false;
-        for (int i = 0; i < toCheckOut.size(); i++) {
-            LocalDate expectedCheckOutDate = toCheckOut.get(i).getTimestamps().getExpectedCheckOutDate();
-            LocalDateTime checkoutDeadline = expectedCheckOutDate.atTime(11, 0);
-            if (now.isAfter(checkoutDeadline)) {
-                isLateCheckout = true;
-                break;
-            }
-        }
-
-        PaymentMethod method = paymentControl.askPaymentMethod(reservationUI);
-        if (method == null) {
-            reservationUI.pressEnterToContinue();
-            return; // guest cancelled payment
-        }
-
         if (!reservationUI.askConfirmation(
                 "Confirm check out for " + toCheckOut.size() + " room(s)?",
                 "- Selected room(s) will be checked out",
@@ -717,7 +705,26 @@ public class ReservationControl {
             return;
         }
 
-        paymentControl.processGroupCheckoutPayment(toCheckOut, roomControl, isLateCheckout, method);
+        // late check-out settlement: past the expected date, or after 11am on the expected date
+        LinkedListInterface<Reservation> lateRooms = new LinkedList<>();
+        for (int i = 0; i < toCheckOut.size(); i++) {
+            Reservation r = toCheckOut.get(i);
+            LocalDate expected = r.getTimestamps().getExpectedCheckOutDate();
+            long extraDays = ChronoUnit.DAYS.between(expected, now.toLocalDate());
+            boolean lateSameDay = extraDays == 0 && now.toLocalTime().isAfter(LocalTime.of(11, 0));
+            if (extraDays > 0 || lateSameDay) {
+                lateRooms.addBack(r);
+            }
+        }
+
+        if (lateRooms.size() > 0) {
+            reservationUI.printError("Late check-out detected for " + lateRooms.size() + " room(s). "
+                    + "Extra night(s) + RM50 fee per late room will be charged.");
+            Payment latePayment = paymentControl.processLateCheckoutPayment(lateRooms, roomControl);
+            if (latePayment == null) {
+                reservationUI.printError("Warning: late check-out fee was NOT paid.");
+            }
+        }
 
         for (int i = 0; i < toCheckOut.size(); i++) {
             Reservation r = toCheckOut.get(i);
@@ -898,6 +905,7 @@ public class ReservationControl {
 
                 reservationDAO.saveGuestQueue(guestQueue);
                 reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+                handleRefund(r);
                 reservationUI.printCancelled();
                 afterCancelSuccess();
                 return;
@@ -924,6 +932,7 @@ public class ReservationControl {
 
                 reservationDAO.saveBookingList(bookingList);
                 reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+                handleRefund(r);
                 reservationUI.printCancelled();
                 afterCancelSuccess();
                 return;
@@ -1013,31 +1022,36 @@ public class ReservationControl {
         // check booking list
         for (int i = 0; i < bookingList.size(); i++) {
             String reservationId = bookingList.get(i).getReservationId();
-            int number = Integer.parseInt(reservationId.substring(3));
-            if (number > max) {
-                max = number;
-            }
+            max = maxIdFrom(reservationId, max);
         }
 
         // check waiting queue
         for (int i = 0; i < guestQueue.size(); i++) {
             String reservationId = guestQueue.get(i).getReservationId();
-            int number = Integer.parseInt(reservationId.substring(3));
-            if (number > max) {
-                max = number;
-            }
+            max = maxIdFrom(reservationId, max);
         }
 
         // check assigned list
         for (int i = 0; i < assignedList.size(); i++) {
             String reservationId = assignedList.get(i).getReservationId();
-            int number = Integer.parseInt(reservationId.substring(3));
-            if (number > max) {
-                max = number;
-            }
+            max = maxIdFrom(reservationId, max);
         }
 
         return String.format("RES%03d", max + 1);
+    }
+
+    // parse "RESxxx" suffix defensively - malformed ids are skipped, never crash
+    private int maxIdFrom(String reservationId, int max) {
+        if (reservationId != null && reservationId.startsWith("RES")) {
+            try {
+                int number = Integer.parseInt(reservationId.substring(3));
+                if (number > max) {
+                    return number;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return max;
     }
         
     // generate confirmation number
@@ -1365,9 +1379,14 @@ public class ReservationControl {
         return date;
     }
 
-    // public static void main(String[] args) {
-    //     ReservationControl reservationControl = new ReservationControl();
-    //     reservationControl.runReservationModule();
-    // }
+    private void handleRefund(Reservation r) {
+        double refund = paymentControl.refundReservation(r, roomControl);
+        if (refund > 0) {
+            System.out.println("Refunded: RM " + String.format("%.2f", refund));
+            reservationUI.printSuccess();
+        } else if (paymentControl.hasPaymentFor(r.getConfirmationNumber())) {
+            reservationUI.printError("Cancelled within 24 hours of check-in - no refund applies.");
+        }
+    }
 
 }

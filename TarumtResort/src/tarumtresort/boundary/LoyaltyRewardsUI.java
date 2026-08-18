@@ -1,9 +1,7 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
-import tarumtresort.control.MemberController;
-import tarumtresort.control.PointsController;
-import tarumtresort.control.RewardController;
+import tarumtresort.control.LoyaltyController;
 
 /**
  *
@@ -28,13 +26,13 @@ public class LoyaltyRewardsUI {
 
             switch (choice) {
                 case 1:
-                    new MemberController(scanner).run();
+                    new LoyaltyController(scanner).runMemberMenu();
                     break;
                 case 2:
-                    new RewardController(scanner).run();
+                    new LoyaltyController(scanner).runRewardMenu();
                     break;
                 case 3:
-                    new PointsController(scanner).run();
+                    new LoyaltyController(scanner).runPointsMenu();
                     break;
                 case 0:
                     System.out.println("\n  Returning to main menu...");
