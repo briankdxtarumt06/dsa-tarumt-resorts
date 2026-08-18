@@ -20,7 +20,7 @@ public class PaymentUI {
     private void printBillHeader() {
         System.out.println();
         System.out.println("========================================");
-        System.out.println(Ansi.bold(Ansi.cyan("          PAYMENT BILL")));
+        System.out.println("          PAYMENT BILL");
         System.out.println("========================================");
         System.out.println();
     }
@@ -39,8 +39,8 @@ public class PaymentUI {
 
         // highlight the total row
         rows.add(new String[]{
-            Ansi.bold(Ansi.cyan("TOTAL")),
-            Ansi.bold(Ansi.cyan("RM " + String.format("%.2f", total)))
+            Ansi.bold("TOTAL"),
+            Ansi.bold("RM " + String.format("%.2f", total))
         });
 
         TablePrinter.displayTable(header, rows.toArray(new String[0][]));
