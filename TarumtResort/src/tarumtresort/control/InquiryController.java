@@ -572,8 +572,8 @@ public class InquiryController {
         return minutes + "m " + seconds + "s";
     }
 
-    public static void main(String[] args) {
-        InquiryController inquiryController = new InquiryController();
-        inquiryController.runInquiryModule();
-    }
+    // public static void main(String[] args) {
+    //     InquiryController inquiryController = new InquiryController();
+    //     inquiryController.runInquiryModule();
+    // }
 }

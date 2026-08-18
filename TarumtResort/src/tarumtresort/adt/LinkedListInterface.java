@@ -36,11 +36,15 @@ public interface LinkedListInterface<T extends Comparable<T>> {
 
     T removeIndex(int index);
 
+    boolean merge(LinkedListInterface<T> other);
+
     // HELPER
 
     boolean contains(T element);
 
     int indexOf(T element);
+
+    boolean isSorted();
 
     int size();
 
