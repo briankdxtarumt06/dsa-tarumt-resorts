@@ -71,11 +71,11 @@ public class PaymentControl {
         return payment;
     }
 
-    public Payment processGroupCheckoutPayment(LinkedListInterface<Reservation> reservations, RoomControl roomControl, boolean isLateCheckout, PaymentMethod method) {
+    public Payment processGroupCheckoutPayment(LinkedListInterface<Reservation> reservations, ReservationControl reservationControl, boolean isLateCheckout, PaymentMethod method) {
         double totalRoomCharge = 0;
         for (int i = 0; i < reservations.size(); i++) {
             Reservation r = reservations.get(i);
-            double pricePerNight = roomControl.getPriceByRoomType(r.getRoomTypeRequested());
+            double pricePerNight = reservationControl.getPriceByRoomType(r.getRoomTypeRequested());
             totalRoomCharge += pricePerNight * r.getNumberOfNights();
         }
 

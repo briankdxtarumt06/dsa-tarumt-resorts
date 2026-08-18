@@ -53,7 +53,7 @@ public class MemberController {
     }
 
     private void addMemberFlow() {
-        String guestId = new GuestControl().generateGuestId();
+        String guestId = new ReservationControl().generateGuestId();
         Member member = memberUI.inputNewMember(nextMemberId(), guestId);
         if (member == null) {
             memberUI.showMessage("Operation cancelled.");
