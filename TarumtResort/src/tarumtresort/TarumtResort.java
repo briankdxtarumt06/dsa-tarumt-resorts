@@ -35,7 +35,7 @@ public class TarumtResort {
 
                     // VIP Reservation module
                     case 2:
-                        new PriorityReservationController().run(null);
+                        new PriorityReservationController().run();
                         break;
 
                     // Housekeeping module

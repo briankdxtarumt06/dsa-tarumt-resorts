@@ -39,6 +39,24 @@ public class InquiryController {
     // list declared
     private LinkedListInterface<Inquiry> pendingInquiryList = new LinkedList<>();
     private LinkedListInterface<Inquiry> resolvedInquiryList = new LinkedList<>();
+    private LinkedListInterface<Inquiry> getAllInquiries(InquiryStatus filterStatus) {
+        LinkedListInterface<Inquiry> combined = new LinkedList<>();
+
+        for (int i = 0; i < pendingInquiryList.size(); i++) {
+            Inquiry inq = pendingInquiryList.get(i);
+            if (filterStatus == null || inq.getStatus() == filterStatus) {
+                combined.addBack(inq);
+            }
+        }
+        for (int i = 0; i < resolvedInquiryList.size(); i++) {
+            Inquiry inq = resolvedInquiryList.get(i);
+            if (filterStatus == null || inq.getStatus() == filterStatus) {
+                combined.addBack(inq);
+            }
+        }
+
+        return combined;
+    }
 
     // dao
     private static final InquiryDAO inquiryDAO = new InquiryDAO();
@@ -80,6 +98,9 @@ public class InquiryController {
                         cancelInquiry();
                         break;
                     case 5:
+                        viewAllInquiries();
+                        break;
+                    case 6:
                         generateReport();
                         break;
                     case 0:
@@ -94,7 +115,7 @@ public class InquiryController {
                 }
             } while (choice != 0);
         } catch (Exception e) {
-            System.err.println("\n  ✗ An unexpected error occurred in Inquiry module: " + e.getMessage());
+            System.err.println("\n An unexpected error occurred in Inquiry module: " + e.getMessage());
         }
     }
 
@@ -138,7 +159,6 @@ public class InquiryController {
             return;
         }
 
-        // removeFront = dequeue: highest priority inquiry is always at the front
         Inquiry inquiry = pendingInquiryList.removeFront();
         inquiry.setStatus(InquiryStatus.IN_PROGRESS);
         inquiryDAO.savePendingInquiryList(pendingInquiryList);
@@ -149,7 +169,6 @@ public class InquiryController {
         ui.printAdditionalInfo(inquiry, extra);
 
         if (inquiry.getStatus() == InquiryStatus.RESOLVED) {
-            // ROOMSERVICE auto-resolves once forwarded to Housekeeping
             ui.printMessage("Inquiry automatically resolved (request forwarded to Housekeeping).");
             return;
         }
@@ -157,6 +176,11 @@ public class InquiryController {
         if (ui.inputConfirmation("Mark this inquiry as resolved?")) {
             resolveInquiry(inquiry);
             ui.printSuccess();
+        } else {
+            inquiry.setStatus(InquiryStatus.PENDING);
+            pendingInquiryList.addSorted(inquiry);
+            inquiryDAO.savePendingInquiryList(pendingInquiryList);
+            ui.printMessage("Inquiry returned to the queue.");
         }
     }
 
@@ -204,6 +228,12 @@ public class InquiryController {
     }
 
     // case 5
+    public void viewAllInquiries() {
+        InquiryStatus filter = ui.inputInquiryStatusFilter();
+        ui.listAllInquiries(buildInquiryTableData(getAllInquiries(filter)));
+    }
+
+    // case 6
     public void generateReport() {
         int choice = ui.getReportMenuChoice();
         switch (choice) {
@@ -542,8 +572,8 @@ public class InquiryController {
         return minutes + "m " + seconds + "s";
     }
 
-    public static void main(String[] args) {
-        InquiryController inquiryController = new InquiryController();
-        inquiryController.runInquiryModule();
-    }
+    // public static void main(String[] args) {
+    //     InquiryController inquiryController = new InquiryController();
+    //     inquiryController.runInquiryModule();
+    // }
 }
