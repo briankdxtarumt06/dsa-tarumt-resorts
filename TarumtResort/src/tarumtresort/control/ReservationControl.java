@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.GuestUI;
@@ -19,16 +20,7 @@ import tarumtresort.entity.enums.PaymentMethod;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.boundary.ReservationUI;
 import tarumtresort.boundary.RoomUI;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
-import java.time.LocalDate;
-import tarumtresort.entity.ReservationTimestamps;
-import tarumtresort.entity.Room;
 
 public class ReservationControl {
 
@@ -1389,9 +1381,14 @@ public class ReservationControl {
         return date;
     }
 
-    // public static void main(String[] args) {
-    //     ReservationControl reservationControl = new ReservationControl();
-    //     reservationControl.runReservationModule();
-    // }
+    private void handleRefund(Reservation r) {
+        double refund = paymentControl.refundReservation(r, roomControl);
+        if (refund > 0) {
+            System.out.println("Refunded: RM " + String.format("%.2f", refund));
+            reservationUI.printSuccess();
+        } else if (paymentControl.hasPaymentFor(r.getConfirmationNumber())) {
+            reservationUI.printError("Cancelled within 24 hours of check-in - no refund applies.");
+        }
+    }
 
 }
