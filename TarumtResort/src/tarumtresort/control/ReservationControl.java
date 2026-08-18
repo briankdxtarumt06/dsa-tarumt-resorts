@@ -333,6 +333,15 @@ public class ReservationControl {
             reservationUI.printWaitingQueueTable(buildBookingSummaryTableData(sessionBookings));
             System.out.println();
             reservationUI.printSuccess();
+
+            // payment collection
+            Payment payment = paymentControl.processBookingPayment(sessionBookings, roomControl);
+            if (payment == null) {
+                reservationUI.printError("Payment was cancelled. Reservations are saved but not yet paid.");
+            } else {
+                reservationUI.printSuccess();
+                System.out.println("Payment recorded: " + payment.getPaymentID());
+            }
         }
 
         String[][] options = {
