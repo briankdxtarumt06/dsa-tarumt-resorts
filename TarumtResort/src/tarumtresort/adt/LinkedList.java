@@ -126,6 +126,17 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
     }
 
     @Override
+    public boolean merge(LinkedListInterface<T> other) {
+        if (other == null || other.isEmpty() || !isSorted() || !other.isSorted()) {
+            return false;
+        }
+        for (int i = 0; i < other.size(); i++) {
+            addSorted(other.get(i));
+        }
+        return true;
+    }
+
+    @Override
     public void addAtIndex(int index, T element) {
         if (index < 0 || index > size) {
             return;
@@ -183,6 +194,18 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
             index++;
         }
         return -1;
+    }
+
+    @Override
+    public boolean isSorted() {
+        Node<T> current = head;
+        while (current != null && current.getNext() != null) {
+            if (current.getData().compareTo(current.getNext().getData()) > 0) {
+                return false;
+            }
+            current = current.getNext();
+        }
+        return true;
     }
 
     @Override
