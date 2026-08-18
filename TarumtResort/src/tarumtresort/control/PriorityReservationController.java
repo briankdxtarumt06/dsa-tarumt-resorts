@@ -21,6 +21,7 @@ public class PriorityReservationController {
 
     // DAO
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
+    private ReservationDAO reservationDAO = new ReservationDAO();
 
     // Controllers
     private LoyaltyController loyaltyController;
@@ -137,7 +138,7 @@ public class PriorityReservationController {
                 if (best == null) {
                     bestIndex = i;
                     best = tmp;
-                    bestTime = getTimestamp(reservations, tmp);
+                    bestTime = getTimestamp(reservations,tmp);
                     continue;
                 }
 
@@ -200,13 +201,13 @@ public class PriorityReservationController {
     }
 
     // UI
-    public void run(LinkedListInterface<Reservation> guestQueue) {
+    public void run() {
         int choice;
         do {
             choice = priorityReservationUI.getMenuChoice();
             switch (choice) {
                 case 1:
-                    viewVIPQueueFlow(guestQueue);
+                    viewVIPQueueFlow();
                     break;
                 case 2:
                     listAllFlow();
@@ -225,9 +226,11 @@ public class PriorityReservationController {
         } while (choice != 5);
     }
 
-    private void viewVIPQueueFlow(LinkedListInterface<Reservation> guestQueue) {
-        LinkedListInterface<Reservation> queue = generateVIPQueue(guestQueue);
-        priorityReservationUI.displayVIPQueue(queue, priorityReservations);
+    private void viewVIPQueueFlow() {
+        LinkedListInterface<Reservation> guestQueue = new LinkedList<>();
+        reservationDAO.loadGuestQueue(guestQueue);
+        priorityReservationUI.displayVIPQueue(
+                generateVIPQueue(guestQueue), priorityReservations);
         priorityReservationUI.pause();
     }
 
