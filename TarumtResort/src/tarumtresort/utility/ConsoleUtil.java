@@ -37,7 +37,7 @@ public class ConsoleUtil {
     }
 
     public static void pressEnterToContinue(Scanner scanner) {
-        System.out.print("Press Enter to continue...");
+        System.out.print("\nPress Enter to continue...");
         if (scanner.hasNextLine()) {
             scanner.nextLine();
         }

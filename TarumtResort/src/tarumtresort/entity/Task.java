@@ -1,34 +1,46 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtresort.entity;
 
 //imports
 import java.time.LocalDateTime;
+import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.enums.TaskPriority;
+import tarumtresort.entity.enums.TaskStatus;
 
 /**
  *
  * @author Brian
  */
-public class Task {
-
+public class Task implements Comparable<Task> {
+    private String taskId;
     private String taskName;
     private String taskType;
-    private LinkedListInterface<String> taskStatus;
-    private String taskPriority; //TODO: change to enum 1 - High, 2 - Medium, 3 - Low, etc
+    private TaskStatus taskStatus;
+    private TaskPriority taskPriority;
     private LocalDateTime startDateTime;
+    private String roomId;
+    private LinkedListInterface<TaskAssignment> taskAssignments;
+    private LinkedListInterface<TaskStatus> statusHistory;
 
     public Task() {
     }
 
-    public Task(String taskName, String taskType, LinkedListInterface<String> taskStatus, String taskPriority, LocalDateTime startDateTime) {
+    public Task(String taskId, String taskName, String taskType, TaskStatus taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime, String roomId) {
+        this.taskId = taskId;
         this.taskName = taskName;
         this.taskType = taskType;
         this.taskStatus = taskStatus;
         this.taskPriority = taskPriority;
         this.startDateTime = startDateTime;
+        this.roomId = roomId;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
     }
 
     public String getTaskName() {
@@ -47,28 +59,24 @@ public class Task {
         this.taskType = taskType;
     }
 
-    public LinkedListInterface<String> getTaskStatus() {
+    public TaskStatus getTaskStatus() {
         return taskStatus;
     }
 
-    public void setTaskStatus(LinkedListInterface<String> taskStatus) {
+    public void setTaskStatus(TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
     }
 
-    public void addTaskStatus(String taskStatus) {
-        //TODO: add status using stack push logic
-    }
-
-    public void rollBackTaskStatus() {
-        //TODO: roll back status using stack pop logic
-    }
-
-    public String getTaskPriority() {
+    public TaskPriority getTaskPriority() {
         return taskPriority;
     }
 
-    public void setTaskPriority(String taskPriority) {
+    public void setTaskPriority(TaskPriority taskPriority) {
         this.taskPriority = taskPriority;
+    }
+
+    public void setTaskPriority(String taskPriority) {
+        this.taskPriority = TaskPriority.fromString(taskPriority);
     }
 
     public LocalDateTime getStartDateTime() {
@@ -77,6 +85,56 @@ public class Task {
 
     public void setStartDateTime(LocalDateTime startDateTime) {
         this.startDateTime = startDateTime;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
+    }
+
+    public LinkedListInterface<TaskAssignment> getTaskAssignments() {
+        if (taskAssignments == null) {
+            taskAssignments = new LinkedList<>();
+        }
+        return taskAssignments;
+    }
+
+    public void setTaskAssignments(LinkedListInterface<TaskAssignment> taskAssignments) {
+        this.taskAssignments = taskAssignments;
+    }
+
+    public void addTaskAssignment(TaskAssignment taskAssignment) {
+        if (taskAssignment == null || taskAssignment.getTaskAssignmentId() == null) {
+            return;
+        }
+        if (taskAssignments == null) {
+            taskAssignments = new LinkedList<>();
+        }
+        if (taskAssignments.contains(taskAssignment)) {
+            return; // duplicate assignment id
+        }
+        taskAssignments.addBack(taskAssignment);
+    }
+
+    public boolean removeTaskAssignment(TaskAssignment taskAssignment) {
+        if (taskAssignment == null || taskAssignment.getTaskAssignmentId() == null) {
+            return false;
+        }
+        return taskAssignments != null && taskAssignments.removeElement(taskAssignment);
+    }
+
+    public LinkedListInterface<TaskStatus> getStatusHistory() {
+        if (statusHistory == null) {
+            statusHistory = new LinkedList<>();
+        }
+        return statusHistory;
+    }
+
+    public void setStatusHistory(LinkedListInterface<TaskStatus> statusHistory) {
+        this.statusHistory = statusHistory;
     }
 
     @Override
@@ -88,5 +146,30 @@ public class Task {
                ",\ntaskPriority=" + taskPriority +
                ",\nstartDateTime=" + startDateTime;
     }
-    
+
+    @Override
+    public int compareTo(Task other) {
+        // null checks to avoid NullPointerException
+        if (other == null) {
+            return 1;
+        }
+        // compare by task priority first, then by start date time
+        int priorityCompare = Integer.compare(
+                this.taskPriority == null ? TaskPriority.UNKNOWN.getRank() : this.taskPriority.getRank(),
+                other.taskPriority == null ? TaskPriority.UNKNOWN.getRank() : other.taskPriority.getRank());
+        if (priorityCompare != 0) {
+            return priorityCompare;
+        }
+        if (this.startDateTime == null && other.startDateTime == null) {
+            return 0;
+        }
+        if (this.startDateTime == null) {
+            return 1;
+        }
+        if (other.startDateTime == null) {
+            return -1;
+        }
+
+        return this.startDateTime.compareTo(other.startDateTime);
+    }
 }
