@@ -24,7 +24,7 @@ public class TablePrinter {
         int[] columnWidths = new int[numColumns];
 
         for (int i = 0; i < numColumns; i++) {
-            columnWidths[i] = header[i].length();
+            columnWidths[i] = Ansi.strip(header[i]).length();
         }
         for (String[] row : rows) {
             if (row.length != numColumns) {
@@ -32,7 +32,7 @@ public class TablePrinter {
                 continue;
             }
             for (int i = 0; i < numColumns; i++) {
-                columnWidths[i] = Math.max(columnWidths[i], row[i].length());
+                columnWidths[i] = Math.max(columnWidths[i], Ansi.strip(row[i]).length());
             }
         }
         for (int i = 0; i < numColumns; i++) {
@@ -77,8 +77,9 @@ public class TablePrinter {
         sb.append(VERTICAL);
         for (int i = 0; i < cells.length; i++) {
             String cell = cells[i] == null ? "" : cells[i];
+            String plain = Ansi.strip(cell);
             sb.append(' ').append(cell);
-            sb.append(repeat(' ', widths[i] - 1 - cell.length()));
+            sb.append(repeat(' ', widths[i] - 1 - plain.length()));
             sb.append(VERTICAL);
         }
         System.out.println(sb);
