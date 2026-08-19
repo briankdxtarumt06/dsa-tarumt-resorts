@@ -68,16 +68,17 @@ public class PriorityReservationUI {
         if (priorityReservationsList.isEmpty()) {
             System.out.println("  (No priority reservations)");
         } else {
-            String[] header = new String[] { "No", "Reservation ID", "Priority Level", "Overridden By", "Override Reason" };
+            String[] header = new String[] { "No", "Reservation ID", "Priority Level", "Overridden By",
+                    "Override Reason" };
             String[][] rows = new String[priorityReservationsList.size()][5];
             for (int i = 0; i < priorityReservationsList.size(); i++) {
                 PriorityReservation pr = priorityReservationsList.get(i);
                 rows[i] = new String[] {
-                    String.valueOf(i + 1),
-                    pr.getReservationId(),
-                    pr.getPriorityLevel().name(),
-                    pr.getOverriddenBy(),
-                    pr.getOverrideReason()
+                        String.valueOf(i + 1),
+                        pr.getReservationId(),
+                        pr.getPriorityLevel().name(),
+                        pr.getOverriddenBy(),
+                        pr.getOverrideReason()
                 };
             }
             TablePrinter.displayTable(header, rows);
@@ -89,7 +90,8 @@ public class PriorityReservationUI {
         System.out.println("  " + action++ + ". Delete Priority Reservation");
         System.out.println("  " + action++ + ". View VIP Queue");
         System.out.println("  " + action++ + ". Filter by Priority Level");
-        
+        System.out.println("  " + action++ + ". Search Priority Reservation");
+
         if (page < pageCount - 1) {
             System.out.println("  " + action++ + ". Next Page");
         }
@@ -104,7 +106,6 @@ public class PriorityReservationUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    // DETAIL SCREEN ACTIONS
     public int getPriorityActionChoice() {
         printSection("Record Actions");
         System.out.println("  1. Update Priority Level");
@@ -115,9 +116,41 @@ public class PriorityReservationUI {
         return inputIntChoice("Enter choice", 0, 3);
     }
 
-    public void printPriorityDetail(String[][] details) {
-        printSection("Priority Reservation Details");
-        TablePrinter.displayTable(new String[] { "Field", "Value" }, details);
+    public static void printDetails(String[][] details) {
+        if (details == null || details.length == 0) {
+            return;
+        }
+
+        int keyWidth = 0;
+        for (String[] pair : details) {
+            if (pair[0] != null && pair[0].length() > keyWidth) {
+                keyWidth = pair[0].length();
+            }
+        }
+
+        printSection("Details");
+        for (String[] pair : details) {
+            System.out.println(String.format("%-" + (keyWidth + 3) + "s: %s",
+                    pair[0] == null ? "" : pair[0],
+                    pair.length > 1 && pair[1] != null ? pair[1] : "-"));
+        }
+        printSeparator();
+    }
+
+    public void printPriorityDetail(PriorityReservation pr, Reservation r) {
+        printDetails(new String[][] {
+                { "Reservation ID", pr.getReservationId() },
+                { "Guest ID", r == null ? "-" : r.getGuestId() },
+                { "Priority Level", pr.getPriorityLevel().name() },
+                { "Reservation Status", (r == null || r.getStatus() == null) ? "-" : r.getStatus().name() },
+                { "Room Type",
+                        (r == null || r.getRoomTypeRequested() == null) ? "-" : r.getRoomTypeRequested().name() },
+                { "Overridden By",
+                        (pr.getOverriddenBy() == null || pr.getOverriddenBy().isEmpty()) ? "-" : pr.getOverriddenBy() },
+                { "Override Reason",
+                        (pr.getOverrideReason() == null || pr.getOverrideReason().isEmpty()) ? "-"
+                                : pr.getOverrideReason() }
+        });
     }
 
     // VIP QUEUE (waiting members only)
@@ -130,6 +163,7 @@ public class PriorityReservationUI {
             printSeparator();
             return;
         }
+        String[] header = new String[] { "Position", "Reservation ID", "Guest ID", "Priority", "Room Type","Registered" };
         String[][] rows = new String[queue.size()][6];
         for (int i = 0; i < queue.size(); i++) {
             Reservation r = queue.get(i);
@@ -143,27 +177,33 @@ public class PriorityReservationUI {
                     formatRegistration(r)
             };
         }
-        TablePrinter.displayTable(
-                new String[] { "Pos", "Reservation ID", "Guest ID", "Priority", "Room Type", "Registered" }, rows);
+        TablePrinter.displayTable(header, rows);
         printSeparator();
     }
 
     // OVERRIDE
     public PriorityLevel selectPriorityLevel(String prompt) {
-        PriorityLevel[] levels = PriorityLevel.values();
-        printSection("Priority Levels");
-        for (int i = 0; i < levels.length; i++) {
-            System.out.printf("  %d. %-10s (rank %d)%n", i + 1, levels[i].name(), levels[i].getRank());
-        }
+        System.out.println("\nSelect Priority Level:");
+        System.out.println("  1. PENALTY");
+        System.out.println("  2. SLIVER");
+        System.out.println("  3. GOLD");
+        System.out.println("  4. PLATINUM");
+        System.out.println("  5. DIAMOND");
+        System.out.println("  6. EMERGENCY");
         System.out.println("  0. Cancel");
-        printSeparator();
-
-        int index = inputIntChoice(prompt, 0, levels.length) - 1;
-        if (index < 0) {
+        int choice = inputIntChoice(prompt, 0, 6);
+        if (choice == 0) {
             showMessage("Operation cancelled.");
             return null;
         }
-        return levels[index];
+        return switch (choice) {
+            case 1 -> PriorityLevel.PENALTY;
+            case 2 -> PriorityLevel.SLIVER;
+            case 3 -> PriorityLevel.GOLD;
+            case 4 -> PriorityLevel.PLATINUM;
+            case 5 -> PriorityLevel.DIAMOND;
+            default -> PriorityLevel.EMERGENCY;
+        };
     }
 
     public void displayOverridePreview(PriorityReservation pr, PriorityLevel newLevel,
