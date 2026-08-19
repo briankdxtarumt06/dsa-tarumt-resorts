@@ -33,7 +33,7 @@ import tarumtresort.report.ReportResult;
 public class InquiryController {
 
     // controller (dependencies on other modules)
-    private RoomControl roomControl = new RoomControl();
+    private ReservationControl reservationControl = new ReservationControl();
     private HousekeepingController housekeepingController = new HousekeepingController();
 
     // list declared
@@ -361,7 +361,7 @@ public class InquiryController {
 
         if (reservation.getStatus() == ReservationStatus.WAITING) {
             RoomType type = reservation.getRoomTypeRequested();
-            LinkedListInterface<Room> roomsOfType = roomControl.getRoomsByType(type);
+            LinkedListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
             int availableCount = 0;
             for (int i = 0; i < roomsOfType.size(); i++) {
                 if (roomsOfType.get(i).getRoomStatus() == RoomStatus.AVAILABLE) {
@@ -371,7 +371,7 @@ public class InquiryController {
             sb.append("Available Rooms of this Type: ").append(availableCount)
               .append(" out of ").append(roomsOfType.size()).append("\n");
         } else {
-            Room room = roomControl.getRoomById(reservation.getRoomId());
+            Room room = reservationControl.getRoomById(reservation.getRoomId());
             if (room != null) {
                 sb.append("Assigned Room No.  : ").append(room.getRoomNumber()).append("\n");
                 sb.append("Room Status        : ").append(room.getRoomStatus()).append("\n");
