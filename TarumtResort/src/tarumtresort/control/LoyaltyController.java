@@ -946,6 +946,36 @@ public class LoyaltyController {
                 + member.getPoints();
     }
 
+    /**
+     * Deduct points - used when a booking refund claws back the points that
+     * were earned at payment. Writes a negative PointTransaction (never
+     * expires) clamped so the member's balance cannot go below zero.
+     */
+    public String deductPoints(String memberId, int amount, String description, LocalDateTime date) {
+        Member member = findMember(memberId);
+        if (member == null) {
+            return "Member not found: " + memberId;
+        }
+        if (amount <= 0) {
+            return "Amount must be positive.";
+        }
+        expirePoints(memberId, date);
+
+        int deduction = Math.min(amount, member.getPoints());
+        if (deduction <= 0) {
+            return "No points to deduct from " + memberId + ".";
+        }
+        PointTransaction t = new PointTransaction(nextTransactionId(), date,
+                description == null || description.isBlank() ? "Points deducted" : description,
+                -deduction, date, -deduction, memberId);
+        member.getPointTransactionList().addSorted(t);
+        recomputeBalance(member);
+        recomputeTier(member, date);
+        persistMembers();
+        return deduction + " pts deducted from " + memberId + " (refund claw-back). New balance: "
+                + member.getPoints();
+    }
+
     public String requestRedemption(String memberId, String rewardId, LocalDateTime now) {
         Member member = findMember(memberId);
         if (member == null) {

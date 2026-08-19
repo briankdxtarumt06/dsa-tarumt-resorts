@@ -2397,6 +2397,13 @@ public class ReservationControl {
 
             paymentList.addBack(payment);
             paymentDAO.saveToFile(paymentList);
+
+            // loyalty: 1 point per RM1 of the total bill paid (incl. SC & tax)
+            int pointsEarned = (int) Math.round(total);
+            if (member != null && pointsEarned > 0) {
+                System.out.println(loyaltyController.earnPoints(member.getMemberId(), pointsEarned,
+                        "Booking " + payment.getPaymentID(), LocalDateTime.now()));
+            }
             return payment;
         }
 
@@ -2454,6 +2461,21 @@ public class ReservationControl {
             payment.setRefundedAmount(payment.getRefundedAmount() + refund);
             payment.setRefundDateTime(LocalDateTime.now());
             paymentDAO.saveToFile(paymentList);
+
+            // claw back the loyalty points earned for this refunded share of the bill
+            if (refund >= 0.005) {
+                Member member = reservationControl.loyaltyController
+                        .findMemberByGuestId(r.getGuestId());
+                if (member != null) {
+                    int pts = (int) Math.round(refund);
+                    if (pts > 0) {
+                        System.out.println(reservationControl.loyaltyController.deductPoints(
+                                member.getMemberId(), pts,
+                                "Refund of booking " + r.getConfirmationNumber(),
+                                LocalDateTime.now()));
+                    }
+                }
+            }
             return refund;
         }
 
