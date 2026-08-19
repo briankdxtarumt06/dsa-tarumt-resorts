@@ -1570,14 +1570,16 @@ public class ReservationControlV2 {
     }
 
     private String[][] buildQueueTableData(LinkedListInterface<Reservation> list) {
-        String[][] data = new String[list.size() + 1][6];
-        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Room Type", "Type", "Status"};
+        String[][] data = new String[list.size() + 1][7];
+        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Type", "Status"};
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
+            String guestName = getGuestName(r.getGuestId());
             data[i + 1] = new String[]{
                 String.valueOf(i + 1),
                 r.getConfirmationNumber(),
                 r.getGuestId(),
+                guestName != null ? guestName : "-",
                 r.getRoomTypeRequested().toString(),
                 r.getReservationType().toString(),
                 r.getStatus().toString()
