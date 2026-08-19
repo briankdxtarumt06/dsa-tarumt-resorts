@@ -73,13 +73,13 @@ public class LoyaltyController {
                 case 4:
                     listMembersFlow();
                     break;
-                case 5:
+                case 0:
                     memberUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    memberUI.showError("Invalid choice. Please enter 1 - 5.");
+                    memberUI.showError("Invalid choice. Please enter 1 - 4 or 0 to exit.");
             }
-        } while (choice != 5);
+        } while (choice != 0);
     }
 
     /** Reward catalogue menu (was RewardController.run). */
@@ -101,13 +101,13 @@ public class LoyaltyController {
                     rewardUI.displayRewards(rewardList);
                     rewardUI.pause();
                     break;
-                case 5:
+                case 0:
                     rewardUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    rewardUI.showError("Invalid choice. Please enter 1 - 5.");
+                    rewardUI.showError("Invalid choice. Please enter 1 - 4 or 0 to exit.");
             }
-        } while (choice != 5);
+        } while (choice != 0);
     }
 
     /** Points, redemption and notification menu (was PointsController.run). */
@@ -147,13 +147,13 @@ public class LoyaltyController {
                 case 9:
                     processRedemptionRequestsFlow();
                     break;
-                case 10:
+                case 0:
                     pointsUI.showMessage("Returning to main menu...");
                     break;
                 default:
-                    pointsUI.showError("Invalid choice. Please enter 1 - 10.");
+                    pointsUI.showError("Invalid choice. Please enter 1 - 9 or 0 to exit.");
             }
-        } while (choice != 10);
+        } while (choice != 0);
     }
 
     // ======================= MEMBER MANAGEMENT =======================

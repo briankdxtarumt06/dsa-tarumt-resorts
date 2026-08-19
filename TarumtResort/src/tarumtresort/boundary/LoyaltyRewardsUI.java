@@ -128,7 +128,7 @@ public class LoyaltyRewardsUI {
             System.out.println(" 2. Update Member Tier");
             System.out.println(" 3. Remove Member");
             System.out.println(" 4. List Members");
-            System.out.println(" 5. Exit");
+            System.out.println(" 0. Exit");
             System.out.println("===========================");
             return readInt("Enter your choice");
         }
@@ -376,7 +376,7 @@ public class LoyaltyRewardsUI {
             System.out.println(" 7. Generate Expiry Alerts (7 days)");
             System.out.println(" 8. View Notifications");
             System.out.println(" 9. Process Redemption Requests");
-            System.out.println("10. Exit");
+            System.out.println(" 0. Exit");
             System.out.println("===========================");
             return readInt("Enter your choice");
         }
@@ -640,7 +640,7 @@ public class LoyaltyRewardsUI {
             System.out.println(" 2. Remove Reward");
             System.out.println(" 3. Update Reward");
             System.out.println(" 4. List Rewards");
-            System.out.println(" 5. Exit");
+            System.out.println(" 0. Exit");
             System.out.println("===========================");
             return readInt("Enter your choice");
         }
