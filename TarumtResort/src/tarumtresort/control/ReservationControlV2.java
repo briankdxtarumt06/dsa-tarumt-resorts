@@ -982,22 +982,35 @@ public class ReservationControlV2 {
         }
     }
 
-    // case 8
+    // case 8 - pick which guest (a guest may have several rooms queued), then show all of that guest's queued reservations in one table, position included
     public void checkQueuePosition() {
-        if (guestQueue.isEmpty()) {
+        LinkedListInterface<Guest> queuedGuests = buildQueuedGuestList();
+
+        if (queuedGuests.isEmpty()) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
-        reservationUI.printWaitingQueueTable(buildQueueTableData(guestQueue));
-        int selection = reservationUI.inputListIndex("reservation", guestQueue.size());
-        if (selection == 0) return;
-        Reservation found = guestQueue.get(selection - 1);
-        reservationUI.printQueuePosition(found.getConfirmationNumber(), selection);
+
+        reservationUI.printQueuedGuestList(buildGuestSelectionTableData(queuedGuests));
+        int guestSelection = reservationUI.inputListIndex("guest", queuedGuests.size());
+        if (guestSelection == 0) return;
+
+        Guest selectedGuest = queuedGuests.get(guestSelection - 1);
+
+        LinkedListInterface<Reservation> guestReservationsInQueue = new LinkedList<>();
+        for (int i = 0; i < guestQueue.size(); i++) {
+            Reservation r = guestQueue.get(i);
+            if (r.getGuestId().equals(selectedGuest.getGuestId())) {
+                guestReservationsInQueue.addBack(r);
+            }
+        }
+
+        reservationUI.printWaitingQueueTable(buildGuestQueuePositionTableData(guestReservationsInQueue));
         reservationUI.pressEnterToContinue();
 
         String[][] options = {
-            {"1", "Check another queue position"},
+            {"1", "Check another guest's queue position"},
             {"2", "Back to module menu"},
             {"0", "Back to main menu"}
         };
@@ -1008,6 +1021,47 @@ public class ReservationControlV2 {
             case 0:
             default: break;
         }
+    }
+
+    // List of guests who currently have at least one reservation in guestQueue
+    private LinkedListInterface<Guest> buildQueuedGuestList() {
+        LinkedListInterface<Guest> queuedGuests = new LinkedList<>();
+        for (int i = 0; i < guestQueue.size(); i++) {
+            String guestId = guestQueue.get(i).getGuestId();
+            boolean alreadyAdded = false;
+            for (int j = 0; j < queuedGuests.size(); j++) {
+                if (queuedGuests.get(j).getGuestId().equals(guestId)) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (!alreadyAdded) {
+                Guest guest = getGuestById(guestId);
+                if (guest != null) {
+                    queuedGuests.addBack(guest);
+                }
+            }
+        }
+        return queuedGuests;
+    }
+
+    // table of one guest's queued reservations, with each row's real position in guestQueue
+    private String[][] buildGuestQueuePositionTableData(LinkedListInterface<Reservation> guestReservations) {
+        String[][] data = new String[guestReservations.size() + 1][6];
+        data[0] = new String[]{"Position", "Conf. No.", "Room Type", "Type", "Status", "Expected Check-In"};
+        for (int i = 0; i < guestReservations.size(); i++) {
+            Reservation r = guestReservations.get(i);
+            int position = guestQueue.indexOf(r) + 1;
+            data[i + 1] = new String[]{
+                String.valueOf(position),
+                r.getConfirmationNumber(),
+                r.getRoomTypeRequested().toString(),
+                r.getReservationType().toString(),
+                r.getStatus().toString(),
+                r.getTimestamps().getExpectedCheckInDate().toString()
+            };
+        }
+        return data;
     }
 
     // case 9

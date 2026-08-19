@@ -373,6 +373,22 @@ public class ReservationUI {
         TablePrinter.displayTable(header, rows);
     }
 
+    public void printQueuedGuestList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo guests currently in queue.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nGuests Currently in Queue:");
+        TablePrinter.displayTable(header, rows);
+    }
+
     public void printCheckInCandidateList(String[][] data) {
         if (data.length <= 1) {
             System.out.println("\nNo reservations ready for check-in.");
