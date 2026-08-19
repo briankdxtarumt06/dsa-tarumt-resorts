@@ -5,9 +5,9 @@ import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.boundary.MemberManagementUI;
-import tarumtresort.boundary.PointsManagementUI;
-import tarumtresort.boundary.RewardManagementUI;
+import tarumtresort.boundary.LoyaltyRewardsUI.MemberManagementUI;
+import tarumtresort.boundary.LoyaltyRewardsUI.PointsManagementUI;
+import tarumtresort.boundary.LoyaltyRewardsUI.RewardManagementUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
 import tarumtresort.dao.RewardDAO;
@@ -46,7 +46,7 @@ public class LoyaltyController {
     public LoyaltyController(Scanner scanner) {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
-        guestList = new GuestControl().getAllGuests();
+        guestDAO.loadFromFile(guestList);
         memberUI = new MemberManagementUI(scanner);
         rewardUI = new RewardManagementUI(scanner);
         pointsUI = new PointsManagementUI(scanner);
@@ -159,13 +159,31 @@ public class LoyaltyController {
     // ======================= MEMBER MANAGEMENT =======================
 
     private void addMemberFlow() {
-        String guestId = new GuestControl().generateGuestId();
+        String guestId = generateGuestId();
         Member member = memberUI.inputNewMember(nextMemberId(), guestId);
         if (member == null) {
             memberUI.showMessage("Operation cancelled.");
             return;
         }
         memberUI.showMessage(addMember(member));
+    }
+
+    // scan the loaded guest list for the highest "GSTxxx" id, malformed ids are skipped
+    private String generateGuestId() {
+        int max = 0;
+        for (int i = 0; i < guestList.size(); i++) {
+            String guestId = guestList.get(i).getGuestId();
+            if (guestId != null && guestId.startsWith("GST")) {
+                try {
+                    int number = Integer.parseInt(guestId.substring(3));
+                    if (number > max) {
+                        max = number;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return String.format("GST%03d", max + 1);
     }
 
     private void updateMemberFlow() {

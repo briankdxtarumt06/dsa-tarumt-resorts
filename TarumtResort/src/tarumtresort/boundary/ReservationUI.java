@@ -1,8 +1,11 @@
 package tarumtresort.boundary;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.Guest;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.utility.ConsoleUtil;
@@ -13,6 +16,180 @@ public class ReservationUI {
 
     Scanner scanner = new Scanner(System.in);
 
+    private static final DateTimeFormatter DATE_TIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public String formatDateTime(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.format(DATE_TIME_DISPLAY_FORMAT) : "-";
+    }
+
+    // MENU
+    public int getMenuChoice() {
+        ConsoleUtil.clearScreen();
+        System.out.println("========================================");
+        System.out.println("   WALK-IN REGISTRATION & BOOKING ");
+        System.out.println("========================================");
+        System.out.println("  1. Guest Management");
+        System.out.println("  2. Reservation Management");
+        System.out.println("  3. Room Management");
+        System.out.println("  4. Reports");
+        System.out.println("  0. Exit");
+        System.out.println("========================================");
+        return inputIntChoice("Enter choice", 0, 4);
+    }
+
+    // ===== GUEST =====
+    public int printGuestListMenu(LinkedListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  GUEST MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+        if (pageList.isEmpty()) {
+            System.out.println("  (No guest records)");
+        } else {
+            String[] header = {"No.", "Guest ID", "Name", "Nationality", "Contact"};
+            String[][] rows = new String[pageList.size()][5];
+            for (int i = 0; i < pageList.size(); i++) {
+                Guest g = pageList.get(i);
+                rows[i] = new String[]{
+                    String.valueOf(i + 1), g.getGuestId(), g.getName(),
+                    g.getNationality(), g.getContactNumber()
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+
+        System.out.println("==========Actions==========");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Register New Guest");
+        System.out.println("  " + action++ + ". Filter by Nationality");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int getGuestActionChoice() {
+        System.err.println();
+        System.out.print("==========Actions==========");
+        System.out.println("\n  1. View Reservation History");
+        System.out.println("  0. Back to List");
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, 1);
+    }
+
+    public void printGuestReservationHistory(LinkedListInterface<Reservation> reservations) {
+        if (reservations.size() == 0) {
+            ConsoleUtil.printWarning("\nNo reservations found.");
+            return;
+        }
+
+        String[] header = {
+            "No.", "Conf. No.", "Room Type", "Guests", "Nights",
+            "Type", "Status", "Expected Check-In", "Expected Check-Out"
+        };
+
+        String[][] rows = new String[reservations.size()][9];
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            rows[i] = new String[]{
+                String.valueOf(i + 1),
+                r.getConfirmationNumber(),
+                r.getRoomTypeRequested().toString(),
+                String.valueOf(r.getNumberOfGuests()),
+                String.valueOf(r.getNumberOfNights()),
+                r.getReservationType().toString(),
+                r.getStatus().toString(),
+                String.valueOf(r.getTimestamps().getExpectedCheckInDate()),
+                String.valueOf(r.getTimestamps().getExpectedCheckOutDate())
+            };
+        }
+
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public String inputName() {
+        return SharedServices.askNonEmptyInput(scanner, "Name (0 = cancel)");
+    }
+
+    public String inputNationality(String[] nationalityOptions) {
+        int otherChoice = nationalityOptions.length + 1;
+
+        System.out.println();
+        System.out.println("==========Nationality==========");
+
+        for (int i = 0; i < nationalityOptions.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + nationalityOptions[i]);
+        }
+
+        System.out.println("  "+ otherChoice + ". Other");
+
+        System.out.println("==============================");
+
+        int choice = inputIntChoice("Enter Choice", 1, otherChoice);
+
+        if (choice == otherChoice) {
+            String typed = SharedServices.askNonEmptyInput(
+                scanner,
+                "Please specify nationality"
+            );
+
+            // Check if it matches one of the fixed options
+            for (int i = 0; i < nationalityOptions.length; i++) {
+                if (nationalityOptions[i].equalsIgnoreCase(typed.trim())) {
+                    return nationalityOptions[i];
+                }
+            }
+
+            return typed;
+        }
+
+        return nationalityOptions[choice - 1];
+    }
+
+    public String inputIc() {
+        return SharedServices.askNonEmptyInput(scanner, "IC Number (XXXXXXXXXXXX)");
+    }
+
+    public String inputPassport() {
+        return SharedServices.askNonEmptyInput(scanner, "Passport Number");
+    }
+
+    public String inputContactNumber() {
+        return SharedServices.askNonEmptyInput(scanner, "Contact Number");
+    }
+
+    public String inputAddress() {
+        return SharedServices.askNonEmptyInput(scanner, "Address");
+    }
+
+    public void printInvalidInput(String message) {
+        ConsoleUtil.printError(message + "\n");
+    }
+
+    public void printGuestDetails(Guest guest) {
+        String[] header = {"Field", "Value"};
+        String[][] rows = {
+            {"Guest ID", guest.getGuestId()},
+            {"Name", guest.getName()},
+            {"IC/Passport", guest.getIcOrPassport()},
+            {"Contact", guest.getContactNumber()},
+            {"Nationality", guest.getNationality()},
+            {"Address", guest.getAddress()}
+        };
+        TablePrinter.displayTable(header, rows);
+    }
+
+    // ===== RESERVATION =====
     public int printReservationListMenu(String currentListName, String[][] tableData, boolean hasFilter) {
         ConsoleUtil.clearScreen();
         System.out.println("\n==============================");
@@ -51,38 +228,6 @@ public class ReservationUI {
 
         System.out.println("===========================");
         return inputIntChoice("Enter choice", 0, 11);
-    }
-
-    // MENU
-    public int getMenuChoice() {
-        ConsoleUtil.clearScreen();
-        System.out.println("========================================");
-        System.out.println("   WALK-IN REGISTRATION & BOOKING ");
-        System.out.println("========================================");
-        System.out.println("  1. Guest Management");
-        System.out.println("  2. Reservation Management");
-        System.out.println("  3. Room Management");
-        System.out.println("  4. Reports");
-        System.out.println("  0. Exit");
-        System.out.println("========================================");
-        return inputIntChoice("Enter choice", 0, 4);
-    }
-
-    // INPUTS
-    public int inputRoomTypeChoice() {
-        System.out.println();
-        System.out.println("==========Room Type==========");
-        System.out.println("  1. STANDARD SINGLE");
-        System.out.println("  2. STANDARD DOUBLE");
-        System.out.println("  3. STANDARD TRIPLE");
-        System.out.println("  4. DELUXE SINGLE");
-        System.out.println("  5. DELUXE DOUBLE");
-        System.out.println("  6. DELUXE TRIPLE");
-        System.out.println("  7. SUITE");
-        System.out.println("  0. Back");
-        System.out.println("=============================");
-
-        return inputIntChoice("Enter choice", 0, 7);
     }
 
     public int inputNumberOfGuests() {
@@ -127,14 +272,9 @@ public class ReservationUI {
         return SharedServices.askNonEmptyInput(scanner, "Enter confirmation number (0 = cancel)");
     }
 
-    public int inputListIndex(String entityLabel, int max) {
-        return inputIntChoice("Enter " + entityLabel + " number to select (0 = cancel)", 0, max);
-    }
-
     public void printQueuePosition(String confirmationNumber, int position) {
         System.out.println("  Confirmation No. " + confirmationNumber + " → Position #" + position);
     }
-    // OUTPUTS
 
     // PRINT TABLE
     // print reservation details aftre finish reservation
@@ -149,8 +289,8 @@ public class ReservationUI {
             {"Status", r.getStatus().toString()},
             {"Expected Check-In", String.valueOf(r.getTimestamps().getExpectedCheckInDate())},
             {"Expected Check-Out", String.valueOf(r.getTimestamps().getExpectedCheckOutDate())},
-            {"Checked In At", r.getTimestamps().getActualCheckInTime() != null ? r.getTimestamps().getActualCheckInTime().toString() : "-"},
-            {"Checked Out At", r.getTimestamps().getActualCheckOutTime() != null ? r.getTimestamps().getActualCheckOutTime().toString() : "-"}
+            {"Checked In At", formatDateTime(r.getTimestamps().getActualCheckInTime())},
+            {"Checked Out At", formatDateTime(r.getTimestamps().getActualCheckOutTime())}
         };
 
         TablePrinter.displayTable(header, rows);
@@ -165,14 +305,14 @@ public class ReservationUI {
             {"Room Number", room.getRoomNumber()},
             {"Room Type", r.getRoomTypeRequested().toString()},
             {"Status", r.getStatus().toString()},
-            {"Assigned Time", r.getTimestamps().getAssignedTime() != null ? r.getTimestamps().getAssignedTime().toString() : "-"}
+            {"Assigned Time", formatDateTime(r.getTimestamps().getAssignedTime())}
         };
         TablePrinter.displayTable(header, rows);
     }
 
     public void printReservationDetails(LinkedListInterface<Reservation> reservations) {
         if (reservations.size() == 0) {
-            System.out.println("\nNo reservations found.");
+            ConsoleUtil.printWarning("\nNo reservations found.");
             return;
         }
 
@@ -232,11 +372,75 @@ public class ReservationUI {
         TablePrinter.displayTable(header, rows);
     }
 
-    // MESSAGE METHODS
-    public void printSuccess() {
-        ConsoleUtil.printSuccess("  Operation successful!");
+    public void printCheckInCandidateList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo reservations ready for check-in.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nReady for Check-In:");
+        TablePrinter.displayTable(header, rows);
     }
 
+    public void printCheckOutCandidateList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo guests currently checked in.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nCurrently Checked-In:");
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public int printGuestSelectionMenu(String[][] tableData, int page, int pageCount) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  SELECT GUEST (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+
+        int rowCount = 0;
+        if (tableData.length <= 1) {
+            System.out.println("  (No guest records)");
+        } else {
+            String[] header = tableData[0];
+            String[][] rows = new String[tableData.length - 1][];
+            for (int i = 1; i < tableData.length; i++) {
+                rows[i - 1] = tableData[i];
+            }
+            rowCount = rows.length;
+            TablePrinter.displayTable(header, rows);
+        }
+
+        System.out.println("==========Actions==========");
+        if (rowCount > 0) {
+            System.out.println("  Enter a No. above to select that guest");
+        }
+        int action = rowCount + 1;
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        System.out.println("  " + action++ + ". Register New Guest");
+        System.out.println("  0. Cancel");
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    // MESSAGE METHODS
     public void printNotFound() {
         ConsoleUtil.printWarning("  Record not found!");
     }
@@ -269,7 +473,115 @@ public class ReservationUI {
         ConsoleUtil.printError(" Your reservation cannot be canceled.");
     }
 
-    // others
+    // ===== ROOM =====
+    public int printRoomListMenu(LinkedListInterface<Room> pageList, int page, int pageCount, boolean hasFilter) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  ROOM MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+
+        if (pageList.isEmpty()) {
+            System.out.println("  (No room records)");
+        } else {
+            String[] header = {"No.", "Room ID", "Room No.", "Room Type", "Status", "Price/Night"};
+            String[][] rows = new String[pageList.size()][6];
+            for (int i = 0; i < pageList.size(); i++) {
+                Room r = pageList.get(i);
+                rows[i] = new String[]{
+                    String.valueOf(i + 1), r.getRoomId(), r.getRoomNumber(),
+                    r.getRoomType().toString(), r.getRoomStatus().toString(),
+                    String.format("%.2f", r.getPricePerNight())
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+
+        System.out.println("==========Actions==========");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Filter by Room Type");
+        System.out.println("  " + action++ + ". Filter by Room Status");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int inputRoomTypeChoice() {
+        System.out.println();
+        System.out.println("==========Room Type==========");
+        System.out.println("  1. STANDARD SINGLE");
+        System.out.println("  2. STANDARD DOUBLE");
+        System.out.println("  3. STANDARD TRIPLE");
+        System.out.println("  4. DELUXE SINGLE");
+        System.out.println("  5. DELUXE DOUBLE");
+        System.out.println("  6. DELUXE TRIPLE");
+        System.out.println("  7. SUITE");
+        System.out.println("  0. Back");
+        System.out.println("=============================");
+
+        return inputIntChoice("Enter choice", 0, 7);
+    }
+
+    public int inputRoomStatusChoice() {
+        System.out.println();
+        System.out.println("==========Room Status==========");
+        System.out.println("  1. AVAILABLE");
+        System.out.println("  2. OCCUPIED");
+        System.out.println("  3. CLEANING");
+        System.out.println("  0. Cancel");
+        System.out.println("===============================");
+        return inputIntChoice("Enter choice", 0, 3);
+    }
+
+    public void printAvailableRoomList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo available rooms found.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nAvailable Rooms:");
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public void printRoomDetails(Room room) {
+        String[] header = {"Field", "Value"};
+        String[][] rows = {
+            {"Room ID", room.getRoomId()},
+            {"Room Number", room.getRoomNumber()},
+            {"Room Type", room.getRoomType().toString()},
+            {"Room Status", room.getRoomStatus().toString()},
+            {"Price Per Night", "RM " + String.format("%.2f", room.getPricePerNight())},
+            {"Total Reservations on Record", String.valueOf(room.getReservations().size())}
+        };
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public int printBookingTypeMenu(){
+        System.out.println("==========Booking Type==========");
+        System.out.println("  1. Walk-in");
+        System.out.println("  2. Advance Booking");
+        System.out.println("  0. Back");
+        System.out.println("================================");
+        return inputIntChoice("Enter choice", 0, 2);
+    }
+
+    // ===== SHARED / OTHERS =====
     public int showSubMenu(String title, String[][] options) {
 
         System.out.println("\n==========" + title + "==========");
@@ -284,7 +596,14 @@ public class ReservationUI {
         return inputIntChoice("Enter choice", 0, maxChoice);
     }
 
-    // HELPER METHODS
+    public void printNoRecords() {
+        ConsoleUtil.printError("No records to view!");
+    }
+
+    public int inputListIndex(String entityLabel, int max) {
+        return inputIntChoice("Enter " + entityLabel + " number to select (0 = cancel)", 0, max);
+    }
+
     private int inputIntChoice(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt + " (" + min + "-" + max + "): ");
@@ -343,10 +662,11 @@ public class ReservationUI {
         return SharedServices.askNonEmptyInput(scanner, prompt);
     }
 
+    public void printSuccess() {
+        ConsoleUtil.printSuccess("  Operation successful!");
+    }
 
-    
     public void pressEnterToContinue() {
-        System.out.print("\nPress Enter to continue...");
-        scanner.nextLine();
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 }
