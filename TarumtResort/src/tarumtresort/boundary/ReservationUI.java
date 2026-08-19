@@ -38,7 +38,8 @@ public class ReservationUI {
     }
 
     // ===== GUEST =====
-    public int printGuestListMenu(LinkedListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter) {
+    public int printGuestListMenu(LinkedListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter,
+            java.util.function.Function<String, String> memberResolver) {
         ConsoleUtil.clearScreen();
         System.out.println("\n==============================");
         System.out.println("  GUEST MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -46,13 +47,14 @@ public class ReservationUI {
         if (pageList.isEmpty()) {
             System.out.println("  (No guest records)");
         } else {
-            String[] header = {"No.", "Guest ID", "Name", "Nationality", "Contact"};
-            String[][] rows = new String[pageList.size()][5];
+            String[] header = {"No.", "Guest ID", "Name", "Nationality", "Contact", "Member"};
+            String[][] rows = new String[pageList.size()][6];
             for (int i = 0; i < pageList.size(); i++) {
                 Guest g = pageList.get(i);
                 rows[i] = new String[]{
                     String.valueOf(i + 1), g.getGuestId(), g.getName(),
-                    g.getNationality(), g.getContactNumber()
+                    g.getNationality(), g.getContactNumber(),
+                    memberResolver == null ? "-" : memberResolver.apply(g.getGuestId())
                 };
             }
             TablePrinter.displayTable(header, rows);
@@ -62,6 +64,7 @@ public class ReservationUI {
         int action = 1;
         System.out.println("  " + action++ + ". View Details");
         System.out.println("  " + action++ + ". Register New Guest");
+        System.out.println("  " + action++ + ". Register as Member");
         System.out.println("  " + action++ + ". Filter by Nationality");
         if (page < pageCount - 1) {
             System.out.println("  " + action++ + ". Next Page");
@@ -82,10 +85,9 @@ public class ReservationUI {
         System.err.println();
         System.out.print("==========Actions==========");
         System.out.println("\n  1. View Reservation History");
-        System.out.println("  2. Register as Member");
         System.out.println("  0. Back to List");
         System.out.println("===========================");
-        return inputIntChoice("Enter choice", 0, 2);
+        return inputIntChoice("Enter choice", 0, 1);
     }
 
     public void printGuestReservationHistory(LinkedListInterface<Reservation> reservations) {
@@ -177,7 +179,7 @@ public class ReservationUI {
         ConsoleUtil.printError(message + "\n");
     }
 
-    public void printGuestDetails(Guest guest) {
+    public void printGuestDetails(Guest guest, String memberInfo) {
         String[] header = {"Field", "Value"};
         String[][] rows = {
             {"Guest ID", guest.getGuestId()},
@@ -185,7 +187,8 @@ public class ReservationUI {
             {"IC/Passport", guest.getIcOrPassport()},
             {"Contact", guest.getContactNumber()},
             {"Nationality", guest.getNationality()},
-            {"Address", guest.getAddress()}
+            {"Address", guest.getAddress()},
+            {"Membership", memberInfo == null ? "-" : memberInfo}
         };
         TablePrinter.displayTable(header, rows);
     }

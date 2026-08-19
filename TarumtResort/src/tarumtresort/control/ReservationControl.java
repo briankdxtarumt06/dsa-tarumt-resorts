@@ -15,6 +15,7 @@ import tarumtresort.dao.PaymentDAO;
 import tarumtresort.dao.ReservationDAO;
 import tarumtresort.dao.RoomDAO;
 import tarumtresort.entity.Guest;
+import tarumtresort.entity.Member;
 import tarumtresort.entity.Payment;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.ReservationTimestamps;
@@ -64,6 +65,7 @@ public class ReservationControl {
     // Controller
     private PaymentControl paymentControl = new PaymentControl();
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
+    private LoyaltyController loyaltyController = new LoyaltyController();
 
     // Constructors
     public ReservationControl() {
@@ -125,7 +127,7 @@ public class ReservationControl {
             }
 
             LinkedListInterface<Guest> pageList = pageOfGuests(display, page);
-            int choice = reservationUI.printGuestListMenu(pageList, page, pageCount, hasFilter);
+            int choice = reservationUI.printGuestListMenu(pageList, page, pageCount, hasFilter, this::memberIdOf);
 
             if (choice == 0) {
                 break;
@@ -136,7 +138,9 @@ public class ReservationControl {
                 viewGuest(pageList);
             } else if (choice == action++) { // 2. Register New Guest
                 createGuest();
-            } else if (choice == action++) { // 3. Filter by Nationality
+            } else if (choice == action++) { // 3. Register as Member
+                registerGuestAsMember(pageList);
+            } else if (choice == action++) { // 4. Filter by Nationality
                 nationalityFilter = reservationUI.inputNationality(getNationalityOptions());
                 page = 0;
             } else {
@@ -183,7 +187,7 @@ public class ReservationControl {
     // select-entity action loop: details -> action -> details, until Back
     private void handleGuestActions(Guest guest) {
         while (true) {
-            reservationUI.printGuestDetails(guest);
+            reservationUI.printGuestDetails(guest, membershipOf(guest.getGuestId()));
 
             int action = reservationUI.getGuestActionChoice();
             if (action == 0) {
@@ -196,16 +200,53 @@ public class ReservationControl {
                     reservationUI.pressEnterToContinue();
                     System.err.println();
                     break;
-                case 2:
-                    System.out.println("\n  " + new LoyaltyController().registerMember(guest));
-                    reservationUI.pressEnterToContinue();
-                    break;
                 default:
                     break;
             }
 
             guest = getGuestById(guest.getGuestId());
         }
+    }
+
+    // action 3: register a guest (picked from the current page) as a loyalty member
+    private void registerGuestAsMember(LinkedListInterface<Guest> pageList) {
+        if (pageList.isEmpty()) {
+            reservationUI.printNoRecords();
+            reservationUI.pressEnterToContinue();
+            return;
+        }
+        int num = reservationUI.inputListIndex("guest", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        Guest guest = pageList.get(num - 1);
+        if (guest == null) {
+            return;
+        }
+        if (loyaltyController.findMemberByGuestId(guest.getGuestId()) != null) {
+            System.out.println("\n  This guest is already a member: " + membershipOf(guest.getGuestId()) + ".");
+            reservationUI.pressEnterToContinue();
+            return;
+        }
+        if (!reservationUI.askConfirmation(
+                "Register " + guest.getName() + " as member?",
+                "Register member", "Cancel")) {
+            return;
+        }
+        System.out.println("\n  " + loyaltyController.registerMember(guest));
+        reservationUI.pressEnterToContinue();
+    }
+
+    // member id shown in the guest list "Member" column ("-" when not a member)
+    private String memberIdOf(String guestId) {
+        Member m = loyaltyController.findMemberByGuestId(guestId);
+        return m == null ? "-" : m.getMemberId();
+    }
+
+    // membership summary shown in guest details ("-" when not a member)
+    private String membershipOf(String guestId) {
+        Member m = loyaltyController.findMemberByGuestId(guestId);
+        return m == null ? "-" : m.getMemberId() + " (" + m.getTier() + ")";
     }
 
     // case 1: register a new guest - continue with menu/ room booking
@@ -243,7 +284,7 @@ public class ReservationControl {
         guestList.addBack(guest);
         guestDAO.saveToFile(guestList);
 
-        reservationUI.printGuestDetails(guest);
+        reservationUI.printGuestDetails(guest, "-");
         reservationUI.printSuccess();
         reservationUI.pressEnterToContinue();
 
