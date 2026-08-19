@@ -9,7 +9,7 @@ package tarumtresort.adt;
  * @author Brian
  * @param <T>
  */
-public interface LinkedListInterface<T extends Comparable<T>> {
+public interface LinkedListInterface<T extends Comparable<T>> extends Iterable<T> {
     // LIST
 
     void addFront(T element);

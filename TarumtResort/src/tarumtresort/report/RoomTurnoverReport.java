@@ -2,11 +2,8 @@ package tarumtresort.report;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import tarumtresort.adt.LinkedList;
@@ -79,7 +76,7 @@ public class RoomTurnoverReport {
      */
     public ReportResult generate(LocalDateTime from, LocalDateTime to) {
 
-        List<TaskRow> rows = new ArrayList<>();
+        LinkedListInterface<TaskRow> rows = new LinkedList<>();
         Set<String> trackedRooms = new LinkedHashSet<>();
         int completedCount = 0;
 
@@ -107,7 +104,7 @@ public class RoomTurnoverReport {
             if (task.getRoomId() != null) {
                 trackedRooms.add(task.getRoomId());
             }
-            rows.add(row);
+            rows.addBack(row);
         }
 
         return new ReportResult(
@@ -213,7 +210,7 @@ public class RoomTurnoverReport {
                         || candidate.getDateTimeAssigned().isAfter(current.getDateTimeAssigned()));
     }
 
-    private String[][] toTable(List<TaskRow> rows) {
+    private String[][] toTable(LinkedListInterface<TaskRow> rows) {
         String[][] table = new String[rows.size() + 1][7];
         table[0] = new String[] { "Room ID", "Room No.", "Room Type", "Current Status",
                 "Last Task Status", "Turnover Time (min)", "Assigned Staff ID" };
@@ -245,8 +242,8 @@ public class RoomTurnoverReport {
         };
     }
 
-    private List<ReportChart> buildCharts(List<TaskRow> rows, LocalDateTime from, LocalDateTime to) {
-        List<ReportChart> charts = new ArrayList<>();
+    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<TaskRow> rows, LocalDateTime from, LocalDateTime to) {
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
 
         // chart 1: average turnover time by room type (completed tasks only)
         ReportChart chart1 = new ReportChart("Average Turnover Time by Room Type (min)");
@@ -266,7 +263,7 @@ public class RoomTurnoverReport {
                 chart1.addBar(type.name(), avg, "(" + acc[1] + " task" + (acc[1] == 1 ? "" : "s") + ")");
             }
         }
-        charts.add(chart1);
+        charts.addBack(chart1);
 
         // chart 2: room status distribution across all tracked rooms
         ReportChart chart2 = new ReportChart("Room Status Distribution");
@@ -284,7 +281,7 @@ public class RoomTurnoverReport {
                 chart2.addBar(status.name(), count, "(room" + (count == 1 ? "" : "s") + ")");
             }
         }
-        charts.add(chart2);
+        charts.addBack(chart2);
 
         // chart 3 & 4: hourly room readiness rate vs guest check-in arrival
         // curve over the check-in window (both share the same hour axis so
@@ -329,40 +326,39 @@ public class RoomTurnoverReport {
                     checkIn == 0 ? "(0)" : "(" + checkIn + " guest" + (checkIn == 1 ? "" : "s") + ")");
         }
         if (readyAny) {
-            charts.add(chart3);
+            charts.addBack(chart3);
         }
         if (checkInAny) {
-            charts.add(chart4);
+            charts.addBack(chart4);
         }
 
         return charts;
     }
 
-    private List<String> buildCallouts(List<TaskRow> rows) {
-        List<String> callouts = new ArrayList<>();
+    private LinkedListInterface<String> buildCallouts(LinkedListInterface<TaskRow> rows) {
+        LinkedListInterface<String> callouts = new LinkedList<>();
 
         // callout 1: fastest turnovers (top 3 by turnover time ascending)
-        List<TaskRow> completed = new ArrayList<>();
+        LinkedListInterface<TaskRow> completed = new LinkedList<>();
         for (TaskRow row : rows) {
             if (row.turnoverMinutes != null) {
-                completed.add(row);
+                completed.addSorted(row);
             }
         }
-        Collections.sort(completed, (a, b) -> Long.compare(a.turnoverMinutes, b.turnoverMinutes));
 
-        callouts.add(Ansi.green(Ansi.bold("◆ Fastest Turnovers (top 3)")));
+        callouts.addBack(Ansi.green(Ansi.bold("◆ Fastest Turnovers (top 3)")));
         if (completed.isEmpty()) {
-            callouts.add(Ansi.green("  (no completed turnovers in range)"));
+            callouts.addBack(Ansi.green("  (no completed turnovers in range)"));
         } else {
             for (int i = 0; i < Math.min(3, completed.size()); i++) {
                 TaskRow row = completed.get(i);
-                callouts.add(Ansi.green("  " + (i + 1) + ". " + roomLabel(row) + " - "
+                callouts.addBack(Ansi.green("  " + (i + 1) + ". " + roomLabel(row) + " - "
                         + row.turnoverMinutes + " min (" + row.task.getTaskId() + ")"));
             }
         }
 
         // callout 2: rooms requiring attention (out of order or > 45 min)
-        callouts.add(Ansi.red(Ansi.bold("⚠ Rooms Requiring Attention")));
+        callouts.addBack(Ansi.red(Ansi.bold("⚠ Rooms Requiring Attention")));
         boolean any = false;
         for (TaskRow row : rows) {
             boolean outOfOrder = row.room != null && row.room.getRoomStatus() == RoomStatus.MAINTENANCE;
@@ -373,10 +369,10 @@ public class RoomTurnoverReport {
             any = true;
             String reason = outOfOrder ? "OUT OF ORDER"
                     : row.turnoverMinutes + " min turnover (> " + ATTENTION_MINUTES + ")";
-            callouts.add(Ansi.red("  ⚠ " + roomLabel(row) + " - " + reason));
+            callouts.addBack(Ansi.red("  ⚠ " + roomLabel(row) + " - " + reason));
         }
         if (!any) {
-            callouts.add(Ansi.red("  (none)"));
+            callouts.addBack(Ansi.red("  (none)"));
         }
 
         return callouts;
@@ -392,7 +388,7 @@ public class RoomTurnoverReport {
         return row.room.getRoomId() + " (" + roomNumber + " " + roomType + ")";
     }
 
-    private static class TaskRow {
+    private static class TaskRow implements Comparable<TaskRow> {
         final Task task;
         Room room;
         LocalDateTime completedAt;
@@ -401,6 +397,21 @@ public class RoomTurnoverReport {
 
         TaskRow(Task task) {
             this.task = task;
+        }
+
+        @Override
+        public int compareTo(TaskRow other) {
+            if (turnoverMinutes == null && other.turnoverMinutes == null) {
+                return 0;
+            }
+            if (turnoverMinutes == null) {
+                return 1;
+            }
+            if (other.turnoverMinutes == null) {
+                return -1;
+            }
+            int c = Long.compare(turnoverMinutes, other.turnoverMinutes);
+            return c != 0 ? c : task.getTaskId().compareToIgnoreCase(other.task.getTaskId());
         }
     }
 }

@@ -4,6 +4,7 @@
  */
 package tarumtresort.adt;
 
+import java.util.Iterator;
 import tarumtresort.entity.Node;
 
 /**
@@ -281,4 +282,23 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
     }
 
     // HELPER END
+
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private Node<T> current = head;
+
+            @Override
+            public boolean hasNext() {
+                return current != null;
+            }
+
+            @Override
+            public T next() {
+                T data = current.getData();
+                current = current.getNext();
+                return data;
+            }
+        };
+    }
 }

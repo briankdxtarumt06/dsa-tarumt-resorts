@@ -2,10 +2,7 @@ package tarumtresort.report;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
@@ -63,7 +60,7 @@ public class StaffProductivityReport {
      */
     public ReportResult generate(LocalDateTime from, LocalDateTime to) {
 
-        List<StaffRow> rows = new ArrayList<>();
+        LinkedListInterface<StaffRow> rows = new LinkedList<>();
         int totalAssignments = 0;
         int totalReassigned = 0;
 
@@ -119,22 +116,8 @@ public class StaffProductivityReport {
                 totalAssignments += row.assignments;
                 totalReassigned += row.reassigned;
             }
-            rows.add(row);
+            rows.addSorted(row);
         }
-
-        // sort: most completed first, then fastest, then by id
-        Collections.sort(rows, (a, b) -> {
-            int c = Integer.compare(b.completed, a.completed);
-            if (c != 0) {
-                return c;
-            }
-            double avgA = a.averageCompletion();
-            double avgB = b.averageCompletion();
-            if (avgA != avgB) {
-                return Double.compare(avgA, avgB);
-            }
-            return a.staff.getStaffId().compareToIgnoreCase(b.staff.getStaffId());
-        });
 
         return new ReportResult(
                 toTable(rows),
@@ -197,7 +180,7 @@ public class StaffProductivityReport {
         return "Reassigned".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status);
     }
 
-    private String[][] toTable(List<StaffRow> rows) {
+    private String[][] toTable(LinkedListInterface<StaffRow> rows) {
         String[][] table = new String[rows.size() + 1][8];
         table[0] = new String[] { "Staff ID", "Name", "Department", "Role", "Tasks Completed",
                 "Tasks Reassigned", "Avg Completion Time (min)", "Availability" };
@@ -218,7 +201,7 @@ public class StaffProductivityReport {
         return table;
     }
 
-    private String[] summary(List<StaffRow> rows, int totalAssignments, int totalReassigned) {
+    private String[] summary(LinkedListInterface<StaffRow> rows, int totalAssignments, int totalReassigned) {
         int activeStaff = 0;
         int utilizedStaff = 0;
         for (int i = 0; i < staffList.size(); i++) {
@@ -268,8 +251,8 @@ public class StaffProductivityReport {
         return false;
     }
 
-    private List<ReportChart> buildCharts(List<StaffRow> rows) {
-        List<ReportChart> charts = new ArrayList<>();
+    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<StaffRow> rows) {
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
 
         // chart 1: top staff by completed tasks (best 8)
         ReportChart chart1 = new ReportChart("Top Staff by Completed Tasks");
@@ -290,7 +273,7 @@ public class StaffProductivityReport {
                     "(" + row.completed + " task" + (row.completed == 1 ? "" : "s")
                             + ", ~" + Math.round(row.averageCompletion()) + " min avg)");
         }
-        charts.add(chart1);
+        charts.addBack(chart1);
 
         // chart 2: reassignment rate by role
         ReportChart chart2 = new ReportChart("Reassignment Rate by Role (%)");
@@ -304,19 +287,18 @@ public class StaffProductivityReport {
             acc[0] += row.reassigned;
             acc[1] += row.assignments;
         }
-        List<String> roles = new ArrayList<>(roleStats.keySet());
-        Collections.sort(roles, (a, b) -> {
-            long[] sa = roleStats.get(a);
-            long[] sb = roleStats.get(b);
-            return Double.compare(rateOf(sb), rateOf(sa));
-        });
+        LinkedListInterface<String> roles = new LinkedList<>();
+        for (String role : roleStats.keySet()) {
+            roles.addBack(role);
+        }
+        sortRolesByRate(roles, roleStats);
         for (String role : roles) {
             long[] acc = roleStats.get(role);
             double rate = rateOf(acc);
             chart2.addBar(role, rate,
                     "(" + acc[0] + "/" + acc[1] + " reassigned)");
         }
-        charts.add(chart2);
+        charts.addBack(chart2);
 
         return charts;
     }
@@ -325,11 +307,25 @@ public class StaffProductivityReport {
         return acc[1] == 0 ? 0 : (double) acc[0] / acc[1] * 100;
     }
 
-    private List<String> buildCallouts(List<StaffRow> rows) {
-        List<String> callouts = new ArrayList<>();
+    // insertion sort: roles by reassignment rate descending (stable)
+    private void sortRolesByRate(LinkedListInterface<String> roles, Map<String, long[]> roleStats) {
+        for (int i = 1; i < roles.size(); i++) {
+            String key = roles.get(i);
+            long[] stats = roleStats.get(key);
+            int j = i - 1;
+            while (j >= 0 && rateOf(roleStats.get(roles.get(j))) < rateOf(stats)) {
+                roles.set(j + 1, roles.get(j));
+                j--;
+            }
+            roles.set(j + 1, key);
+        }
+    }
+
+    private LinkedListInterface<String> buildCallouts(LinkedListInterface<StaffRow> rows) {
+        LinkedListInterface<String> callouts = new LinkedList<>();
 
         // callout 1: top performers (top 3 by completed desc, fastest first)
-        callouts.add(Ansi.green(Ansi.bold("★ Top Performers (top 3)")));
+        callouts.addBack(Ansi.green(Ansi.bold("★ Top Performers (top 3)")));
         boolean any = false;
         for (int i = 0; i < Math.min(3, rows.size()); i++) {
             StaffRow row = rows.get(i);
@@ -337,17 +333,17 @@ public class StaffProductivityReport {
                 break;
             }
             any = true;
-            callouts.add(Ansi.green("  " + (i + 1) + ". " + row.staff.getStaffName() + " ("
+            callouts.addBack(Ansi.green("  " + (i + 1) + ". " + row.staff.getStaffName() + " ("
                     + row.staff.getStaffId() + ") - " + row.completed + " task"
                     + (row.completed == 1 ? "" : "s")
                     + ", ~" + Math.round(row.averageCompletion()) + " min avg"));
         }
         if (!any) {
-            callouts.add(Ansi.green("  (no completed tasks in range)"));
+            callouts.addBack(Ansi.green("  (no completed tasks in range)"));
         }
 
         // callout 2: high-churn roles (reassignment rate > 15%)
-        callouts.add(Ansi.red(Ansi.bold("⚠ Highest Reassignment Roles (> " + HIGH_CHURN_RATE + "%)")));
+        callouts.addBack(Ansi.red(Ansi.bold("⚠ Highest Reassignment Roles (> " + HIGH_CHURN_RATE + "%)")));
         Map<String, long[]> roleStats = new LinkedHashMap<>();
         for (StaffRow row : rows) {
             String role = row.staff.getStaffRole();
@@ -363,18 +359,18 @@ public class StaffProductivityReport {
             double rate = rateOf(entry.getValue());
             if (rate > HIGH_CHURN_RATE) {
                 anyRole = true;
-                callouts.add(Ansi.red("  ⚠ " + entry.getKey() + " - " + String.format("%.1f%%", rate)
+                callouts.addBack(Ansi.red("  ⚠ " + entry.getKey() + " - " + String.format("%.1f%%", rate)
                         + " (" + entry.getValue()[0] + "/" + entry.getValue()[1] + " reassigned)"));
             }
         }
         if (!anyRole) {
-            callouts.add(Ansi.red("  (no role exceeds the threshold)"));
+            callouts.addBack(Ansi.red("  (no role exceeds the threshold)"));
         }
 
         return callouts;
     }
 
-    private static class StaffRow {
+    private static class StaffRow implements Comparable<StaffRow> {
         final Staff staff;
         int assignments;
         int completed;
@@ -387,6 +383,21 @@ public class StaffProductivityReport {
 
         double averageCompletion() {
             return completed == 0 ? 0 : (double) completionSum / completed;
+        }
+
+        // most completed first, then fastest, then by id (matches addSorted order)
+        @Override
+        public int compareTo(StaffRow other) {
+            int c = Integer.compare(other.completed, completed);
+            if (c != 0) {
+                return c;
+            }
+            double avgA = averageCompletion();
+            double avgB = other.averageCompletion();
+            if (avgA != avgB) {
+                return Double.compare(avgA, avgB);
+            }
+            return staff.getStaffId().compareToIgnoreCase(other.staff.getStaffId());
         }
     }
 }
