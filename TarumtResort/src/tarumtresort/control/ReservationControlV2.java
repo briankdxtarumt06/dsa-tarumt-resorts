@@ -8,26 +8,13 @@ import java.time.temporal.ChronoUnit;
 
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.boundary.PaymentUI;
-import tarumtresort.boundary.ReservationUI;
-import tarumtresort.dao.GuestDAO;
-import tarumtresort.dao.NationalityDAO;
-import tarumtresort.dao.PaymentDAO;
-import tarumtresort.dao.ReservationDAO;
-import tarumtresort.dao.RoomDAO;
-import tarumtresort.entity.Guest;
-import tarumtresort.entity.Payment;
-import tarumtresort.entity.Reservation;
-import tarumtresort.entity.ReservationTimestamps;
-import tarumtresort.entity.Room;
-import tarumtresort.entity.enums.PaymentMethod;
-import tarumtresort.entity.enums.PaymentStatus;
-import tarumtresort.entity.enums.ReservationStatus;
-import tarumtresort.entity.enums.ReservationType;
-import tarumtresort.entity.enums.RoomStatus;
-import tarumtresort.entity.enums.RoomType;
+import tarumtresort.boundary.*;
+import tarumtresort.dao.*;
+import tarumtresort.entity.*;
+import tarumtresort.entity.enums.*;
 
-public class ReservationControl {
+
+public class ReservationControlV2 {
 
     // default nationality options offered when registering a guest
     private static final String[] DEFAULT_NATIONALITIES = {
@@ -49,17 +36,19 @@ public class ReservationControl {
     private ReservationUI reservationUI = new ReservationUI();
 
     // List declaration
+    private LinkedListInterface<Reservation> reservations = new LinkedList<>();
     private LinkedListInterface<Guest> guestList = new LinkedList<>();
     private LinkedListInterface<String> customNationalities = new LinkedList<>();
     private LinkedListInterface<Reservation> bookingList = new LinkedList<>();
     private LinkedListInterface<Reservation> guestQueue = new LinkedList<>();
     private LinkedListInterface<Reservation> assignedList = new LinkedList<>();
+    private LinkedListInterface<Reservation> vipList = new LinkedList<>();
     private LinkedListInterface<Room> roomList = new LinkedList<>();
 
     // DAO declarations
     private static final GuestDAO guestDAO = new GuestDAO();
     private static final NationalityDAO nationalityDAO = new NationalityDAO();
-    private static final ReservationDAO reservationDAO = new ReservationDAO();
+    private static final ReservationDAOV2 reservationDAO = new ReservationDAOV2();
     private static final RoomDAO roomDAO = new RoomDAO();
 
     // Controller
@@ -67,11 +56,9 @@ public class ReservationControl {
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
 
     // Constructors
-    public ReservationControl() {
-        reservationDAO.loadBookingList(bookingList);
-        reservationDAO.loadGuestQueue(guestQueue);
-        reservationDAO.loadAssignedList(assignedList);
-
+    public ReservationControlV2() {
+        reservationDAO.loadAllReservations(reservations);
+        rebuildWorkingLists(); // derive booking/guest/vip/assigned from history
         guestDAO.loadFromFile(guestList);
 
         String[] loaded = nationalityDAO.loadCustomNationalities();
@@ -81,6 +68,47 @@ public class ReservationControl {
 
         roomDAO.loadFromFile(roomList);
     }
+
+    private void rebuildWorkingLists() {
+        bookingList.clear();
+        guestQueue.clear();
+        vipList.clear();
+        assignedList.clear();
+
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            if (r.getStatus() == null || r.isDeleted()) {
+                continue;
+            }
+            switch (r.getStatus()) {
+                case BOOKED:
+                    bookingList.addSorted(r); //advance booking
+                    break;
+                case WAITING:
+                    PriorityReservation pr = priorityReservationController.searchPriorityReservationById(r.getReservationId());
+                    if (pr != null && !pr.isDeleted()) {
+                        vipList.addSorted(r); // member
+                    } else {
+                        guestQueue.addSorted(r); // non-member
+                    }
+                    break;
+                case ASSIGNED:
+                case CHECKED_IN:
+                case CHECKED_OUT:
+                    assignedList.addBack(r);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    // ===== READ-ONLY ACCESSORS (for testing / reporting) =====
+    public LinkedListInterface<Reservation> getReservations() { return reservations; }
+    public LinkedListInterface<Reservation> getBookingList() { return bookingList; }
+    public LinkedListInterface<Reservation> getGuestQueue() { return guestQueue; }
+    public LinkedListInterface<Reservation> getVipList() { return vipList; }
+    public LinkedListInterface<Reservation> getAssignedList() { return assignedList; }
 
     // ===== ENTRY POINT =====
 
@@ -247,6 +275,36 @@ public class ReservationControl {
         return guest;
     }
 
+    // update guest
+    public boolean updateGuest(String guestId,
+                            String name,
+                            String icOrPassport,
+                            String contactNumber,
+                            String nationality,
+                            String address) {
+
+        // IC / Passport cannot be duplicated with another guest
+        Guest owner = getGuestByIcOrPassport(icOrPassport);
+        if (owner != null && !owner.getGuestId().equals(guestId)) {
+            return false;
+        }
+
+        // update guest information
+        Guest guest = getGuestById(guestId);
+        if (guest == null) {
+            return false;
+        }
+
+        guest.setName(name);
+        guest.setIcOrPassport(icOrPassport);
+        guest.setContactNumber(contactNumber);
+        guest.setNationality(nationality);
+        guest.setAddress(address);
+        guestDAO.saveToFile(guestList);
+
+        return true;
+    }
+
     public void addNationalityIfNew(String nationality) {
         for (String d : DEFAULT_NATIONALITIES) {
             if (d.equalsIgnoreCase(nationality)) return;
@@ -301,18 +359,29 @@ public class ReservationControl {
             }
 
             boolean hasFilter = roomTypeFilter != null;
-            int choice = reservationUI.printReservationListMenu(currentListName, buildQueueTableData(displayList), hasFilter);
+            int choice = reservationUI.printReservationListMenu(currentListName, buildQueueTableData(displayList),
+                    hasFilter);
 
-            if (hasFilter && choice == 12) {
+            if (hasFilter && choice == 13) {
                 roomTypeFilter = null;
                 continue;
             }
 
             switch (choice) {
-                case 0: return;
-                case 1: currentView = VIEW_BOOKING_LIST; roomTypeFilter = null; break;
-                case 2: currentView = VIEW_GUEST_QUEUE; roomTypeFilter = null; break;
-                case 3: currentView = VIEW_ASSIGNED_LIST; roomTypeFilter = null; break;
+                case 0:
+                    return;
+                case 1:
+                    currentView = VIEW_BOOKING_LIST;
+                    roomTypeFilter = null;
+                    break;
+                case 2:
+                    currentView = VIEW_GUEST_QUEUE;
+                    roomTypeFilter = null;
+                    break;
+                case 3:
+                    currentView = VIEW_ASSIGNED_LIST;
+                    roomTypeFilter = null;
+                    break;
                 case 4: {
                     int roomChoice = reservationUI.inputRoomTypeChoice();
                     if (roomChoice != 0) {
@@ -320,26 +389,47 @@ public class ReservationControl {
                     }
                     break;
                 }
-                case 5: bookRoom(); break;
-                case 6: guestArrival(); break;
-                case 7: assignRoom(); break;
-                case 8: checkIn(); break;
-                case 9: checkOut(); break;
-                case 10: checkQueuePosition(); break;
-                case 11: cancelReservation(); break;
-                default: break;
+                case 5:
+                    bookRoom();
+                    break;
+                case 6:
+                    guestArrival();
+                    break;
+                case 7:
+                    assignRoom();
+                    break;
+                case 8:
+                    checkIn();
+                    break;
+                case 9:
+                    checkOut();
+                    break;
+                case 10:
+                    checkQueuePosition();
+                    break;
+                case 11:
+                    cancelReservation();
+                    break;
+                case 12:
+                    deleteReservation();
+                    break;
+                default:
+                    break;
             }
         }
     }
 
-    // business rule: guests still CHECKED_IN past FORCE_CHECKOUT_HOUR on their expectedCheckOutDate are forcibly checked out so the room can be freed up for the guest queue. payment is handled separately at booking time, not here.
+    // business rule: guests still CHECKED_IN past FORCE_CHECKOUT_HOUR on their
+    // expectedCheckOutDate are forcibly checked out so the room can be freed up for
+    // the guest queue. payment is handled separately at booking time, not here.
     private void forceCheckoutOverdueReservations() {
         LocalDateTime now = LocalDateTime.now();
         LinkedListInterface<Reservation> forcedOut = new LinkedList<>();
 
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation r = assignedList.get(i);
-            if (r.getStatus() != ReservationStatus.CHECKED_IN) continue;
+            if (r.getStatus() != ReservationStatus.CHECKED_IN)
+                continue;
 
             LocalDateTime deadline = r.getTimestamps().getExpectedCheckOutDate().atTime(FORCE_CHECKOUT_HOUR, 0);
             if (now.isAfter(deadline)) {
@@ -351,12 +441,11 @@ public class ReservationControl {
         }
 
         if (forcedOut.size() > 0) {
-            reservationDAO.saveAssignedList(assignedList);
-            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+            reservationDAO.saveAllReservations(reservations);
             saveGuestList();
 
             System.out.println("\n" + forcedOut.size() + " guest(s) were automatically checked out for exceeding the "
-                + FORCE_CHECKOUT_HOUR + ":00 checkout deadline.");
+                    + FORCE_CHECKOUT_HOUR + ":00 checkout deadline.");
             reservationUI.printWaitingQueueTable(buildCheckOutSummaryTableData(forcedOut));
             reservationUI.pressEnterToContinue();
         }
@@ -369,10 +458,11 @@ public class ReservationControl {
 
         for (int i = bookingList.size() - 1; i >= 0; i--) {
             Reservation r = bookingList.get(i);
-            if (r.getStatus() != ReservationStatus.WAITING) continue;
+            if (r.getStatus() != ReservationStatus.BOOKED) continue;
 
             if (today.isAfter(r.getTimestamps().getExpectedCheckInDate())) {
                 bookingList.removeIndex(i);
+                r.setStatus(ReservationStatus.CANCELLED); 
 
                 Guest guest = getGuestById(r.getGuestId());
                 if (guest != null) {
@@ -385,8 +475,7 @@ public class ReservationControl {
         }
 
         if (noShows.size() > 0) {
-            reservationDAO.saveBookingList(bookingList);
-            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+            reservationDAO.saveAllReservations(reservations);
             saveGuestList();
 
             System.out.println("\n" + noShows.size() + " advance booking(s) auto-cancelled as no-show (guest never arrived on the expected check-in date).");
@@ -399,13 +488,14 @@ public class ReservationControl {
     public void registerGuest() {
         Guest guest = createGuest();
 
-        if (guest == null) return;
+        if (guest == null)
+            return;
 
         String[][] options = {
-            {"1", "Book a room"},
-            {"2","Back to menu"},
-            {"3","Continue another guest registration"},
-            {"0", "Back to main menu"}
+                { "1", "Book a room" },
+                { "2", "Back to menu" },
+                { "3", "Continue another guest registration" },
+                { "0", "Back to main menu" }
         };
 
         int choice = reservationUI.showSubMenu("Next?", options);
@@ -419,44 +509,41 @@ public class ReservationControl {
         }
     }
 
-    // case 2
+    // case 2 
     public void bookRoom() {
-        Guest guest = selectGuestForBooking();
-        if (guest == null) return;
-        bookRoom(guest.getGuestId());
-    }
 
-    // paginated guest picker for bookRoom() - guestList can be large, unlike the small
-    // reservation-status lists used elsewhere (checkIn/checkOut/cancel/queue)
-    private Guest selectGuestForBooking() {
-        int page = 0;
-        while (true) {
-            int pageCount = Math.max(1, (guestList.size() + PAGE_SIZE - 1) / PAGE_SIZE);
-            if (page >= pageCount) page = pageCount - 1;
-            LinkedListInterface<Guest> pageList = pageOfGuests(guestList, page);
+        String ic = reservationUI.inputIcOrPassport();
 
-            int choice = reservationUI.printGuestSelectionMenu(buildGuestSelectionTableData(pageList), page, pageCount);
-            if (choice == 0) return null;
+        if (ic.equals("0"))
+            return;
 
-            int action = pageList.size();
-            if (choice <= action) {
-                return pageList.get(choice - 1);
-            }
+        // find guest by IC
+        Guest guest = getGuestByIcOrPassport(ic);
+        if (guest == null) {
+            reservationUI.printNotFound();
 
-            if (page < pageCount - 1) {
-                action++;
-                if (choice == action) { page++; continue; }
+            String[][] options = {
+                    { "1", "Add Guest" },
+                    { "2", "Restart Booking (Re-enter IC/Passport)" },
+                    { "0", "Back to Menu" },
+            };
+            int choice = reservationUI.showSubMenu("Guest not found. Next?", options);
+            switch (choice) {
+                case 1:
+                    registerGuest();
+                    break;
+                case 2:
+                    bookRoom();
+                    break;
+                case 0:
+                    break;
+                default:
+                    break;
             }
-            if (page > 0) {
-                action++;
-                if (choice == action) { page--; continue; }
-            }
-            action++;
-            if (choice == action) { // Register New Guest
-                Guest newGuest = createGuest();
-                if (newGuest != null) return newGuest;
-            }
+            return;
         }
+
+        bookRoom(guest.getGuestId());
     }
 
     public void bookRoom(String guestId) {
@@ -467,9 +554,8 @@ public class ReservationControl {
         if (typeChoice == 0) return;
 
         ReservationType reservationType = typeChoice == 1
-            ? ReservationType.WALK_IN
-            : ReservationType.ADVANCE_BOOKING;
-
+                ? ReservationType.WALK_IN
+                : ReservationType.ADVANCE_BOOKING;
 
         // ask once, shared for all rooms in for the same guest
         int numberOfNights = reservationUI.inputNumberOfNights();
@@ -478,7 +564,8 @@ public class ReservationControl {
         if (reservationType == ReservationType.WALK_IN) {
             expectedCheckInDate = LocalDate.now();
         } else {
-            expectedCheckInDate = inputValidDate("Expected check-in date (must be at least 2 days from today)", LocalDate.now().plusDays(2));
+            expectedCheckInDate = inputValidDate("Expected check-in date (must be at least 2 days from today)",
+                    LocalDate.now().plusDays(2));
             if (expectedCheckInDate == null) {
                 return;
             }
@@ -496,11 +583,11 @@ public class ReservationControl {
             if (roomType == null) break;
 
             // check whether enough rooms of this type exist for the requested date range
-            // (reservations booked earlier in this same session are already saved into
-            // bookingList/guestQueue by this point, so countOverlappingReservations() alone
-            // already reflects them - counting sessionBookings on top would double-count)
+            // (also count the session's own in-memory bookings so multiple rooms
+            // booked in one session do not double-book the same inventory)
             int totalRoomsOfType = countRoomsByType(roomType);
-            int overlappingReservations = countOverlappingReservations(roomType, expectedCheckInDate, expectedCheckOutDate);
+            int overlappingReservations = countOverlappingReservations(roomType, expectedCheckInDate, expectedCheckOutDate)
+                                        + countOverlapInList(sessionBookings, roomType, expectedCheckInDate, expectedCheckOutDate);
 
             if (overlappingReservations >= totalRoomsOfType) {
                 reservationUI.printRoomNotAvailable();
@@ -512,10 +599,9 @@ public class ReservationControl {
 
             // create timestamps
             ReservationTimestamps timestamps = new ReservationTimestamps(
-                LocalDateTime.now(),
-                expectedCheckInDate,
-                expectedCheckOutDate
-            );
+                    LocalDateTime.now(),
+                    expectedCheckInDate,
+                    expectedCheckOutDate);
 
             Reservation reservation = new Reservation(
                 generateReservationId(),
@@ -532,17 +618,22 @@ public class ReservationControl {
             );
 
             if (reservationType == ReservationType.WALK_IN) {
-                guestQueue.addSorted(reservation);
-                reservationDAO.saveGuestQueue(guestQueue);
-                reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
-
-                priorityReservationController.addPriorityReservation(
+                boolean isMember = priorityReservationController.addPriorityReservation(
                         reservation.getReservationId(), reservation.getGuestId());
+
+                if (isMember) {
+                    vipList.addSorted(reservation);
+                } else {
+                    guestQueue.addSorted(reservation);
+                }
             } else {
+                reservation.setStatus(ReservationStatus.BOOKED);
                 bookingList.addSorted(reservation);
-                reservationDAO.saveBookingList(bookingList);
-                reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
             }
+
+
+            reservations.addBack(reservation);
+            reservationDAO.saveAllReservations(reservations);
 
             Guest guest = getGuestById(guestId);
             if (guest != null) {
@@ -558,10 +649,9 @@ public class ReservationControl {
 
             // ask book another room
             continueBooking = reservationUI.askConfirmation(
-                "Book another room for this guest?",
-                "Add another room",
-                "Done booking"
-            );
+                    "Book another room for this guest?",
+                    "Add another room",
+                    "Done booking");
         }
 
         if (sessionBookings.size() > 0) {
@@ -581,16 +671,20 @@ public class ReservationControl {
         }
 
         String[][] options = {
-            {"1", "Book room for another guest"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Book room for another guest" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
         int choice = reservationUI.showSubMenu("Next?", options);
         switch (choice) {
-            case 1: bookRoom(); break;
-            case 2: break;
+            case 1:
+                bookRoom();
+                break;
+            case 2:
+                break;
             case 0:
-            default: break;
+            default:
+                break;
         }
     }
 
@@ -626,23 +720,26 @@ public class ReservationControl {
         reservationUI.printReservationDetails(found);
 
         // confirm arrival
-        if (!reservationUI.askConfirmation( "Confirm guest arrival?", "Guest will be moved to queue", "Cancel arrival")) {
+        if (!reservationUI.askConfirmation("Confirm guest arrival?", "Guest will be moved to queue",
+                "Cancel arrival")) {
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        // move from bookingList to guestQueue
+        // move from bookingList into a queue on arrival: BOOKED -> WAITING
         bookingList.removeElement(found);
+        found.setStatus(ReservationStatus.WAITING);
         found.getTimestamps().setRegistrationTimestamp(LocalDateTime.now());
-        guestQueue.addSorted(found);
 
-        priorityReservationController.addPriorityReservation(
+        boolean isMember = priorityReservationController.addPriorityReservation(
                 found.getReservationId(), found.getGuestId());
+        if (isMember) {
+            vipList.addSorted(found);
+        } else {
+            guestQueue.addSorted(found);
+        }
 
-        // save both lists
-        reservationDAO.saveBookingList(bookingList);
-        reservationDAO.saveGuestQueue(guestQueue);
-        reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+        reservationDAO.saveAllReservations(reservations);
         saveGuestList();
 
         reservationUI.printSuccess();
@@ -651,17 +748,21 @@ public class ReservationControl {
         reservationUI.printWaitingQueueTable(buildQueueTableData(guestQueue));
 
         String[][] options = {
-            {"1", "Continue with another guest arrival"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Continue with another guest arrival" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
 
         int choice = reservationUI.showSubMenu("Next?", options);
         switch (choice) {
-            case 1: guestArrival(); break;
-            case 2: break;
+            case 1:
+                guestArrival();
+                break;
+            case 2:
+                break;
             case 0: // handle back to main menu
-            default: break;
+            default:
+                break;
         }
     }
 
@@ -669,7 +770,8 @@ public class ReservationControl {
     public void assignRoom() {
         // input room type
         int roomChoice = reservationUI.inputRoomTypeChoice();
-        if (roomChoice == 0) return;
+        if (roomChoice == 0)
+            return;
 
         RoomType roomType = intToRoomType(roomChoice);
         if (roomType == null) return;
@@ -690,18 +792,21 @@ public class ReservationControl {
 
         // find first guest in queue matching room type
         Reservation found = null;
+        boolean fromVip = false;
 
-        LinkedListInterface<Reservation> vipQueue =
-                priorityReservationController.generateVIPQueue(guestQueue);
+        // members first, in priority order
+        LinkedListInterface<Reservation> vipQueue = priorityReservationController.generateVIPQueue(vipList);
 
         for (int i = 0; i < vipQueue.size(); i++) {
             Reservation r = vipQueue.get(i);
             if (r.getRoomTypeRequested() == roomType) {
                 found = r;
+                fromVip = true;
                 break;
             }
         }
 
+        // then non-members, FIFO
         if (found == null) {
             for (int i = 0; i < guestQueue.size(); i++) {
                 Reservation r = guestQueue.get(i);
@@ -718,13 +823,19 @@ public class ReservationControl {
             return;
         }
 
-        // assign room
-        int queueIndex = guestQueue.indexOf(found);
-        if (queueIndex >= 0) {
-            guestQueue.removeIndex(queueIndex);
+        // remove from whichever real queue it belongs to
+        if (fromVip) {
+            int idx = vipList.indexOf(found);
+            if (idx >= 0) {
+                vipList.removeIndex(idx);
+            }
+            priorityReservationController.removePriorityReservationById(found.getReservationId());
+        } else {
+            int idx = guestQueue.indexOf(found);
+            if (idx >= 0) {
+                guestQueue.removeIndex(idx);
+            }
         }
-
-        priorityReservationController.removePriorityReservationById(found.getReservationId());
 
         found.setRoomId(availableRoom.getRoomId());
         found.setStatus(ReservationStatus.ASSIGNED);
@@ -736,18 +847,16 @@ public class ReservationControl {
 
         assignedList.addBack(found);
 
-        reservationDAO.saveGuestQueue(guestQueue);
-        reservationDAO.saveAssignedList(assignedList);
-        reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+        reservationDAO.saveAllReservations(reservations);
         saveGuestList();
 
         reservationUI.printAssignmentSummary(found, availableRoom);
         reservationUI.printSuccess();
 
         String[][] options = {
-            {"1", "Continue with room assignment"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Continue with room assignment" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
 
         int choice = reservationUI.showSubMenu("Next?", options);
@@ -755,44 +864,55 @@ public class ReservationControl {
             case 1: assignRoom(); break;
             case 2: break;
             case 0:
-            default: break;
+            default:
+                break;
         }
     }
 
     // case 5 
     public void checkIn() {
-        LinkedListInterface<Reservation> candidates = new LinkedList<>();
-        for (int i = 0; i < assignedList.size(); i++) {
-            Reservation r = assignedList.get(i);
-            if (r.getStatus() == ReservationStatus.ASSIGNED) {
-                candidates.addBack(r);
-            }
-        }
+        String ic = reservationUI.inputIcOrPassport();
+        Guest guest = getGuestByIcOrPassport(ic);
 
-        if (candidates.isEmpty()) {
+        if (guest == null) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        reservationUI.printCheckInCandidateList(buildCheckInCandidateTableData(candidates));
-        int selection = reservationUI.inputListIndex("reservation", candidates.size());
-        if (selection == 0) return;
+        // find reservation in assignedList
+        Reservation found = null;
+        for (int i = 0; i < assignedList.size(); i++) {
+            Reservation reservation = assignedList.get(i);
+            if (reservation.getGuestId().equals(guest.getGuestId())
+                    && reservation.getStatus() == ReservationStatus.ASSIGNED) {
+                found = reservation;
+                break;
+            }
+        }
 
-        Reservation found = candidates.get(selection - 1);
+        if (found == null) {
+            reservationUI.printNotFound();
+            reservationUI.pressEnterToContinue();
+            return;
+        }
 
         // check time validation (after 12pm)
         if (LocalTime.now().isBefore(LocalTime.of(12, 0))) {
             reservationUI.printCannotCheckIn();
             String[][] options = {
-                {"1", "Try again"},
-                {"0", "Back to module menu"}
+                    { "1", "Try again" },
+                    { "0", "Back to module menu" }
             };
             int choice = reservationUI.showSubMenu("Next?", options);
             switch (choice) {
-                case 1: checkIn(); break;
-                case 0: break;
-                default: break;
+                case 1:
+                    checkIn();
+                    break;
+                case 0:
+                    break;
+                default:
+                    break;
             }
             return;
         }
@@ -816,57 +936,54 @@ public class ReservationControl {
 
         found.setStatus(ReservationStatus.CHECKED_IN);
         found.getTimestamps().setActualCheckInTime(LocalDateTime.now());
-        reservationDAO.saveAssignedList(assignedList);
-        reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+        reservationDAO.saveAllReservations(reservations);
         saveGuestList();
-        saveRoomList(); // found is also embedded in its room's own reservations list
 
         reservationUI.printReservationDetails(found);
         reservationUI.printSuccess();
 
         String[][] options = {
-            {"1", "Continue with another check in"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Continue with another check in" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
         int choice = reservationUI.showSubMenu("Next?", options);
         switch (choice) {
-            case 1: checkIn(); break;
-            case 2: break;
+            case 1:
+                checkIn();
+                break;
+            case 2:
+                break;
             case 0:
-            default: break;
+            default:
+                break;
         }
     }
 
     // case 6
     public void checkOut() {
-        LinkedListInterface<Reservation> checkedIn = new LinkedList<>();
-        for (int i = 0; i < assignedList.size(); i++) {
-            Reservation r = assignedList.get(i);
-            if (r.getStatus() == ReservationStatus.CHECKED_IN) {
-                checkedIn.addBack(r);
-            }
-        }
+        String ic = reservationUI.inputIcOrPassport();
+        Guest guest = getGuestByIcOrPassport(ic);
 
-        if (checkedIn.isEmpty()) {
+        if (guest == null) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        reservationUI.printCheckOutCandidateList(buildCheckOutCandidateTableData(checkedIn));
-        int selection = reservationUI.inputListIndex("reservation", checkedIn.size());
-        if (selection == 0) return;
-
-        String guestId = checkedIn.get(selection - 1).getGuestId();
-
-        // gather ALL currently checked-in rooms for this guest (may be more than the one picked)
+        // gather ALL currently checked-in rooms for this guest
         LinkedListInterface<Reservation> checkedInRooms = new LinkedList<>();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation r = assignedList.get(i);
-            if (r.getGuestId().equals(guestId) && r.getStatus() == ReservationStatus.CHECKED_IN) {
+            if (r.getGuestId().equals(guest.getGuestId()) && r.getStatus() == ReservationStatus.CHECKED_IN) {
                 checkedInRooms.addBack(r);
             }
+        }
+
+        if (checkedInRooms.size() == 0) {
+            reservationUI.printNotFound();
+            reservationUI.pressEnterToContinue();
+            return;
         }
 
         // show all checked-in rooms with numbering
@@ -878,12 +995,13 @@ public class ReservationControl {
 
         // ask: check out all, or select specific rooms
         String[][] scopeOptions = {
-            {"1", "Check Out All Rooms"},
-            {"2", "Check Out Selected Rooms"},
-            {"0", "Cancel"}
+                { "1", "Check Out All Rooms" },
+                { "2", "Check Out Selected Rooms" },
+                { "0", "Cancel" }
         };
         int scopeChoice = reservationUI.showSubMenu("Check-out Option:", scopeOptions);
-        if (scopeChoice == 0) return;
+        if (scopeChoice == 0)
+            return;
 
         LinkedListInterface<Reservation> toCheckOut = new LinkedList<>();
 
@@ -905,10 +1023,10 @@ public class ReservationControl {
                 for (int i = 0; i < checkedInRooms.size(); i++) {
                     Reservation r = checkedInRooms.get(i);
                     boolean wantsToCheckOut = reservationUI.askConfirmation(
-                        "Check out room " + (i + 1) + " (" + r.getConfirmationNumber() + " - " + r.getRoomTypeRequested() + ")?",
-                        "- Yes, check out this room",
-                        "- No, keep this room"
-                    );
+                            "Check out room " + (i + 1) + " (" + r.getConfirmationNumber() + " - "
+                                    + r.getRoomTypeRequested() + ")?",
+                            "- Yes, check out this room",
+                            "- No, keep this room");
                     if (wantsToCheckOut) {
                         selected.addBack(r);
                     }
@@ -924,10 +1042,9 @@ public class ReservationControl {
                 reservationUI.printWaitingQueueTable(buildCheckOutSelectionTableData(selected));
 
                 boolean proceed = reservationUI.askConfirmation(
-                    "Proceed with check-out for these " + selected.size() + " room(s)?",
-                    "Continue with check-out",
-                    "Go back and reselect"
-                );
+                        "Proceed with check-out for these " + selected.size() + " room(s)?",
+                        "Continue with check-out",
+                        "Go back and reselect");
 
                 if (proceed) {
                     toCheckOut = selected;
@@ -952,7 +1069,8 @@ public class ReservationControl {
             return;
         }
 
-        // late check-out settlement: past the expected date, or after 11am on the expected date
+        // late check-out settlement: past the expected date, or after 11am on the
+        // expected date
         LinkedListInterface<Reservation> lateRooms = new LinkedList<>();
         for (int i = 0; i < toCheckOut.size(); i++) {
             Reservation r = toCheckOut.get(i);
@@ -981,8 +1099,7 @@ public class ReservationControl {
             // TODO: call Brian's cleaning function.
         }
 
-        reservationDAO.saveAssignedList(assignedList);
-        reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
+        reservationDAO.saveAllReservations(reservations);
         saveGuestList();
 
         // display final status table for the checked-out room(s)
@@ -992,140 +1109,366 @@ public class ReservationControl {
         reservationUI.printSuccess();
 
         String[][] options = {
-            {"1", "Continue with another check out"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Continue with another check out" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
         int choice = reservationUI.showSubMenu("Next?", options);
         switch (choice) {
-            case 1: checkOut(); break;
-            case 2: break;
+            case 1:
+                checkOut();
+                break;
+            case 2:
+                break;
             case 0:
-            default: break;
+            default:
+                break;
         }
     }
 
-    // case 8
+    // case 7
+    public void viewQueue() {
+        String[][] options = {
+                { "1", "View All Waiting Reservations" },
+                { "2", "View by Room Type" },
+                { "0", "Back" }
+        };
+
+        int choice = reservationUI.showSubMenu("View Queue:", options);
+
+        switch (choice) {
+            case 0:
+                return;
+            case 1:
+                reservationUI.printWaitingQueueTable(buildQueueTableData(guestQueue));
+                break;
+
+            case 2: {
+                int roomChoice = reservationUI.inputRoomTypeChoice();
+                if (roomChoice == 0) return;
+                RoomType roomType = intToRoomType(roomChoice);
+                if (roomType == null) return;
+                LinkedListInterface<Reservation> filtered = findReservationsByRoomType(roomType);
+                reservationUI.printWaitingQueueTable(buildQueueTableData(filtered));
+                break;
+            }
+            default: return;
+        }
+
+        String[][] options2 = {
+                { "1", "View all queue" },
+                { "2", "View by room type" },
+                { "3", "Back to module menu" },
+                { "0", "Back to main menu" }
+        };
+        int next = reservationUI.showSubMenu("Next?", options2);
+        switch (next) {
+            case 1:
+            case 2:
+                viewQueue();
+                break;
+            case 3:
+                break;
+            case 0:
+            default:
+                break;
+        }
+    }
+
+    // case 8 
     public void checkQueuePosition() {
-        if (guestQueue.isEmpty()) {
+        String icOrPassport = reservationUI.inputIcOrPassport();
+        Guest guest = getGuestByIcOrPassport(icOrPassport);
+
+        if (guest == null) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        reservationUI.printWaitingQueueTable(buildQueueTableData(guestQueue));
-        int selection = reservationUI.inputListIndex("reservation", guestQueue.size());
-        if (selection == 0) return;
+        // find all reservations for this guest in queue
+        boolean found = false;
+        for (int i = 0; i < guestQueue.size(); i++) {
+            Reservation r = guestQueue.get(i);
+            if (r.getGuestId().equals(guest.getGuestId())) {
+                reservationUI.printQueuePosition(r.getConfirmationNumber(), i + 1);
+                found = true;
+            }
+        }
 
-        Reservation found = guestQueue.get(selection - 1);
-        reservationUI.printQueuePosition(found.getConfirmationNumber(), selection);
+        if (!found) {
+            reservationUI.printNotFound();
+        }
+
         reservationUI.pressEnterToContinue();
 
         String[][] options = {
-            {"1", "Check another queue position"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Check another guest's queue position" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
         int choice = reservationUI.showSubMenu("Next?", options);
         switch (choice) {
-            case 1: checkQueuePosition(); break;
-            case 2: break;
+            case 1:
+                checkQueuePosition();
+                break;
+            case 2:
+                break;
             case 0:
-            default: break;
+            default:
+                break;
         }
     }
 
     // case 9 
     public void cancelReservation() {
-        LinkedListInterface<Reservation> candidates = new LinkedList<>();
-        for (int i = 0; i < guestQueue.size(); i++) {
-            candidates.addBack(guestQueue.get(i));
-        }
-        for (int i = 0; i < bookingList.size(); i++) {
-            candidates.addBack(bookingList.get(i));
-        }
-        for (int i = 0; i < assignedList.size(); i++) {
-            Reservation r = assignedList.get(i);
-            if (r.getStatus() == ReservationStatus.ASSIGNED) {
-                candidates.addBack(r);
-            }
-        }
+        String ic = reservationUI.inputIcOrPassport();
+        Guest guest = getGuestByIcOrPassport(ic);
 
-        if (candidates.isEmpty()) {
+        if (guest == null) {
             reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        reservationUI.printWaitingQueueTable(buildQueueTableData(candidates));
-        int selection = reservationUI.inputListIndex("reservation", candidates.size());
-        if (selection == 0) return;
+        boolean found = false;
 
-        Reservation r = candidates.get(selection - 1);
-        reservationUI.printReservationDetails(r);
+        // check guestQueue first
+        for (int i = 0; i < guestQueue.size(); i++) {
+            Reservation r = guestQueue.get(i);
+            if (r.getGuestId().equals(guest.getGuestId())) {
+                reservationUI.printReservationDetails(r);
+                found = true;
+            }
+        }
 
-        if (!reservationUI.askConfirmation(
-                "Cancel this reservation?",
-                "- Confirm cancellation",
-                "- Keep reservation")) {
+        // check bookingList
+        for (int i = 0; i < bookingList.size(); i++) {
+            Reservation r = bookingList.get(i);
+            if (r.getGuestId().equals(guest.getGuestId())) {
+                reservationUI.printReservationDetails(r);
+                found = true;
+            }
+        }
+
+        // check vipList (members)
+        for (int i = 0; i < vipList.size(); i++) {
+            Reservation r = vipList.get(i);
+            if (r.getGuestId().equals(guest.getGuestId())) {
+                reservationUI.printReservationDetails(r);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            reservationUI.printNotFound();
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        Guest guest = getGuestById(r.getGuestId());
-
-        int queueIndex = guestQueue.indexOf(r);
-        if (queueIndex >= 0) {
-            guestQueue.removeIndex(queueIndex);
-            if (guest != null) removeReservationFromGuest(guest, r);
-            saveGuestList();
-
-            reservationDAO.saveGuestQueue(guestQueue);
-            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
-            handleRefund(r);
-            reservationUI.printCancelled();
-            afterCancelSuccess();
+        String confirmationNumber = reservationUI.inputConfirmationNumber();
+        if (confirmationNumber.equals("0")) {
             return;
         }
 
-        int bookingIndex = bookingList.indexOf(r);
-        if (bookingIndex >= 0) {
-            bookingList.removeIndex(bookingIndex);
-            if (guest != null) removeReservationFromGuest(guest, r);
-            saveGuestList();
+        for (int i = 0; i < guestQueue.size(); i++) {
+            Reservation r = guestQueue.get(i);
+            if (r.getConfirmationNumber().equals(confirmationNumber)
+                    && r.getGuestId().equals(guest.getGuestId())) {
 
-            reservationDAO.saveBookingList(bookingList);
-            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
-            handleRefund(r);
-            reservationUI.printCancelled();
-            afterCancelSuccess();
-            return;
+                if (!reservationUI.askConfirmation(
+                        "Cancel this reservation?",
+                        "- Confirm cancellation",
+                        "- Keep reservation")) {
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                guestQueue.removeIndex(i);
+                r.setStatus(ReservationStatus.CANCELLED); 
+                removeReservationFromGuest(guest, r);
+                saveGuestList();
+
+                reservationDAO.saveAllReservations(reservations);
+                handleRefund(r);
+                reservationUI.printCancelled();
+                afterCancelSuccess();
+                return;
+            }
         }
 
-        // must be the assignedList (ASSIGNED) case - can cancel, free up room
-        int assignedIndex = assignedList.indexOf(r);
-        if (assignedIndex >= 0) {
-            assignedList.removeIndex(assignedIndex);
-            if (guest != null) removeReservationFromGuest(guest, r);
-            saveGuestList();
+        // vipList (members) - same as guestQueue, plus clear the priority record
+        for (int i = 0; i < vipList.size(); i++) {
+            Reservation r = vipList.get(i);
+            if (r.getConfirmationNumber().equals(confirmationNumber)
+                    && r.getGuestId().equals(guest.getGuestId())) {
 
-            Room room = getRoomById(r.getRoomId());
-            if (room != null) {
-                for (int j = 0; j < room.getReservations().size(); j++) {
-                    if (room.getReservations().get(j).getReservationId().equals(r.getReservationId())) {
-                        room.getReservations().removeIndex(j);
-                        break;
+                if (!reservationUI.askConfirmation(
+                        "Cancel this reservation?",
+                        "- Confirm cancellation",
+                        "- Keep reservation")) {
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                vipList.removeIndex(i);
+                r.setStatus(ReservationStatus.CANCELLED); 
+                priorityReservationController.removePriorityReservationById(r.getReservationId());
+                removeReservationFromGuest(guest, r);
+                saveGuestList();
+
+                reservationDAO.saveAllReservations(reservations);
+                handleRefund(r);
+                reservationUI.printCancelled();
+                afterCancelSuccess();
+                return;
+            }
+        }
+
+        for (int i = 0; i < bookingList.size(); i++) {
+            Reservation r = bookingList.get(i);
+            if (r.getConfirmationNumber().equals(confirmationNumber)
+                    && r.getGuestId().equals(guest.getGuestId())) {
+
+                if (!reservationUI.askConfirmation(
+                        "Cancel this reservation?",
+                        "- Confirm cancellation",
+                        "- Keep reservation")) {
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                bookingList.removeIndex(i);
+                r.setStatus(ReservationStatus.CANCELLED); 
+                removeReservationFromGuest(guest, r);
+                saveGuestList();
+
+                reservationDAO.saveAllReservations(reservations);
+                handleRefund(r);
+                reservationUI.printCancelled();
+                afterCancelSuccess();
+                return;
+            }
+        }
+
+        // check assignedList - cannot cancel if CHECKED_IN or CHECKED_OUT
+        for (int i = 0; i < assignedList.size(); i++) {
+            Reservation r = assignedList.get(i);
+            if (r.getConfirmationNumber().equals(confirmationNumber)) {
+                if (r.getStatus() == ReservationStatus.CHECKED_IN
+                        || r.getStatus() == ReservationStatus.CHECKED_OUT) {
+                    reservationUI.printCannotCancel();
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                // ASSIGNED - can cancel, free up room
+                if (!reservationUI.askConfirmation("Cancel this reservation?", "- Confirm cancellation",
+                        "- Keep reservation")) {
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+                assignedList.removeIndex(i);
+                r.setStatus(ReservationStatus.CANCELLED); 
+                removeReservationFromGuest(guest, r);
+                saveGuestList();
+
+                Room room = getRoomById(r.getRoomId());
+                if (room != null) {
+                    for (int j = 0; j < room.getReservations().size(); j++) {
+                        if (room.getReservations().get(j).getReservationId().equals(r.getReservationId())) {
+                            room.getReservations().removeIndex(j);
+                            break;
+                        }
                     }
                 }
-            }
 
-            // updateRoomStatus() also persists the removal above
-            updateRoomStatus(r.getRoomId(), RoomStatus.AVAILABLE);
-            reservationDAO.saveAssignedList(assignedList);
-            reservationDAO.saveAllReservations(bookingList, guestQueue, assignedList);
-            reservationUI.printCancelled();
-            afterCancelSuccess();
+                // updateRoomStatus() also persists the removal above
+                updateRoomStatus(r.getRoomId(), RoomStatus.AVAILABLE);
+                reservationDAO.saveAllReservations(reservations);
+                reservationUI.printCancelled();
+                afterCancelSuccess();
+                return;
+            }
         }
+
+        reservationUI.printNotFound();
+        reservationUI.pressEnterToContinue();
+    }
+
+    // soft delete: hide a terminal (CANCELLED / CHECKED_OUT) reservation from the views.
+    // the record stays in the history file, just flagged isDeleted = true.
+    public void deleteReservation() {
+        String ic = reservationUI.inputIcOrPassport();
+        Guest guest = getGuestByIcOrPassport(ic);
+
+        if (guest == null) {
+            reservationUI.printNotFound();
+            reservationUI.pressEnterToContinue();
+            return;
+        }
+
+        // show this guest's deletable records (terminal, not already deleted) from history
+        boolean found = false;
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            if (r.getGuestId().equals(guest.getGuestId())
+                    && !r.isDeleted()
+                    && (r.getStatus() == ReservationStatus.CANCELLED
+                            || r.getStatus() == ReservationStatus.CHECKED_OUT)) {
+                reservationUI.printReservationDetails(r);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            reservationUI.printError("No deletable reservations. Only CANCELLED or CHECKED_OUT records can be deleted.");
+            reservationUI.pressEnterToContinue();
+            return;
+        }
+
+        String confirmationNumber = reservationUI.inputConfirmationNumber();
+        if (confirmationNumber.equals("0")) {
+            return;
+        }
+
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            if (r.getConfirmationNumber().equals(confirmationNumber)
+                    && r.getGuestId().equals(guest.getGuestId())) {
+
+                // guard: only terminal records may be deleted
+                if (r.getStatus() != ReservationStatus.CANCELLED
+                        && r.getStatus() != ReservationStatus.CHECKED_OUT) {
+                    reservationUI.printError("Only CANCELLED or CHECKED_OUT reservations can be deleted. Cancel it first.");
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                if (r.isDeleted()) {
+                    reservationUI.printError("This reservation is already deleted.");
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                if (!reservationUI.askConfirmation(
+                        "Delete this reservation from the list?",
+                        "- Confirm delete (kept in file, hidden from views)",
+                        "- Keep reservation")) {
+                    reservationUI.pressEnterToContinue();
+                    return;
+                }
+
+                r.setDeleted(true);
+                reservationDAO.saveAllReservations(reservations);
+                reservationUI.printSuccess();
+                reservationUI.pressEnterToContinue();
+                return;
+            }
+        }
+
+        reservationUI.printNotFound();
+        reservationUI.pressEnterToContinue();
     }
 
     // remove a reservation from the guest's own reservation history list
@@ -1140,19 +1483,34 @@ public class ReservationControl {
 
     private void afterCancelSuccess() {
         String[][] options = {
-            {"1", "Cancel another reservation"},
-            {"2", "Back to module menu"},
-            {"0", "Back to main menu"}
+                { "1", "Cancel another reservation" },
+                { "2", "Back to module menu" },
+                { "0", "Back to main menu" }
         };
         int choice = reservationUI.showSubMenu("Next?", options);
         switch (choice) {
-            case 1: cancelReservation(); break;
-            case 2: break;
+            case 1:
+                cancelReservation();
+                break;
+            case 2:
+                break;
             case 0:
-            default: break;
+            default:
+                break;
         }
     }
 
+    public boolean deleteReservation(String reservationId) {
+    for (int i = 0; i < reservations.size(); i++) {
+        Reservation r = reservations.get(i);
+        if (r.getReservationId().equals(reservationId)) {
+            r.setDeleted(true);              // soft delete
+            reservationDAO.saveAllReservations(reservations);
+            return true;
+        }
+    }
+    return false;
+}
     // ===== ROOM MANAGEMENT =====
 
     public void runRoomManagement() {
@@ -1313,15 +1671,18 @@ public class ReservationControl {
         return count;
     }
 
-    private int countOverlapInList(LinkedListInterface<Reservation> list, RoomType roomType, LocalDate checkIn, LocalDate checkOut) {
+    private int countOverlapInList(LinkedListInterface<Reservation> list, RoomType roomType, LocalDate checkIn,
+            LocalDate checkOut) {
         int count = 0;
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
 
-            if (r.getRoomTypeRequested() != roomType) continue;
+            if (r.getRoomTypeRequested() != roomType)
+                continue;
 
             // a guest that has already checked out no longer occupies this date range
-            if (r.getStatus() == ReservationStatus.CHECKED_OUT) continue;
+            if (r.getStatus() == ReservationStatus.CHECKED_OUT)
+                continue;
 
             LocalDate rCheckIn = r.getTimestamps().getExpectedCheckInDate();
             LocalDate rCheckOut = r.getTimestamps().getExpectedCheckOutDate();
@@ -1379,7 +1740,7 @@ public class ReservationControl {
 
     private String[][] buildArrivalListTableData(LinkedListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
-        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In"};
+        data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In" };
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
             String guestName = getGuestName(r.getGuestId());
@@ -1390,58 +1751,6 @@ public class ReservationControl {
                 guestName != null ? guestName : "-",
                 r.getRoomTypeRequested().toString(),
                 r.getTimestamps().getExpectedCheckInDate().toString()
-            };
-        }
-        return data;
-    }
-
-    private String[][] buildGuestSelectionTableData(LinkedListInterface<Guest> list) {
-        String[][] data = new String[list.size() + 1][5];
-        data[0] = new String[]{"No.", "Guest ID", "Name", "Nationality", "Contact"};
-        for (int i = 0; i < list.size(); i++) {
-            Guest g = list.get(i);
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                g.getGuestId(),
-                g.getName(),
-                g.getNationality(),
-                g.getContactNumber()
-            };
-        }
-        return data;
-    }
-
-    private String[][] buildCheckInCandidateTableData(LinkedListInterface<Reservation> list) {
-        String[][] data = new String[list.size() + 1][6];
-        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In"};
-        for (int i = 0; i < list.size(); i++) {
-            Reservation r = list.get(i);
-            String guestName = getGuestName(r.getGuestId());
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                r.getConfirmationNumber(),
-                r.getGuestId(),
-                guestName != null ? guestName : "-",
-                r.getRoomTypeRequested().toString(),
-                r.getTimestamps().getExpectedCheckInDate().toString()
-            };
-        }
-        return data;
-    }
-
-    private String[][] buildCheckOutCandidateTableData(LinkedListInterface<Reservation> list) {
-        String[][] data = new String[list.size() + 1][6];
-        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-Out"};
-        for (int i = 0; i < list.size(); i++) {
-            Reservation r = list.get(i);
-            String guestName = getGuestName(r.getGuestId());
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                r.getConfirmationNumber(),
-                r.getGuestId(),
-                guestName != null ? guestName : "-",
-                r.getRoomTypeRequested().toString(),
-                r.getTimestamps().getExpectedCheckOutDate().toString()
             };
         }
         return data;
@@ -1467,14 +1776,14 @@ public class ReservationControl {
 
     private String[][] buildAvailableRoomTableData(LinkedListInterface<Room> rooms) {
         String[][] data = new String[rooms.size() + 1][4];
-        data[0] = new String[]{"No.", "Room ID", "Room Number", "Price/Night"};
+        data[0] = new String[] { "No.", "Room ID", "Room Number", "Price/Night" };
         for (int i = 0; i < rooms.size(); i++) {
             Room r = rooms.get(i);
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                r.getRoomId(),
-                r.getRoomNumber(),
-                String.format("%.2f", r.getPricePerNight())
+            data[i + 1] = new String[] {
+                    String.valueOf(i + 1),
+                    r.getRoomId(),
+                    r.getRoomNumber(),
+                    String.format("%.2f", r.getPricePerNight())
             };
         }
         return data;
@@ -1483,16 +1792,16 @@ public class ReservationControl {
     // build table data from queue
     private String[][] buildQueueTableData(LinkedListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
-        data[0] = new String[]{"No.", "Conf. No.", "Guest ID", "Room Type", "Type", "Status"};
+        data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Room Type", "Type", "Status" };
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                r.getConfirmationNumber(),
-                r.getGuestId(),
-                r.getRoomTypeRequested().toString(),
-                r.getReservationType().toString(),
-                r.getStatus().toString()
+            data[i + 1] = new String[] {
+                    String.valueOf(i + 1),
+                    r.getConfirmationNumber(),
+                    r.getGuestId(),
+                    r.getRoomTypeRequested().toString(),
+                    r.getReservationType().toString(),
+                    r.getStatus().toString()
             };
         }
         return data;
@@ -1500,16 +1809,16 @@ public class ReservationControl {
 
     private String[][] buildBookingSummaryTableData(LinkedListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
-        data[0] = new String[]{"No.", "Conf. No.", "Room Type", "Nights", "Check-In Date", "Status"};
+        data[0] = new String[] { "No.", "Conf. No.", "Room Type", "Nights", "Check-In Date", "Status" };
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                r.getConfirmationNumber(),
-                r.getRoomTypeRequested().toString(),
-                String.valueOf(r.getNumberOfNights()),
-                r.getTimestamps().getExpectedCheckInDate().toString(),
-                r.getStatus().toString()
+            data[i + 1] = new String[] {
+                    String.valueOf(i + 1),
+                    r.getConfirmationNumber(),
+                    r.getRoomTypeRequested().toString(),
+                    String.valueOf(r.getNumberOfNights()),
+                    r.getTimestamps().getExpectedCheckInDate().toString(),
+                    r.getStatus().toString()
             };
         }
         return data;
@@ -1517,15 +1826,15 @@ public class ReservationControl {
 
     private String[][] buildCheckOutSelectionTableData(LinkedListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][5];
-        data[0] = new String[]{"No.", "Conf. No.", "Room Type", "Nights", "Check-In Date"};
+        data[0] = new String[] { "No.", "Conf. No.", "Room Type", "Nights", "Check-In Date" };
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
-            data[i + 1] = new String[]{
-                String.valueOf(i + 1),
-                r.getConfirmationNumber(),
-                r.getRoomTypeRequested().toString(),
-                String.valueOf(r.getNumberOfNights()),
-                r.getTimestamps().getExpectedCheckInDate().toString()
+            data[i + 1] = new String[] {
+                    String.valueOf(i + 1),
+                    r.getConfirmationNumber(),
+                    r.getRoomTypeRequested().toString(),
+                    String.valueOf(r.getNumberOfNights()),
+                    r.getTimestamps().getExpectedCheckInDate().toString()
             };
         }
         return data;
@@ -1533,7 +1842,8 @@ public class ReservationControl {
 
     private String[][] buildCheckOutSummaryTableData(LinkedListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][8];
-        data[0] = new String[]{"No.", "Conf. No.", "Room Type", "Status", "Check-In Date", "Check-Out Date", "Actual Check-In", "Actual Check-Out"};
+        data[0] = new String[] { "No.", "Conf. No.", "Room Type", "Status", "Check-In Date", "Check-Out Date",
+                "Actual Check-In", "Actual Check-Out" };
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
             data[i + 1] = new String[]{
@@ -2160,7 +2470,7 @@ public class ReservationControl {
         }
 
         // called from bookRoom() - one combined payment for the whole booking session
-        public Payment processBookingPayment(LinkedListInterface<Reservation> reservations, ReservationControl reservationControl) {
+        public Payment processBookingPayment(LinkedListInterface<Reservation> reservations, ReservationControlV2 reservationControl) {
             if (reservations == null || reservations.size() == 0) {
                 return null;
             }
@@ -2184,16 +2494,15 @@ public class ReservationControl {
             }
 
             Payment payment = new Payment(
-                generatePaymentId(),
-                totalRoomCharge,
-                serviceCharge,
-                tax,
-                total,
-                method,
-                PaymentStatus.PAID,
-                LocalDateTime.now(),
-                reservations.get(0).getConfirmationNumber()
-            );
+                    generatePaymentId(),
+                    totalRoomCharge,
+                    serviceCharge,
+                    tax,
+                    total,
+                    method,
+                    PaymentStatus.PAID,
+                    LocalDateTime.now(),
+                    reservations.get(0).getConfirmationNumber());
 
             for (int i = 0; i < reservations.size(); i++) {
                 payment.addConfirmationNumber(reservations.get(i).getConfirmationNumber());
@@ -2206,7 +2515,7 @@ public class ReservationControl {
 
         // called from checkOut() - late check-out settlement:
         // extra nights at the room's rate (+10% service, +6% tax) + RM50 flat fee per late room
-        public Payment processLateCheckoutPayment(LinkedListInterface<Reservation> reservations, ReservationControl reservationControl) {
+        public Payment processLateCheckoutPayment(LinkedListInterface<Reservation> reservations, ReservationControlV2 reservationControl) {
             if (reservations == null || reservations.size() == 0) {
                 return null;
             }
@@ -2237,16 +2546,15 @@ public class ReservationControl {
             }
 
             Payment payment = new Payment(
-                generatePaymentId(),
-                extraRoomCharge,
-                serviceCharge,
-                tax,
-                total,
-                method,
-                PaymentStatus.PAID,
-                now,
-                reservations.get(0).getConfirmationNumber()
-            );
+                    generatePaymentId(),
+                    extraRoomCharge,
+                    serviceCharge,
+                    tax,
+                    total,
+                    method,
+                    PaymentStatus.PAID,
+                    now,
+                    reservations.get(0).getConfirmationNumber());
 
             for (int i = 0; i < reservations.size(); i++) {
                 payment.addConfirmationNumber(reservations.get(i).getConfirmationNumber());
@@ -2260,7 +2568,7 @@ public class ReservationControl {
         // refund policy: 100% refund if cancelled at least 24 hours before the
         // 12pm check-in moment; 0% refund if cancelled within the last 24 hours.
         // Called from cancelReservation() after the reservation is removed.
-        public double refundReservation(Reservation r, ReservationControl reservationControl) {
+        public double refundReservation(Reservation r, ReservationControlV2 reservationControl) {
             if (r == null || r.getTimestamps() == null || r.getTimestamps().getExpectedCheckInDate() == null) {
                 return 0.0;
             }
@@ -2329,21 +2637,27 @@ public class ReservationControl {
 
         public PaymentMethod askPaymentMethod(ReservationUI reservationUI) {
             String[][] methodOptions = {
-                {"1", "Cash"},
-                {"2", "Credit Card"},
-                {"3", "Debit Card"},
-                {"4", "E-Wallet"},
-                {"5", "Online Banking"},
-                {"0", "Cancel"}
+                    { "1", "Cash" },
+                    { "2", "Credit Card" },
+                    { "3", "Debit Card" },
+                    { "4", "E-Wallet" },
+                    { "5", "Online Banking" },
+                    { "0", "Cancel" }
             };
             int methodChoice = reservationUI.showSubMenu("Select Payment Method:", methodOptions);
             switch (methodChoice) {
-                case 1: return PaymentMethod.CASH;
-                case 2: return PaymentMethod.CREDIT_CARD;
-                case 3: return PaymentMethod.DEBIT_CARD;
-                case 4: return PaymentMethod.E_WALLET;
-                case 5: return PaymentMethod.ONLINE_BANKING;
-                default: return null;
+                case 1:
+                    return PaymentMethod.CASH;
+                case 2:
+                    return PaymentMethod.CREDIT_CARD;
+                case 3:
+                    return PaymentMethod.DEBIT_CARD;
+                case 4:
+                    return PaymentMethod.E_WALLET;
+                case 5:
+                    return PaymentMethod.ONLINE_BANKING;
+                default:
+                    return null;
             }
         }
 
