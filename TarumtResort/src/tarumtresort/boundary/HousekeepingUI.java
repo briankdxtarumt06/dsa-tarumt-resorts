@@ -12,15 +12,15 @@ import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
+import tarumtresort.entity.enums.TaskType;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
 /**
  *
- * @author Brian
+ * @author Brian Kam Ding Xian
  *
- * Combined UI for the Housekeeping module (Staff + Task + Assignment).
  */
 public class HousekeepingUI {
 
@@ -28,9 +28,7 @@ public class HousekeepingUI {
 
     public static final String[] DEPARTMENTS = {"Finance", "Housekeeping", "Maintenance", "Front Office"};
     public static final String[] STAFF_ROLES = {"Manager", "Supervisor", "Cleaner", "Technician", "Receptionist", "Admin"};
-    public static final String[] AVAILABILITY_STATUSES = {"Available", "Unavailable", "On Leave", "Resigned"};
 
-    // keep in sync with HousekeepingController.SHIFT_START
     public static final LocalTime DEFAULT_SHIFT_START = LocalTime.of(8, 0);
 
     public HousekeepingUI() {
@@ -86,65 +84,27 @@ public class HousekeepingUI {
     // MODULE MENU
     public int getMenuChoice() {
         printBanner("HOUSEKEEPING MODULE");
-        System.out.println("  1. Staff Management");
-        System.out.println("  2. Task Management");
-        System.out.println("  3. Task Assignment Management");
-        System.out.println("  4. Reports");
+        System.out.println("  1. Task Management");
+        System.out.println("  2. Staff Management");
+        System.out.println("  3. Reports");
         System.out.println("  0. Exit");
-        printSeparator();
-        return inputIntChoice("Enter choice", 0, 4);
-    }
-
-    public int printStaffListMenu(LinkedListInterface<Staff> pageList, int page, int pageCount, boolean hasFilter) {
-        clearScreen();
-        printBanner("STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
-        if (pageList.isEmpty()) {
-            System.out.println("  (No staff records)");
-        } else {
-            String[] header = new String[] { "No.", "Staff ID", "Name", "Role", "Availability" };
-            String[][] rows = new String[pageList.size()][5];
-            for (int i = 0; i < pageList.size(); i++) {
-                Staff staff = pageList.get(i);
-                rows[i] = new String[] {
-                    String.valueOf(i + 1), staff.getStaffId(), staff.getStaffName(),
-                    staff.getStaffRole(), staff.getAvailabilityStatus()
-                };
-            }
-            TablePrinter.displayTable(header, rows);
-        }
-        printSection("Actions");
-        int action = 1;
-        System.out.println("  " + action++ + ". View Details");
-        System.out.println("  " + action++ + ". Add New Staff");
-        System.out.println("  " + action++ + ". Filter by Department");
-        System.out.println("  " + action++ + ". Filter by Availability");
-        if (page < pageCount - 1) {
-            System.out.println("  " + action++ + ". Next Page");
-        }
-        if (page > 0) {
-            System.out.println("  " + action++ + ". Previous Page");
-        }
-        if (hasFilter) {
-            System.out.println("  " + action++ + ". Clear Filter");
-        }
-        System.out.println("  0. Back");
-        printSeparator();
-        return inputIntChoice("Enter choice", 0, action - 1);
-    }
-
-    public int getStaffActionChoice() {
-        printSection("Staff Actions");
-        System.out.println("  1. Update Staff Info");
-        System.out.println("  2. Resign Staff");
-        System.out.println("  3. View Task Assignments");
-        System.out.println("  0. Back to List");
         printSeparator();
         return inputIntChoice("Enter choice", 0, 3);
     }
 
-    public int printTaskListMenu(LinkedListInterface<Task> pageList, int page, int pageCount, boolean hasFilter) {
+    public int printTaskListMenu(LinkedListInterface<Task> pageList, int page, int pageCount, TaskStatus statusFilter,
+            TaskPriority priorityFilter, String searchTerm) {
         clearScreen();
         printBanner("TASK MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        if (statusFilter != null) {
+            System.out.println("  Filter: Status = " + statusFilter.name());
+        }
+        if (priorityFilter != null) {
+            System.out.println("  Filter: Priority = " + priorityFilter.name());
+        }
+        if (searchTerm != null) {
+            System.out.println("  Search: \"" + searchTerm + "\"");
+        }
         if (pageList.isEmpty()) {
             System.out.println("  (no task records)");
         } else {
@@ -154,7 +114,8 @@ public class HousekeepingUI {
                 Task task = pageList.get(i);
                 rows[i] = new String[] {
                     String.valueOf(i + 1), task.getTaskId(), task.getTaskName(),
-                    task.getTaskType(), task.getTaskPriority().name(),
+                    task.getTaskType() == null ? "-" : task.getTaskType().name(),
+                    task.getTaskPriority() == null ? "-" : task.getTaskPriority().name(),
                     task.getTaskStatus() == null ? "-" : task.getTaskStatus().name()
                 };
             }
@@ -164,16 +125,80 @@ public class HousekeepingUI {
         int action = 1;
         System.out.println("  " + action++ + ". View Details");
         System.out.println("  " + action++ + ". Add New Task");
-        System.out.println("  " + action++ + ". Filter by Priority");
-        System.out.println("  " + action++ + ". Filter by Type");
+        System.out.println("  " + action++ + ". Update Task Status");
+        System.out.println("  " + action++ + ". Roll Back Task Status");
+        System.out.println("  " + action++ + ". Add Filter");
+        boolean hasFilter = statusFilter != null || priorityFilter != null;
+        boolean hasSearch = searchTerm != null;
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        if (!hasSearch) {
+            System.out.println("  " + action++ + ". Search Tasks");
+        }
+        if (hasSearch) {
+            System.out.println("  " + action++ + ". Clear Search");
+        }
         if (page < pageCount - 1) {
             System.out.println("  " + action++ + ". Next Page");
         }
         if (page > 0) {
             System.out.println("  " + action++ + ". Previous Page");
         }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int printStaffListMenu(LinkedListInterface<Staff> pageList, int page, int pageCount,
+            String departmentFilter, String roleFilter, String searchTerm) {
+        clearScreen();
+        printBanner("STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        if (departmentFilter != null) {
+            System.out.println("  Filter: Department = " + departmentFilter);
+        }
+        if (roleFilter != null) {
+            System.out.println("  Filter: Role = " + roleFilter);
+        }
+        if (searchTerm != null) {
+            System.out.println("  Search: \"" + searchTerm + "\"");
+        }
+        if (pageList.isEmpty()) {
+            System.out.println("  (no staff records)");
+        } else {
+            String[] header = new String[] { "No.", "Staff ID", "Name", "Department", "Role", "Availability" };
+            String[][] rows = new String[pageList.size()][6];
+            for (int i = 0; i < pageList.size(); i++) {
+                Staff staff = pageList.get(i);
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), staff.getStaffId(), staff.getStaffName(),
+                    staff.getDepartment(), staff.getStaffRole(),
+                    staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Add New Staff");
+        System.out.println("  " + action++ + ". Add Filter");
+        boolean hasFilter = departmentFilter != null || roleFilter != null;
+        boolean hasSearch = searchTerm != null;
         if (hasFilter) {
             System.out.println("  " + action++ + ". Clear Filter");
+        }
+        if (!hasSearch) {
+            System.out.println("  " + action++ + ". Search Staff");
+        }
+        if (hasSearch) {
+            System.out.println("  " + action++ + ". Clear Search");
+        }
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
         }
         System.out.println("  0. Back");
         printSeparator();
@@ -182,83 +207,67 @@ public class HousekeepingUI {
 
     public int getTaskActionChoice() {
         printSection("Task Actions");
-        System.out.println("  1. Update Task Info");
+        System.out.println("  1. Edit Task Details");
         System.out.println("  2. Update Task Status");
-        System.out.println("  3. Assign Task to Room");
-        System.out.println("  4. View Assignments");
-        System.out.println("  5. Rollback Task Status");
-        System.out.println("  6. Remove Task");
+        System.out.println("  3. Roll Back Latest Status");
+        System.out.println("  4. View Staff Assigned");
+        System.out.println("  5. Assign / Reassign Staff");
+        System.out.println("  6. Delete Task");
+        System.out.println("  7. View Change History");
         System.out.println("  0. Back to List");
         printSeparator();
-        return inputIntChoice("Enter choice", 0, 6);
+        return inputIntChoice("Enter choice", 0, 7);
     }
 
-    public int printAssignmentListMenu(String[] lines, int page, int pageCount, boolean hasFilter) {
-        clearScreen();
-        printBanner("ASSIGNMENTS & SCHEDULING (Page " + (page + 1) + " of " + pageCount + ")");
-        if (lines.length == 0) {
-            System.out.println("  (no assignment records)");
-        } else {
-            String[] header = new String[] { "No.", "Assignment ID", "Staff → Task", "Status", "When" };
-            String[][] rows = new String[lines.length][5];
-            for (int i = 0; i < lines.length; i++) {
-                String[] parts = lines[i].split(" \\| ", -1);
-                rows[i] = new String[] {
-                    String.valueOf(i + 1),
-                    parts.length > 0 ? parts[0] : "",
-                    parts.length > 1 ? parts[1] : "",
-                    parts.length > 2 ? parts[2] : "",
-                    parts.length > 3 ? parts[3] : ""
-                };
-            }
-            TablePrinter.displayTable(header, rows);
-        }
-        printSection("Actions");
-        int action = 1;
-        System.out.println("  " + action++ + ". View Details");
-        System.out.println("  " + action++ + ". + New Assignment");
-        System.out.println("  " + action++ + ". Filter by Staff");
-        System.out.println("  " + action++ + ". Filter by Task");
-        System.out.println("  " + action++ + ". View Tasks by Room");
-        System.out.println("  " + action++ + ". Simulate Guest Checkout");
-        System.out.println("  " + action++ + ". Guest Cleaning Request");
-        System.out.println("  " + action++ + ". View All Change History");
-        if (page < pageCount - 1) {
-            System.out.println("  " + action++ + ". Next Page");
-        }
-        if (page > 0) {
-            System.out.println("  " + action++ + ". Previous Page");
-        }
-        if (hasFilter) {
-            System.out.println("  " + action++ + ". Clear Filter");
-        }
+    public int getStaffActionChoice() {
+        printSection("Staff Actions");
+        System.out.println("  1. Edit Staff Details");
+        System.out.println("  2. View Assignment History");
+        System.out.println("  3. Resign Staff");
+        System.out.println("  4. View Change History");
+        System.out.println("  0. Back to List");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, 4);
+    }
+
+    public int inputTaskFieldChoice() {
+        printSection("Select Field to Edit");
+        System.out.println("  1. Task Name");
+        System.out.println("  2. Task Type");
+        System.out.println("  3. Priority");
+        System.out.println("  4. Room ID");
+        System.out.println("  5. Start Date & Time");
         System.out.println("  0. Back");
-        printSeparator();
-        return inputIntChoice("Enter choice", 0, action - 1);
+        return inputIntChoice("Enter choice", 0, 5);
     }
 
-    public int getAssignmentActionChoice() {
-        printSection("Assignment Actions");
-        System.out.println("  1. Update Assignment Status (Worker)");
-        System.out.println("  2. Reassign Staff / Task");
-        System.out.println("  3. View Change History");
-        System.out.println("  0. Back to List");
-        printSeparator();
-        return inputIntChoice("Enter choice", 0, 3);
+    public int inputStaffFieldChoice() {
+        printSection("Select Field to Edit");
+        System.out.println("  1. Staff Name");
+        System.out.println("  2. Department");
+        System.out.println("  3. Staff Role");
+        System.out.println("  4. Toggle On Leave");
+        System.out.println("  0. Back");
+        return inputIntChoice("Enter choice", 0, 4);
+    }
+
+    public int inputTaskFilterDimension() {
+        printSection("Filter Tasks By");
+        System.out.println("  1. Status");
+        System.out.println("  2. Priority");
+        System.out.println("  0. Back");
+        return inputIntChoice("Enter choice", 0, 2);
+    }
+
+    public int inputStaffFilterDimension() {
+        printSection("Filter Staff By");
+        System.out.println("  1. Department");
+        System.out.println("  2. Role");
+        System.out.println("  0. Back");
+        return inputIntChoice("Enter choice", 0, 2);
     }
 
     // INPUT METHODS (staff)
-    public String inputStaffId() {
-        String input = "";
-        while (input.trim().isEmpty()) {
-            System.out.print("Enter Staff ID: ");
-            input = scanner.nextLine();
-            if (input.trim().isEmpty())
-                ConsoleUtil.printError("Staff ID cannot be empty!");
-        }
-        return input.trim();
-    }
-
     public String inputStaffName() {
         String input = "";
         while (input.trim().isEmpty()) {
@@ -286,47 +295,7 @@ public class HousekeepingUI {
         return STAFF_ROLES[inputIntChoice("Enter staff role", 1, STAFF_ROLES.length) - 1];
     }
 
-    public String inputAvailabilityStatus() {
-        System.out.println("\nSelect Availability Status:");
-        for (int i = 0; i < AVAILABILITY_STATUSES.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + AVAILABILITY_STATUSES[i]);
-        }
-        return AVAILABILITY_STATUSES[inputIntChoice("Enter availability status", 1, AVAILABILITY_STATUSES.length) - 1];
-    }
-
-    public String[] inputStaffDetails() {
-        ConsoleUtil.clearScreen();
-        printSection("Add New Staff");
-        String staffName = inputStaffName();
-        String department = inputDepartment();
-        String staffRole = inputStaffRole();
-        String availabilityStatus = inputAvailabilityStatus();
-        System.out.println();
-        return new String[]{staffName, department, staffRole, availabilityStatus};
-    }
-
-    // generic "which field to edit" prompt; returns 0 = Back
-    public int inputFieldChoice(String[] fields) {
-        printSection("Select Field to Edit");
-        for (int i = 0; i < fields.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + fields[i]);
-        }
-        System.out.println("  0. Back");
-        return inputIntChoice("Enter choice", 0, fields.length);
-    }
-
     // INPUT METHODS (task)
-    public String inputTaskId() {
-        String input = "";
-        while (input.trim().isEmpty()) {
-            System.out.print("Enter Task ID: ");
-            input = scanner.nextLine();
-            if (input.trim().isEmpty())
-                ConsoleUtil.printError("Task ID cannot be empty!");
-        }
-        return input.trim();
-    }
-
     public String inputTaskName() {
         String input = "";
         while (input.trim().isEmpty()) {
@@ -338,15 +307,19 @@ public class HousekeepingUI {
         return input.trim();
     }
 
-    public String inputTaskType() {
-        String input = "";
-        while (input.trim().isEmpty()) {
-            System.out.print("Enter Task Type (e.g. Housekeeping, Maintenance): ");
-            input = scanner.nextLine();
-            if (input.trim().isEmpty())
-                ConsoleUtil.printError("Task Type cannot be empty!");
-        }
-        return input.trim();
+    public TaskType inputTaskType() {
+        System.out.println("\nSelect Task Type:");
+        System.out.println("  1. CHECKOUT_CLEAN");
+        System.out.println("  2. MAINTENANCE");
+        System.out.println("  3. INSPECTION");
+        System.out.println("  4. ROOM_SERVICE");
+        int choice = inputIntChoice("Enter task type", 1, 4);
+        return switch (choice) {
+            case 1 -> TaskType.CHECKOUT_CLEAN;
+            case 2 -> TaskType.MAINTENANCE;
+            case 3 -> TaskType.INSPECTION;
+            default -> TaskType.ROOM_SERVICE;
+        };
     }
 
     public TaskPriority inputTaskPriority() {
@@ -358,123 +331,117 @@ public class HousekeepingUI {
         return choice == 1 ? TaskPriority.HIGH : choice == 2 ? TaskPriority.MEDIUM : TaskPriority.LOW;
     }
 
-    public LocalDateTime inputStartDateTime() {
-        return inputDateTimeWithQuickOptions("Task Start Date & Time");
-    }
-
-    public LocalDateTime parseDateTime(String value) {
-        try {
-            return LocalDateTime.parse(value);
-        } catch (DateTimeParseException e) {
-            ConsoleUtil.printError("Invalid date & time format! Please use yyyy-MM-ddTHH:mm (ISO format).");
-            return null;
-        }
-    }
-
-    public String inputTaskStatus(TaskStatus currentStatus) {
+    public TaskStatus inputTaskStatusFilter() {
         System.out.println("\nSelect Task Status:");
-        TaskStatus[] options = getValidTransitions(currentStatus);
-        if (options.length == 0) {
-            ConsoleUtil.printWarning("No valid status transitions available — use Rollback instead.");
-            return null;
-        }
-        for (int i = 0; i < options.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + options[i].name());
-        }
-        int choice = inputIntChoice("Enter task status", 1, options.length);
-        return options[choice - 1].name();
-    }
-
-    private TaskStatus[] getValidTransitions(TaskStatus current) {
-        if (current == null) {
-            return new TaskStatus[]{TaskStatus.PENDING, TaskStatus.CANCELLED};
-        }
-        return switch (current) {
-            case PENDING -> new TaskStatus[]{TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED};
-            case IN_PROGRESS -> new TaskStatus[]{TaskStatus.CANCELLED, TaskStatus.COMPLETED};
-            case COMPLETED -> new TaskStatus[]{};
-            case CANCELLED -> new TaskStatus[]{TaskStatus.IN_PROGRESS};
+        System.out.println("  1. PENDING");
+        System.out.println("  2. IN_PROGRESS");
+        System.out.println("  3. COMPLETED");
+        System.out.println("  4. CANCELLED");
+        int choice = inputIntChoice("Enter task status", 1, 4);
+        return switch (choice) {
+            case 1 -> TaskStatus.PENDING;
+            case 2 -> TaskStatus.IN_PROGRESS;
+            case 3 -> TaskStatus.COMPLETED;
+            default -> TaskStatus.CANCELLED;
         };
     }
 
-    public String[] inputTaskDetails() {
-        printSection("Add New Task");
-        String taskName = inputTaskName();
-        String taskType = inputTaskType();
-        TaskPriority taskPriority = inputTaskPriority();
-        LocalDateTime startDateTime = inputStartDateTime();
-        System.out.println();
-        return new String[]{taskName, taskType, taskPriority.name(), startDateTime.toString()};
+    public TaskPriority inputTaskPriorityFilter() {
+        return inputTaskPriority();
     }
 
-    // INPUT METHODS (assignment)
-    public String inputAssignmentId() {
-        String input = "";
-        while (input.trim().isEmpty()) {
-            System.out.print("Enter Assignment ID: ");
-            input = scanner.nextLine();
-            if (input.trim().isEmpty())
-                ConsoleUtil.printError("Assignment ID cannot be empty!");
-        }
-        return input.trim();
-    }
-
-    // optional task id filter for the change history (blank = all changes)
-    public String inputOptionalTaskId() {
-        System.out.print("Enter Task ID to filter (blank = all): ");
+    public String inputOptionalRoomId() {
+        System.out.print("Enter Room ID (blank = none): ");
         String input = scanner.nextLine().trim();
         return input.isEmpty() ? null : input;
     }
 
-    public String inputRoomId() {
+    public LocalDateTime inputStartDateTime() {
+        return inputDateTimeWithQuickOptions("Task Start Date & Time");
+    }
+
+    public String inputSearchTerm() {
+        System.out.print("Enter search term (blank = cancel): ");
+        String input = scanner.nextLine().trim();
+        return input.isEmpty() ? null : input;
+    }
+
+    public TaskStatus selectTaskStatus(TaskStatus[] options) {
+        System.out.println("\nSelect Task Status:");
+        for (int i = 0; i < options.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + options[i].name());
+        }
+        System.out.println("  0. Cancel");
+        int choice = inputIntChoice("Enter task status", 0, options.length);
+        return choice == 0 ? null : options[choice - 1];
+    }
+
+    public String inputCancellationReason() {
         String input = "";
         while (input.trim().isEmpty()) {
-            System.out.print("Enter Room ID: ");
+            System.out.print("Enter cancellation reason (0 = cancel): ");
             input = scanner.nextLine();
             if (input.trim().isEmpty())
-                ConsoleUtil.printError("Room ID cannot be empty!");
+                ConsoleUtil.printError("Cancellation reason cannot be empty!");
+        }
+        if (input.trim().equals("0")) {
+            return null;
         }
         return input.trim();
     }
 
-    public String inputAssignmentStatus() {
+    public int inputAssignMode() {
+        printSection("Assign Staff");
+        System.out.println("  1. Auto-assign (earliest available staff)");
+        System.out.println("  2. Choose staff manually");
+        System.out.println("  0. Cancel");
+        return inputIntChoice("Enter choice", 0, 2);
+    }
+
+    public int selectStaff(LinkedListInterface<Staff> staffList) {
+        printSection("Select Staff to Assign");
+        if (staffList.isEmpty()) {
+            System.out.println("  (no eligible staff)");
+        } else {
+            String[] header = new String[] { "No.", "Staff ID", "Name", "Department", "Role", "Availability" };
+            String[][] rows = new String[staffList.size()][6];
+            for (int i = 0; i < staffList.size(); i++) {
+                Staff staff = staffList.get(i);
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), staff.getStaffId(), staff.getStaffName(),
+                    staff.getDepartment(), staff.getStaffRole(),
+                    staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+        System.out.println("  0. Cancel");
+        return inputIntChoice("Enter choice", 0, staffList.size());
+    }
+
+    public String inputConfirmName(String expectedName) {
         String input = "";
         while (input.trim().isEmpty()) {
-            System.out.print("Enter assignment status (e.g. Pending, In Progress, Completed, Cancelled): ");
+            System.out.print("Type the name \"" + expectedName + "\" to confirm: ");
             input = scanner.nextLine();
             if (input.trim().isEmpty())
-                ConsoleUtil.printError("Assignment status cannot be empty!");
+                ConsoleUtil.printError("Name cannot be empty!");
         }
         return input.trim();
     }
 
-    public String inputWorkerAssignmentStatus() {
-        System.out.println("\nSelect worker assignment status:");
-        System.out.println("  1. In Progress");
-        System.out.println("  2. Completed");
-        System.out.println("  3. Cancelled (drop / decline)");
-        System.out.println("  4. Handed Off (shift change)");
-        System.out.println("  5. Paused");
-        System.out.println("  6. Work Finished (awaiting inspection)");
-        System.out.println("  7. Inspected (passed inspection)");
-        int choice = inputIntChoice("Enter status", 1, 7);
-        switch (choice) {
-            case 1: return "In Progress";
-            case 2: return "Completed";
-            case 3: return "Cancelled";
-            case 4: return "Handed Off";
-            case 5: return "Paused";
-            case 6: return "Work Finished";
-            default: return "Inspected";
+    public boolean confirm(String prompt) {
+        while (true) {
+            System.out.print(prompt + " (y/n): ");
+            String input = scanner.nextLine().trim();
+            if (input.equalsIgnoreCase("y") || input.equalsIgnoreCase("yes")) {
+                return true;
+            }
+            if (input.equalsIgnoreCase("n") || input.equalsIgnoreCase("no")) {
+                return false;
+            }
+            ConsoleUtil.printError("Please answer y or n!");
         }
-    }
-
-    public LocalDateTime inputDateAssigned() {
-        return inputDateTimeWithQuickOptions("Date & Time Assigned");
-    }
-
-    public LocalDateTime inputCheckoutDateTime() {
-        return inputDateTimeWithQuickOptions("Guest Checkout Date & Time");
     }
 
     // -------------------- QUICK DATE-TIME INPUT --------------------
@@ -521,7 +488,7 @@ public class HousekeepingUI {
         return dateTime;
     }
 
-    // DISPLAY / OUTPUT METHODS (staff)
+    // DISPLAY / OUTPUT METHODS
     public static void printDetails(String[][] details) {
         if (details == null || details.length == 0) {
             return;
@@ -543,80 +510,88 @@ public class HousekeepingUI {
         printSeparator();
     }
 
-    public void printStaffDetails(Staff staff) {
+    public void printTaskDetails(Task task, TaskAssignment active) {
+        printDetails(new String[][] {
+            {"Task ID", task.getTaskId()},
+            {"Task Name", task.getTaskName()},
+            {"Task Type", task.getTaskType() == null ? "-" : task.getTaskType().name()},
+            {"Current Status", task.getTaskStatus() == null ? "-" : task.getTaskStatus().name()},
+            {"Priority", task.getTaskPriority() == null ? "-" : task.getTaskPriority().name()},
+            {"Start Date & Time", String.valueOf(task.getStartDateTime())},
+            {"Room ID", task.getRoomId() == null ? "-" : task.getRoomId()},
+            {"Active Assignment", active == null ? "-"
+                    : active.getTaskAssignmentId() + " (" + (active.getStatus() == null ? "-" : active.getStatus().name()) + ")"}
+        });
+    }
+
+    public void printStaffDetails(Staff staff, TaskAssignment active) {
         printDetails(new String[][] {
             {"Staff ID", staff.getStaffId()},
             {"Staff Name", staff.getStaffName()},
             {"Department", staff.getDepartment()},
             {"Staff Role", staff.getStaffRole()},
-            {"Availability", staff.getAvailabilityStatus()}
+            {"Availability", staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()},
+            {"Active Assignment", active == null ? "-"
+                    : active.getTaskAssignmentId() + " (" + (active.getStatus() == null ? "-" : active.getStatus().name()) + ")"}
         });
     }
 
-    public void listAllStaffs(String[][] data) {
-        printSection("Staff List");
-        if (data.length <= 1) {
-            System.out.println("  No staff records found.");
+    public void printTaskCreationSummary(String taskName, TaskType taskType, TaskPriority taskPriority,
+            String roomId, LocalDateTime startDateTime) {
+        printDetails(new String[][] {
+            {"Task Name", taskName},
+            {"Task Type", taskType == null ? "-" : taskType.name()},
+            {"Priority", taskPriority == null ? "-" : taskPriority.name()},
+            {"Room ID", roomId == null ? "-" : roomId},
+            {"Start Date & Time", String.valueOf(startDateTime)}
+        });
+    }
+
+    public void printTaskEditSummary(String taskName, TaskType taskType, TaskPriority taskPriority, String roomId,
+            LocalDateTime startDateTime) {
+        printTaskCreationSummary(taskName, taskType, taskPriority, roomId, startDateTime);
+    }
+
+    public void printStaffCreationSummary(String staffName, String department, String staffRole) {
+        printDetails(new String[][] {
+            {"Staff Name", staffName},
+            {"Department", department},
+            {"Staff Role", staffRole}
+        });
+    }
+
+    public void printStaffEditSummary(String staffName, String department, String staffRole) {
+        printStaffCreationSummary(staffName, department, staffRole);
+    }
+
+    public void printStatusChangeSummary(String taskId, TaskStatus current, TaskStatus next, String reason) {
+        printDetails(new String[][] {
+            {"Task ID", taskId},
+            {"Status Change", (current == null ? "-" : current.name()) + "  to  " + next.name()},
+            {"Reason", reason == null ? "-" : reason}
+        });
+    }
+
+    public void printAssignmentStatusSummary(String assignmentId, TaskStatus current, TaskStatus next, String reason) {
+        printDetails(new String[][] {
+            {"Assignment ID", assignmentId},
+            {"Status Change", (current == null ? "-" : current.name()) + "  to  " + next.name()},
+            {"Reason", reason == null ? "-" : reason}
+        });
+    }
+
+    public void printTaskAutoCompleted(Task task) {
+        if (task == null) {
             return;
         }
-        String[] header = data[0];
-        String[][] rows = new String[data.length - 1][];
-        System.arraycopy(data, 1, rows, 0, rows.length);
-        TablePrinter.displayTable(header, rows);
-    }
-
-    public void printStaffId(String staffId) {
-        ConsoleUtil.printSuccess("New Staff ID: " + staffId);
-    }
-
-    // DISPLAY / OUTPUT METHODS (task)
-    public void printTaskDetails(Task task) {
-        printDetails(new String[][] {
-            {"Task ID", task.getTaskId()},
-            {"Task Name", task.getTaskName()},
-            {"Task Type", task.getTaskType()},
-            {"Current Status", task.getTaskStatus() == null ? "-" : task.getTaskStatus().name()},
-            {"Priority", task.getTaskPriority().name()},
-            {"Start Date & Time", String.valueOf(task.getStartDateTime())},
-            {"Room ID", task.getRoomId() == null ? "-" : task.getRoomId()}
-        });
-    }
-
-    public void listAllTasks(String[][] data) {
-        printSection("Task List");
-        if (data.length <= 1) {
-            System.out.println("  No task records found.");
-            return;
-        }
-        String[] header = data[0];
-        String[][] rows = new String[data.length - 1][];
-        System.arraycopy(data, 1, rows, 0, rows.length);
-        TablePrinter.displayTable(header, rows);
-    }
-
-    public void printTaskId(String taskId) {
-        ConsoleUtil.printSuccess("New Task ID: " + taskId);
-    }
-
-    // DISPLAY / OUTPUT METHODS (assignment)
-    public void printAssignmentDetails(TaskAssignment assignment, Staff staff, Task task) {
-        printDetails(new String[][] {
-            {"Assignment ID", assignment.getTaskAssignmentId()},
-            {"Status", assignment.getStatus()},
-            {"Date & Time Assigned", String.valueOf(assignment.getDateTimeAssigned())},
-            {"Staff ID", staff == null ? "-" : staff.getStaffId()},
-            {"Staff Name", staff == null ? "-" : staff.getStaffName()},
-            {"Task ID", task == null ? "-" : task.getTaskId()},
-            {"Task Name", task == null ? "-" : task.getTaskName()},
-            {"Room ID", task == null || task.getRoomId() == null ? "-" : task.getRoomId()}
-        });
+        ConsoleUtil.printSuccess("Task " + task.getTaskId()
+                + " auto-completed: all assigned workers finished.");
     }
 
     public void listAllAssignments(String[][] data) {
         printSection("Assignment List");
         if (data.length <= 1) {
             System.out.println("  No assignment records found.");
-            pressEnterToContinue();
             return;
         }
         String[] header = data[0];
@@ -637,30 +612,12 @@ public class HousekeepingUI {
         TablePrinter.displayTable(header, rows);
     }
 
-    public void printGuestCheckoutTask(Task task, Staff staff, TaskAssignment assignment, boolean deferred) {
-        printDetails(new String[][] {
-            {"Room ID", task.getRoomId()},
-            {"Task ID", task.getTaskId()},
-            {"Task Name", task.getTaskName()},
-            {"Current Status", String.valueOf(task.getTaskStatus())},
-            {"Priority", task.getTaskPriority().name()},
-            {"Assigned Staff", staff == null ? "-" : staff.getStaffId() + " (" + staff.getStaffName() + ")"},
-            {"Assignment ID", assignment == null ? "-" : assignment.getTaskAssignmentId()},
-            {"Assignment Status", assignment == null ? "-" : assignment.getStatus()},
-            {"Date Assigned", assignment == null || assignment.getDateTimeAssigned() == null ? "-"
-                    : String.valueOf(assignment.getDateTimeAssigned())},
-            {"Scheduled Start", String.valueOf(task.getStartDateTime())},
-            {"Scheduled End", String.valueOf(task.getStartDateTime().plusMinutes(60))}
-        });
-        if (deferred) {
-            ConsoleUtil.printWarning("Note: No staff was free at checkout time.");
-            System.out.println("  Task was scheduled into the first free");
-            System.out.println("  60-minute slot on the staff timetable.");
-        }
+    public void printTaskId(String taskId) {
+        ConsoleUtil.printSuccess("New Task ID: " + taskId);
     }
 
-    public void printAssignmentId(String assignmentId) {
-        ConsoleUtil.printSuccess("New Assignment ID: " + assignmentId);
+    public void printStaffId(String staffId) {
+        ConsoleUtil.printSuccess("New Staff ID: " + staffId);
     }
 
     public void printSuccess() {
@@ -675,47 +632,12 @@ public class HousekeepingUI {
         ConsoleUtil.printError("Name already exists!");
     }
 
-    public void printStaffNotFound() {
-        ConsoleUtil.printError("Staff not found!");
-    }
-
-    public void printTaskNotFound() {
-        ConsoleUtil.printError("Task not found!");
-    }
-
     public void printStaffUnavailable() {
-        ConsoleUtil.printError("Staff is not available (Resigned)!");
-    }
-
-    public void printWindowOverlap() {
-        ConsoleUtil.printError("Staff already has another task in this 60-minute window!");
-        ConsoleUtil.printError("A staff can only take the next task after the current one is done.");
-    }
-
-    public void printScheduleConflict() {
-        ConsoleUtil.printError("Reschedule rejected: the new start time overlaps a task");
-        ConsoleUtil.printError("already assigned to this task's staff!");
-    }
-
-    public void printTaskAlreadyExists() {
-        ConsoleUtil.printError("A cleaning task for this room already exists!");
-    }
-
-    public void printAllWorkersDoneHint(String assignmentId) {
-        ConsoleUtil.printSuccess("All workers of this task are done.");
-        System.out.println("    The task stays active under inspection until a supervisor");
-        System.out.println("    gives final approval (use 'Update Task Status' to complete it).");
-    }
-
-    public void printReassigned() {
-        ConsoleUtil.printSuccess("Assignment closed and task auto-reassigned.");
-        System.out.println("    The task is scheduled into the first free 60-minute slot");
-        System.out.println("    on the next available staff's timetable.");
+        ConsoleUtil.printError("Staff is not available right now!");
     }
 
     public void printNoStaffFreeForTask() {
-        ConsoleUtil.printError("No Housekeeping staff is free for this task's 60-minute window!");
-        ConsoleUtil.printError("Try another task, or cancel / complete an overlapping task first.");
+        ConsoleUtil.printError("No eligible staff is free for this task right now!");
     }
 
     public void printNoPreviousStatus() {
@@ -729,32 +651,24 @@ public class HousekeepingUI {
         System.out.println("    (or the task still has unfinished workers).");
     }
 
+    public void printTaskClosed() {
+        ConsoleUtil.printError("Task is already closed (completed or cancelled)!");
+    }
+
+    public void printTaskAlreadyAssigned() {
+        ConsoleUtil.printError("Task already has an active assignment!");
+    }
+
+    public void printStaffHasActiveAssignment() {
+        ConsoleUtil.printError("Staff has an active assignment and cannot go on leave!");
+    }
+
     public void printNoRecords() {
         ConsoleUtil.printError("No records to view!");
     }
 
-    public int inputListIndex(String entityLabel, int max) {
-        return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
-    }
-
-    public int printEligibleStaffMenu(LinkedListInterface<Staff> staffList) {
-        printSection("Select Staff to Assign");
-        if (staffList.isEmpty()) {
-            System.out.println("  (no eligible staff)");
-        } else {
-            String[] header = new String[] { "No.", "Staff ID", "Name", "Department", "Availability" };
-            String[][] rows = new String[staffList.size()][5];
-            for (int i = 0; i < staffList.size(); i++) {
-                Staff staff = staffList.get(i);
-                rows[i] = new String[] {
-                    String.valueOf(i + 1), staff.getStaffId(), staff.getStaffName(),
-                    staff.getDepartment(), staff.getAvailabilityStatus()
-                };
-            }
-            TablePrinter.displayTable(header, rows);
-        }
-        System.out.println("  0. Cancel");
-        return inputIntChoice("Enter choice", 0, staffList.size());
+    public void printWarning(String message) {
+        ConsoleUtil.printWarning(message);
     }
 
     public void printExitMessage() {
@@ -763,6 +677,10 @@ public class HousekeepingUI {
 
     public void printInvalidChoice() {
         ConsoleUtil.printError("Invalid choice! Please try again.");
+    }
+
+    public int inputListIndex(String entityLabel, int max) {
+        return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
     }
 
     private int inputIntChoice(String prompt, int min, int max) {

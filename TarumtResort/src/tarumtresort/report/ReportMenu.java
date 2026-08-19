@@ -3,11 +3,13 @@ package tarumtresort.report;
 import java.time.LocalDateTime;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.dao.ReservationDAO;
 import tarumtresort.dao.RoomDAO;
 import tarumtresort.dao.StaffDAO;
 import tarumtresort.dao.TaskAssignmentChangeDAO;
 import tarumtresort.dao.TaskAssignmentDAO;
 import tarumtresort.dao.TaskDAO;
+import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
@@ -31,6 +33,7 @@ public class ReportMenu {
     private final TaskDAO taskDAO = new TaskDAO();
     private final TaskAssignmentDAO taskAssignmentDAO = new TaskAssignmentDAO();
     private final TaskAssignmentChangeDAO taskAssignmentChangeDAO = new TaskAssignmentChangeDAO();
+    private final ReservationDAO reservationDAO = new ReservationDAO();
 
     public ReportMenu(ReportUI ui) {
         this.ui = ui;
@@ -60,7 +63,7 @@ public class ReportMenu {
     }
 
     /**
-     * Room Turnover &amp; Readiness Report (Room + Task + Assignment + Change).
+     * Room Turnover &amp; Readiness Report (Room + Task + Assignment + Change + Reservation).
      * Filters: date range (task start).
      */
     private void generateRoomTurnoverReportMenu() {
@@ -71,8 +74,10 @@ public class ReportMenu {
         LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
         LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
         LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        LinkedListInterface<Reservation> reservations = new LinkedList<>();
+        reservationDAO.loadAllReservations(reservations);
 
-        ReportResult result = new RoomTurnoverReport(rooms, tasks, assignments, changes)
+        ReportResult result = new RoomTurnoverReport(rooms, tasks, assignments, changes, reservations)
                 .generate(range[0], range[1]);
         ui.printReport(result, "ROOM TURNOVER & READINESS REPORT");
     }

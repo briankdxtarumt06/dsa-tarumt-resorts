@@ -22,7 +22,6 @@ import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.report.ReportChart;
 import tarumtresort.report.ReportResult;
 
@@ -338,15 +337,11 @@ public class InquiryController {
                 return buildRoomAvailabilityInfo(reservation);
 
             case ROOMSERVICE:
-                Task task = housekeepingController.createCleaningTask(
-                        reservation.getRoomId(),
-                        "Housekeeping",
-                        TaskPriority.HIGH,
-                        LocalDateTime.now());
-                if (task != null) {
+                String taskId = housekeepingController.createRoomServiceTask(reservation.getRoomId());
+                if (taskId != null) {
                     resolveInquiry(inquiry);
                 }
-                return task;
+                return housekeepingController.getTaskById(taskId);
 
             default:
                 return null;

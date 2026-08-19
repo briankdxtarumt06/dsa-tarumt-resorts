@@ -62,7 +62,7 @@ public class TarumtResort {
                 }
             } while (choice != 0);
         } catch (Exception e) {
-            ConsoleUtil.printError("\n  ✗ An unexpected error occurred: " + e.getMessage());
+            ConsoleUtil.printError("\n?! An unexpected error occurred !?: " + e.getMessage());
         }
     }
 }
