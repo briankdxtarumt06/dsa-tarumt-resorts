@@ -634,8 +634,9 @@ public class ReservationControl {
             System.out.println();
             reservationUI.printSuccess();
 
-            // payment collection
-            Payment payment = paymentControl.processBookingPayment(sessionBookings, this);
+            // payment collection (member tier discount applies to the whole session)
+            Member member = loyaltyController.findMemberByGuestId(guestId);
+            Payment payment = paymentControl.processBookingPayment(sessionBookings, this, member);
             if (payment == null) {
                 reservationUI.printError("Payment was cancelled. Reservations are saved but not yet paid.");
             } else {
@@ -2248,7 +2249,8 @@ public class ReservationControl {
         }
 
         // called from bookRoom() - one combined payment for the whole booking session
-        public Payment processBookingPayment(LinkedListInterface<Reservation> reservations, ReservationControl reservationControl) {
+        public Payment processBookingPayment(LinkedListInterface<Reservation> reservations,
+                ReservationControl reservationControl, Member member) {
             if (reservations == null || reservations.size() == 0) {
                 return null;
             }
@@ -2260,11 +2262,16 @@ public class ReservationControl {
                 totalRoomCharge += pricePerNight * r.getNumberOfNights();
             }
 
-            double serviceCharge = totalRoomCharge * 0.10;
-            double tax = (totalRoomCharge + serviceCharge) * 0.06;
-            double total = totalRoomCharge + serviceCharge + tax;
+            // member tier discount (applied to room charge before service charge & tax)
+            int discountPercent = member == null ? 0 : member.getTier().getDiscountPercent();
+            double discount = totalRoomCharge * discountPercent / 100.0;
+            double netRoomCharge = totalRoomCharge - discount;
 
-            paymentUI.printBill(totalRoomCharge, serviceCharge, tax, 0.0, total);
+            double serviceCharge = netRoomCharge * 0.10;
+            double tax = (netRoomCharge + serviceCharge) * 0.06;
+            double total = netRoomCharge + serviceCharge + tax;
+
+            paymentUI.printBill(netRoomCharge, discountPercent, discount, serviceCharge, tax, 0.0, total);
 
             PaymentMethod method = askPaymentMethod(reservationUI);
             if (method == null) {
@@ -2273,7 +2280,7 @@ public class ReservationControl {
 
             Payment payment = new Payment(
                 generatePaymentId(),
-                totalRoomCharge,
+                netRoomCharge,
                 serviceCharge,
                 tax,
                 total,

@@ -10,9 +10,10 @@ import tarumtresort.utility.TablePrinter;
 
 public class PaymentUI {
 
-    public void printBill(double roomCharge, double serviceCharge, double tax, double lateFee, double total) {
+    public void printBill(double roomCharge, int discountPercent, double discount,
+            double serviceCharge, double tax, double lateFee, double total) {
         printBillHeader();
-        printBillTable(roomCharge, serviceCharge, tax, lateFee, total);
+        printBillTable(roomCharge, discountPercent, discount, serviceCharge, tax, lateFee, total);
         System.out.println("  " + Ansi.green("Thank you for choosing TARUMT Resort!"));
         System.out.println();
     }
@@ -25,11 +26,18 @@ public class PaymentUI {
         System.out.println();
     }
 
-    private void printBillTable(double roomCharge, double serviceCharge, double tax, double lateFee, double total) {
+    private void printBillTable(double roomCharge, int discountPercent, double discount,
+            double serviceCharge, double tax, double lateFee, double total) {
         String[] header = {"Description", "Amount (RM)"};
 
         List<String[]> rows = new ArrayList<>();
         rows.add(new String[]{"Room Charge", String.format("%.2f", roomCharge)});
+
+        if (discount > 0) {
+            rows.add(new String[]{"Member Discount (" + discountPercent + "%)",
+                "-" + String.format("%.2f", discount)});
+        }
+
         rows.add(new String[]{"Service Charge (10%)", String.format("%.2f", serviceCharge)});
         rows.add(new String[]{"Tax (6%)", String.format("%.2f", tax)});
 
