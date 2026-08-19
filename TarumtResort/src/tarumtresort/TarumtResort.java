@@ -6,6 +6,7 @@ import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.MainMenuUI;
 import tarumtresort.control.HousekeepingController;
 import tarumtresort.control.InquiryController;
+import tarumtresort.control.LoyaltyController;
 import tarumtresort.control.PriorityReservationController;
 import tarumtresort.control.ReservationControl;
 import tarumtresort.utility.ConsoleUtil;
@@ -50,7 +51,7 @@ public class TarumtResort {
 
                     // Loyalty & Rewards module
                     case 5:
-                        new LoyaltyRewardsUI(scanner).run();
+                        new LoyaltyController(new LoyaltyRewardsUI(scanner)).runLoyaltyRewards();
                         break;
 
                     case 0:
