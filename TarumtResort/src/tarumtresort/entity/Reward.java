@@ -8,25 +8,11 @@ public class Reward implements Comparable<Reward> {
     private String name;
     private String description;
     private int pointCost;
-    /**
-     * Cash value in RM for voucher-type rewards (e.g. RM20 Dining Voucher = 20.0).
-     * Null means this reward is NOT a voucher (experience rewards etc.).
-     */
     private Double voucherValue;
-    /**
-     * Lowest tier that may redeem this reward. Null means SILVER (everyone).
-     */
     private Tier minTier;
-    /**
-     * Room type this voucher applies to (null = generic voucher, any room type).
-     */
     private RoomType roomType;
-    /**
-     * Percentage discount for percent-type vouchers (e.g. 20 = 20% off the
-     * room charge of the matching room type). Null means this reward is NOT
-     * a percentage voucher (it is either a fixed-RM voucher or not a voucher).
-     */
     private Integer discountPercent;
+    private boolean isDeleted;
 
     public Reward() {
     }
@@ -132,6 +118,15 @@ public class Reward implements Comparable<Reward> {
 
     public void setDiscountPercent(Integer discountPercent) {
         this.discountPercent = discountPercent;
+    }
+
+    /** Soft-delete flag: the record stays for history but is hidden from active views. */
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     @Override

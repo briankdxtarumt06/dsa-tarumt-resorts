@@ -74,6 +74,15 @@ public class Member implements Comparable<Member> {
         this.guestId = guestId;
     }
 
+    /** Soft-delete flag: the record stays for history/audit but is hidden from active views. */
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
     public LinkedListInterface<PointTransaction> getPointTransactionList() {
         if (pointTransactionList == null) {
             pointTransactionList = new LinkedList<>();

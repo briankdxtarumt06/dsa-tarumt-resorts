@@ -114,17 +114,19 @@ public class LoyaltyController {
             if (tierFilter != null) {
                 display = getMembersByTier(tierFilter);
             } else {
-                display = memberList;
+                display = getActiveMembers();
             }
 
             boolean hasFilter = tierFilter != null;
+            boolean hasDeleted = getDeletedMembers().size() > 0;
             int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
             if (page >= pageCount) {
                 page = pageCount - 1; // clamp after the list shrank
             }
 
             LinkedListInterface<Member> pageList = pageOf(display, page);
-            int choice = memberUI.printMemberListMenu(pageList, page, pageCount, hasFilter, this::findGuest);
+            int choice = memberUI.printMemberListMenu(pageList, page, pageCount, hasFilter,
+                    hasDeleted, this::findGuest);
 
             if (choice == 0) {
                 break;
@@ -139,6 +141,8 @@ public class LoyaltyController {
                     tierFilter = tier;
                     page = 0;
                 }
+            } else if (hasDeleted && choice == action++) { // 3. Restore Deleted Member
+                restoreDeletedMemberFlow();
             } else {
                 boolean matched = false;
                 if (page < pageCount - 1) { // Next Page
@@ -161,6 +165,51 @@ public class LoyaltyController {
                     if (matched) {
                         tierFilter = null;
                         page = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    /** Deleted-members list: pick one, confirm, and restore it (undo soft delete). */
+    private void restoreDeletedMemberFlow() {
+        int page = 0;
+        while (true) {
+            LinkedListInterface<Member> deleted = getDeletedMembers();
+            int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+            LinkedListInterface<Member> pageList = pageOf(deleted, page);
+            int choice = memberUI.printDeletedMembersMenu(pageList, page, pageCount, this::findGuest);
+            if (choice == 0) {
+                return;
+            }
+            int action = 1;
+            if (choice == action++) { // 1. Restore Selected Member
+                int index = memberUI.inputListIndex("member", pageList.size());
+                if (index == 0) {
+                    continue;
+                }
+                Member member = pageList.get(index - 1);
+                if (member != null && memberUI.confirm("Restore member " + member.getMemberId() + "?")) {
+                    memberUI.showMessage(restoreMember(member.getMemberId()));
+                }
+                return;
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page++;
+                    }
+                }
+                if (!matched && page > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page--;
                     }
                 }
             }
@@ -202,7 +251,10 @@ public class LoyaltyController {
                     }
                     break;
                 case 2: // Remove Member
-                    memberUI.showMessage(removeMember(member.getMemberId()));
+                    if (memberUI.confirm("Remove member " + member.getMemberId()
+                            + "? (soft delete - can be restored later)")) {
+                        memberUI.showMessage(removeMember(member.getMemberId()));
+                    }
                     return; // member is gone; back to the list
                 default:
                     break;
@@ -219,7 +271,7 @@ public class LoyaltyController {
         LinkedListInterface<Member> filteredList = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member member = memberList.get(i);
-            if (member.getTier() != null && member.getTier().name().equalsIgnoreCase(tier)) {
+            if (!member.isDeleted() && member.getTier() != null && member.getTier().name().equalsIgnoreCase(tier)) {
                 filteredList.addBack(member);
             }
         }
@@ -248,11 +300,12 @@ public class LoyaltyController {
             if (tierFilter != null) {
                 display = getRewardsByMinTier(tierFilter);
             } else {
-                display = rewardList;
+                display = getActiveRewards();
             }
             display = sortedRewardView(display, sortMode);
 
             boolean hasFilter = tierFilter != null;
+            boolean hasDeleted = getDeletedRewards().size() > 0;
             int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
             if (page >= pageCount) {
                 page = pageCount - 1; // clamp after the list shrank
@@ -260,7 +313,7 @@ public class LoyaltyController {
 
             LinkedListInterface<Reward> pageList = pageOf(display, page);
             int choice = rewardUI.printRewardListMenu(pageList, page, pageCount, hasFilter,
-                    sortLabelOf(sortMode));
+                    hasDeleted, sortLabelOf(sortMode));
 
             if (choice == 0) {
                 break;
@@ -280,6 +333,8 @@ public class LoyaltyController {
             } else if (choice == action++) { // 4. Sort by Points
                 sortMode = (sortMode + 1) % 3;
                 page = 0;
+            } else if (hasDeleted && choice == action++) { // 5. Restore Deleted Reward
+                restoreDeletedRewardFlow();
             } else {
                 boolean matched = false;
                 if (page < pageCount - 1) { // Next Page
@@ -302,6 +357,52 @@ public class LoyaltyController {
                     if (matched) {
                         tierFilter = null;
                         page = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    /** Deleted-rewards list: pick one, confirm, and restore it (undo soft delete). */
+    private void restoreDeletedRewardFlow() {
+        int page = 0;
+        while (true) {
+            LinkedListInterface<Reward> deleted = getDeletedRewards();
+            int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+            LinkedListInterface<Reward> pageList = pageOf(deleted, page);
+            int choice = rewardUI.printDeletedRewardsMenu(pageList, page, pageCount);
+            if (choice == 0) {
+                return;
+            }
+            int action = 1;
+            if (choice == action++) { // 1. Restore Selected Reward
+                int index = rewardUI.inputListIndex("reward", pageList.size());
+                if (index == 0) {
+                    continue;
+                }
+                Reward reward = pageList.get(index - 1);
+                if (reward != null && rewardUI.confirm("Restore reward " + reward.getRewardId()
+                        + " (" + reward.getName() + ")?")) {
+                    rewardUI.showMessage(restoreReward(reward.getRewardId()));
+                }
+                return;
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page++;
+                    }
+                }
+                if (!matched && page > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page--;
                     }
                 }
             }
@@ -363,7 +464,10 @@ public class LoyaltyController {
                     updateRewardPrompt(reward);
                     break;
                 case 2: // Remove Reward
-                    rewardUI.showMessage(removeReward(reward.getRewardId()));
+                    if (rewardUI.confirm("Remove reward " + reward.getRewardId()
+                            + " (" + reward.getName() + ")? (soft delete - can be restored later)")) {
+                        rewardUI.showMessage(removeReward(reward.getRewardId()));
+                    }
                     return; // reward is gone; back to the list
                 default:
                     break;
@@ -429,7 +533,7 @@ public class LoyaltyController {
         LinkedListInterface<Reward> filteredList = new LinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {
             Reward reward = rewardList.get(i);
-            if (reward.getName() != null
+            if (!reward.isDeleted() && reward.getName() != null
                     && reward.getName().toLowerCase().contains(keyword.toLowerCase())) {
                 filteredList.addBack(reward);
             }
@@ -442,6 +546,9 @@ public class LoyaltyController {
         LinkedListInterface<Reward> filteredList = new LinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {
             Reward reward = rewardList.get(i);
+            if (reward.isDeleted()) {
+                continue;
+            }
             Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
             if (minTier == tier) {
                 filteredList.addBack(reward);
@@ -455,6 +562,9 @@ public class LoyaltyController {
         LinkedListInterface<Reward> eligible = new LinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {
             Reward reward = rewardList.get(i);
+            if (reward.isDeleted()) {
+                continue;
+            }
             Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
             if (tier != null && tier.ordinal() >= minTier.ordinal()) {
                 eligible.addBack(reward);
@@ -477,7 +587,7 @@ public class LoyaltyController {
             if (tierFilter != null) {
                 display = getMembersByTier(tierFilter);
             } else {
-                display = memberList;
+                display = getActiveMembers();
             }
 
             boolean hasFilter = tierFilter != null;
@@ -680,8 +790,8 @@ public class LoyaltyController {
     private void runNotificationCentre() {
         int memberPage = 0;
         while (true) {
-            // level 1: all members with their unread counts
-            LinkedListInterface<Member> display = memberList;
+            // level 1: all active members with their unread counts
+            LinkedListInterface<Member> display = getActiveMembers();
             int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
             if (memberPage >= pageCount) {
                 memberPage = pageCount - 1;
@@ -835,7 +945,7 @@ public class LoyaltyController {
     public Member findMemberByGuestId(String guestId) {
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
-            if (m.getGuestId() != null && m.getGuestId().equals(guestId)) {
+            if (m.getGuestId() != null && m.getGuestId().equals(guestId) && !m.isDeleted()) {
                 return m;
             }
         }
@@ -860,18 +970,62 @@ public class LoyaltyController {
         if (member == null) {
             return "Member not found: " + memberId;
         }
-        LinkedListInterface<Member> kept = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            if (!memberList.get(i).getMemberId().equals(memberId)) {
-                kept.addBack(memberList.get(i));
+        if (member.isDeleted()) {
+            return "Member " + memberId + " is already removed.";
+        }
+        member.setDeleted(true);
+
+        // auto-reject any still-pending redemption requests
+        int rejected = 0;
+        LinkedListInterface<RedemptionRecord> records = member.getRedemptionRecordList();
+        for (int i = 0; i < records.size(); i++) {
+            RedemptionRecord r = records.get(i);
+            if (r != null && "PENDING".equals(r.getStatus())) {
+                r.setStatus("REJECTED");
+                rejected++;
             }
         }
-        memberList.clear();
-        for (int i = 0; i < kept.size(); i++) {
-            memberList.addBack(kept.get(i));
-        }
         persistMembers();
-        return "Member removed: " + memberId + ".";
+        return "Member " + memberId + " removed (soft delete). " + rejected
+                + " pending redemption request(s) rejected.";
+    }
+
+    /** Undoes a soft delete so the member appears in active views again. */
+    public String restoreMember(String memberId) {
+        Member member = findMember(memberId);
+        if (member == null) {
+            return "Member not found: " + memberId;
+        }
+        if (!member.isDeleted()) {
+            return "Member " + memberId + " is not deleted.";
+        }
+        member.setDeleted(false);
+        persistMembers();
+        return "Member " + memberId + " restored.";
+    }
+
+    /** Members that are active (not soft-deleted) - used for all list views. */
+    public LinkedListInterface<Member> getActiveMembers() {
+        LinkedListInterface<Member> active = new LinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (!m.isDeleted()) {
+                active.addBack(m);
+            }
+        }
+        return active;
+    }
+
+    /** Soft-deleted members (history kept, hidden from active views). */
+    public LinkedListInterface<Member> getDeletedMembers() {
+        LinkedListInterface<Member> deleted = new LinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (m.isDeleted()) {
+                deleted.addBack(m);
+            }
+        }
+        return deleted;
     }
 
     public String updateMember(String memberId, Tier tier) {
@@ -910,6 +1064,11 @@ public class LoyaltyController {
             rewardUI.showMessage("Operation cancelled.");
             return;
         }
+        rewardUI.printRewardCreationSummary(reward);
+        if (!rewardUI.confirm("Add this reward?")) {
+            rewardUI.showMessage("Reward creation cancelled.");
+            return;
+        }
         rewardUI.showMessage(addReward(reward));
     }
 
@@ -943,18 +1102,50 @@ public class LoyaltyController {
         if (reward == null) {
             return "Reward not found: " + rewardId;
         }
-        LinkedListInterface<Reward> kept = new LinkedList<>();
+        if (reward.isDeleted()) {
+            return "Reward " + rewardId + " is already removed.";
+        }
+        reward.setDeleted(true);
+        persistRewards();
+        return "Reward removed (soft delete): " + reward.getName() + " (" + rewardId + ").";
+    }
+
+    /** Undoes a soft delete so the reward appears in active views again. */
+    public String restoreReward(String rewardId) {
+        Reward reward = findReward(rewardId);
+        if (reward == null) {
+            return "Reward not found: " + rewardId;
+        }
+        if (!reward.isDeleted()) {
+            return "Reward " + rewardId + " is not deleted.";
+        }
+        reward.setDeleted(false);
+        persistRewards();
+        return "Reward " + rewardId + " restored.";
+    }
+
+    /** Rewards that are active (not soft-deleted) - used for all list views. */
+    public LinkedListInterface<Reward> getActiveRewards() {
+        LinkedListInterface<Reward> active = new LinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {
-            if (!rewardList.get(i).getRewardId().equals(rewardId)) {
-                kept.addBack(rewardList.get(i));
+            Reward r = rewardList.get(i);
+            if (!r.isDeleted()) {
+                active.addBack(r);
             }
         }
-        rewardList.clear();
-        for (int i = 0; i < kept.size(); i++) {
-            rewardList.addBack(kept.get(i));
+        return active;
+    }
+
+    /** Soft-deleted rewards (history kept, hidden from active views). */
+    public LinkedListInterface<Reward> getDeletedRewards() {
+        LinkedListInterface<Reward> deleted = new LinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {
+            Reward r = rewardList.get(i);
+            if (r.isDeleted()) {
+                deleted.addBack(r);
+            }
         }
-        persistRewards();
-        return "Reward removed: " + reward.getName() + " (" + rewardId + ").";
+        return deleted;
     }
 
     public String updateReward(String rewardId, String name, String description, int pointCost,
@@ -1006,6 +1197,9 @@ public class LoyaltyController {
         boolean changed = false;
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
+            if (m.isDeleted()) {
+                continue; // soft-deleted members keep their stored tier
+            }
             Tier correct = tierFor(getCumulativeEarned(m.getMemberId()));
             if (m.getTier() != correct) {
                 m.setTier(correct);
@@ -1194,6 +1388,9 @@ public class LoyaltyController {
         if (reward == null) {
             return "Reward not found: " + rewardId;
         }
+        if (reward.isDeleted()) {
+            return "Reward not available: " + rewardId + " has been removed.";
+        }
         Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
         if (member.getTier() == null || member.getTier().ordinal() < minTier.ordinal()) {
             return "Tier not high enough: " + reward.getName() + " requires " + minTier
@@ -1381,6 +1578,9 @@ public class LoyaltyController {
     public LinkedListInterface<RedemptionRecord> getPendingRedemptions() {
         LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
+            if (memberList.get(i).isDeleted()) {
+                continue; // deleted members' requests were auto-rejected
+            }
             LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();
             for (int j = 0; j < list.size(); j++) {
                 if ("PENDING".equals(list.get(j).getStatus())) {
@@ -1494,7 +1694,11 @@ public class LoyaltyController {
         int created = 0;
         StringBuilder summary = new StringBuilder();
         for (int i = 0; i < memberList.size(); i++) {
-            LinkedListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList();
+            Member owner = memberList.get(i);
+            if (owner.isDeleted()) {
+                continue; // no expiry alerts for soft-deleted members
+            }
+            LinkedListInterface<PointTransaction> tlist = owner.getPointTransactionList();
             for (int j = 0; j < tlist.size(); j++) {
             PointTransaction t = tlist.get(j);
             if (t.isExpired(now) || t.getRemainingPoints() <= 0) {
