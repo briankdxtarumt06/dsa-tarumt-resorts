@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
 
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
@@ -42,8 +41,8 @@ public class ReservationControl {
     // paging: how many entity rows fit on one list page
     private static final int PAGE_SIZE = 20;
 
-    // business rule: a guest still CHECKED_IN past this hour on their expectedCheckOutDate is forcibly checked out so the room can be freed up for the guest queue
-    private static final int FORCE_CHECKOUT_HOUR = 12;
+    // business rule: a guest still CHECKED_IN past the checkout hour (11am) on their expectedCheckOutDate is forcibly checked out so the room can be freed up for the guest queue
+    private static final int FORCE_CHECKOUT_HOUR = 11;
 
     // ui declaration
     private ReservationUI reservationUI = new ReservationUI();
@@ -362,7 +361,7 @@ public class ReservationControl {
         }
     }
 
-    // business rule: guests still CHECKED_IN past FORCE_CHECKOUT_HOUR on their expectedCheckOutDate are forcibly checked out so the room can be freed up for the guest queue. payment is handled separately at booking time, not here.
+    // business rule: guests still CHECKED_IN past FORCE_CHECKOUT_HOUR on their expectedCheckOutDate are forcibly checked out so the room can be freed up for the guest queue
     private void forceCheckoutOverdueReservations() {
         LocalDateTime now = LocalDateTime.now();
         LinkedListInterface<Reservation> forcedOut = new LinkedList<>();
@@ -969,27 +968,6 @@ public class ReservationControl {
                 "- Cancel check out")) {
             reservationUI.pressEnterToContinue();
             return;
-        }
-
-        // late check-out settlement: past the expected date, or after 11am on the expected date
-        LinkedListInterface<Reservation> lateRooms = new LinkedList<>();
-        for (int i = 0; i < toCheckOut.size(); i++) {
-            Reservation r = toCheckOut.get(i);
-            LocalDate expected = r.getTimestamps().getExpectedCheckOutDate();
-            long extraDays = ChronoUnit.DAYS.between(expected, now.toLocalDate());
-            boolean lateSameDay = extraDays == 0 && now.toLocalTime().isAfter(LocalTime.of(11, 0));
-            if (extraDays > 0 || lateSameDay) {
-                lateRooms.addBack(r);
-            }
-        }
-
-        if (lateRooms.size() > 0) {
-            reservationUI.printError("Late check-out detected for " + lateRooms.size() + " room(s). "
-                    + "Extra night(s) + RM50 fee per late room will be charged.");
-            Payment latePayment = paymentControl.processLateCheckoutPayment(lateRooms, this);
-            if (latePayment == null) {
-                reservationUI.printError("Warning: late check-out fee was NOT paid.");
-            }
         }
 
         for (int i = 0; i < toCheckOut.size(); i++) {
@@ -2257,59 +2235,6 @@ public class ReservationControl {
                 method,
                 PaymentStatus.PAID,
                 LocalDateTime.now(),
-                reservations.get(0).getConfirmationNumber()
-            );
-
-            for (int i = 0; i < reservations.size(); i++) {
-                payment.addConfirmationNumber(reservations.get(i).getConfirmationNumber());
-            }
-
-            paymentList.addBack(payment);
-            paymentDAO.saveToFile(paymentList);
-            return payment;
-        }
-
-        // called from checkOut() - late check-out settlement:
-        // extra nights at the room's rate (+10% service, +6% tax) + RM50 flat fee per late room
-        public Payment processLateCheckoutPayment(LinkedListInterface<Reservation> reservations, ReservationControl reservationControl) {
-            if (reservations == null || reservations.size() == 0) {
-                return null;
-            }
-
-            LocalDateTime now = LocalDateTime.now();
-
-            double extraRoomCharge = 0;
-            double lateFee = 0;
-            for (int i = 0; i < reservations.size(); i++) {
-                Reservation r = reservations.get(i);
-                LocalDate expected = r.getTimestamps().getExpectedCheckOutDate();
-                long extraDays = ChronoUnit.DAYS.between(expected, now.toLocalDate());
-                if (extraDays > 0) {
-                    extraRoomCharge += extraDays * reservationControl.getPriceByRoomType(r.getRoomTypeRequested());
-                }
-                lateFee += 50.0; // flat fee per late room
-            }
-
-            double serviceCharge = extraRoomCharge * 0.10;
-            double tax = (extraRoomCharge + serviceCharge) * 0.06;
-            double total = extraRoomCharge + serviceCharge + tax + lateFee;
-
-            paymentUI.printBill(extraRoomCharge, serviceCharge, tax, lateFee, total);
-
-            PaymentMethod method = askPaymentMethod(reservationUI);
-            if (method == null) {
-                return null; // fee not paid - checkout still proceeds with a warning
-            }
-
-            Payment payment = new Payment(
-                generatePaymentId(),
-                extraRoomCharge,
-                serviceCharge,
-                tax,
-                total,
-                method,
-                PaymentStatus.PAID,
-                now,
                 reservations.get(0).getConfirmationNumber()
             );
 
