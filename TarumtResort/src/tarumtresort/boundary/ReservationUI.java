@@ -372,6 +372,74 @@ public class ReservationUI {
         TablePrinter.displayTable(header, rows);
     }
 
+    public void printCheckInCandidateList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo reservations ready for check-in.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nReady for Check-In:");
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public void printCheckOutCandidateList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo guests currently checked in.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nCurrently Checked-In:");
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public int printGuestSelectionMenu(String[][] tableData, int page, int pageCount) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  SELECT GUEST (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+
+        int rowCount = 0;
+        if (tableData.length <= 1) {
+            System.out.println("  (No guest records)");
+        } else {
+            String[] header = tableData[0];
+            String[][] rows = new String[tableData.length - 1][];
+            for (int i = 1; i < tableData.length; i++) {
+                rows[i - 1] = tableData[i];
+            }
+            rowCount = rows.length;
+            TablePrinter.displayTable(header, rows);
+        }
+
+        System.out.println("==========Actions==========");
+        if (rowCount > 0) {
+            System.out.println("  Enter a No. above to select that guest");
+        }
+        int action = rowCount + 1;
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        System.out.println("  " + action++ + ". Register New Guest");
+        System.out.println("  0. Cancel");
+        System.out.println("===========================");
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
     // MESSAGE METHODS
     public void printNotFound() {
         ConsoleUtil.printWarning("  Record not found!");
