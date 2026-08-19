@@ -11,6 +11,7 @@ public class Member implements Comparable<Member> {
     private Tier tier;
     private LocalDateTime enrollmentDate;
     private String guestId;
+    private boolean isDeleted;
     private LinkedListInterface<PointTransaction> pointTransactionList = new LinkedList<>();
     private LinkedListInterface<RedemptionRecord> redemptionRecordList = new LinkedList<>();
 

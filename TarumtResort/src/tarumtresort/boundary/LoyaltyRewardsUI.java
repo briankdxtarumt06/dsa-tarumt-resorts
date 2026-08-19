@@ -52,12 +52,12 @@ public class LoyaltyRewardsUI {
         return "-";
     }
 
-    public int getMenuChoice() {
-        printMenu();
-        return getIntInput("Enter choice (0-3): ", 0, 3);
+    public int getMenuChoice(int unreadCount) {
+        printMenu(unreadCount);
+        return getIntInput("Enter choice (0-4): ", 0, 4);
     }
 
-    private void printMenu() {
+    private void printMenu(int unreadCount) {
         ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
@@ -66,6 +66,11 @@ public class LoyaltyRewardsUI {
         System.out.println("  1. Member Management");
         System.out.println("  2. Reward Management");
         System.out.println("  3. Points & Redemption Management");
+        if (unreadCount > 0) {
+            System.out.println("  4. Notifications (" + unreadCount + " unread)");
+        } else {
+            System.out.println("  4. Notifications");
+        }
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
     }
@@ -249,21 +254,32 @@ public class LoyaltyRewardsUI {
                 System.out.println("Member not found.");
                 return;
             }
-            System.out.println("Member id     : " + m.getMemberId());
-            System.out.println("Tier          : " + m.getTier());
-            System.out.println("Discount      : " + m.getTier().getDiscountPercent() + "% off stays & dining");
-            System.out.println("Points        : " + m.getPoints());
-            System.out.println("Guest id      : " + m.getGuestId());
-            if (g != null) {
-                System.out.println("Name          : " + g.getName());
-                System.out.println("IC / Passport : " + g.getIcOrPassport());
-                System.out.println("Phone         : " + g.getContactNumber());
-                System.out.println("Nationality   : " + g.getNationality());
-                System.out.println("Address       : " + g.getAddress());
-            } else {
-                System.out.println("Guest record  : (not found for this member)");
+            String[][] details = {
+                {"Member ID", m.getMemberId()},
+                {"Tier", m.getTier() == null ? "-" : m.getTier().name()},
+                {"Discount", (m.getTier() == null ? 0 : m.getTier().getDiscountPercent()) + "% off stays & dining"},
+                {"Points", String.valueOf(m.getPoints())},
+                {"Guest ID", m.getGuestId() == null ? "-" : m.getGuestId()},
+                {"Name", g == null ? "-" : g.getName()},
+                {"IC / Passport", g == null ? "-" : g.getIcOrPassport()},
+                {"Phone", g == null ? "-" : g.getContactNumber()},
+                {"Nationality", g == null ? "-" : g.getNationality()},
+                {"Address", g == null ? "-" : g.getAddress()},
+                {"Enrolled", m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)}
+            };
+            printSection("Details");
+            int keyWidth = 0;
+            for (String[] pair : details) {
+                if (pair[0] != null && pair[0].length() > keyWidth) {
+                    keyWidth = pair[0].length();
+                }
             }
-            System.out.println("Enrolled      : " + (m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)));
+            for (String[] pair : details) {
+                System.out.println(String.format("%-" + (keyWidth + 3) + "s: %s",
+                        pair[0] == null ? "" : pair[0],
+                        pair[1] == null ? "-" : pair[1]));
+            }
+            printSeparator();
         }
 
         public Tier selectTier() {
@@ -687,6 +703,149 @@ public class LoyaltyRewardsUI {
 
     // ==================================================================
     // RewardManagementUI
+    // ==================================================================
+    /** Inbox for member notifications (tier upgrades, redemption results,
+     *  point expiry). Rendered as a table across all members. */
+    public static class NotificationCentreUI {
+
+        private static final int BANNER_WIDTH = 32;
+        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+
+        private final Scanner scanner;
+
+        public NotificationCentreUI(Scanner scanner) {
+            this.scanner = scanner;
+        }
+
+        /** Member list for the notification centre.
+         *  @param rows  page rows: {No., Member ID, Name, Unread}
+         *  @return 1 = view notifications, 2 = mark all read (all members),
+         *          next/previous page numbers, 0 = back */
+        public int printMemberListMenu(String[][] rows, int page, int pageCount, int totalUnread) {
+            ConsoleUtil.clearScreen();
+            printBanner("NOTIFICATION CENTRE (Page " + (page + 1) + " of " + pageCount + ")");
+            if (totalUnread > 0) {
+                System.out.println("  " + totalUnread + " unread notification(s) across all members");
+            }
+            if (rows.length == 0) {
+                System.out.println("  (No members)");
+            } else {
+                TablePrinter.displayTable(
+                        new String[] { "No.", "Member ID", "Name", "Unread" }, rows);
+            }
+            printSection("Actions");
+            int action = 1;
+            System.out.println("  " + action++ + ". View Notifications");
+            System.out.println("  " + action++ + ". Mark All Read (All Members)");
+            if (page < pageCount - 1) {
+                System.out.println("  " + action++ + ". Next Page");
+            }
+            if (page > 0) {
+                System.out.println("  " + action++ + ". Previous Page");
+            }
+            System.out.println("  0. Back");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, action - 1);
+        }
+
+        /** A single member's notifications.
+         *  @param memberId   member id for the banner
+         *  @param memberName member name for the banner
+         *  @param rows       page rows: {No., Type, Message, Date, Status}
+         *  @return 1 = mark all read, next/previous page numbers, 0 = back to members */
+        public int printMemberNotificationsMenu(String memberId, String memberName,
+                String[][] rows, int page, int pageCount) {
+            ConsoleUtil.clearScreen();
+            printBanner("NOTIFICATIONS - " + memberId
+                    + (memberName == null ? "" : " (" + memberName + ")")
+                    + (pageCount > 1 ? " (Page " + (page + 1) + " of " + pageCount + ")" : ""));
+            if (rows.length == 0) {
+                System.out.println("  (No notifications for this member)");
+            } else {
+                TablePrinter.displayTable(
+                        new String[] { "No.", "Type", "Message", "Date", "Status" }, rows);
+            }
+            printSection("Actions");
+            int action = 1;
+            System.out.println("  " + action++ + ". Mark All Read");
+            if (page < pageCount - 1) {
+                System.out.println("  " + action++ + ". Next Page");
+            }
+            if (page > 0) {
+                System.out.println("  " + action++ + ". Previous Page");
+            }
+            System.out.println("  0. Back to Members");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, action - 1);
+        }
+
+        public boolean confirmMarkAllRead() {
+            System.out.print("Mark all notifications as read? (y/n): ");
+            return scanner.nextLine().trim().equalsIgnoreCase("y");
+        }
+
+        public void showMessage(String message) {
+            System.out.println("  " + message);
+        }
+
+        public int inputListIndex(String entityLabel, int max) {
+            return inputIntChoice("Enter " + entityLabel + " (0 = cancel)", 0, max);
+        }
+
+        public void pause() {
+            ConsoleUtil.pressEnterToContinue(scanner);
+        }
+
+        private static void printBanner(String title) {
+            System.out.println("\n" + BANNER_LINE);
+            System.out.println(center(title, BANNER_WIDTH));
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSeparator() {
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSection(String text) {
+            String core = " " + text + " ";
+            int available = BANNER_WIDTH - core.length();
+            int left = available / 2;
+            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+        }
+
+        private static String center(String text, int width) {
+            if (text == null) {
+                text = "";
+            }
+            if (text.length() >= width) {
+                return text;
+            }
+            int pad = width - text.length();
+            int left = pad / 2;
+            return " ".repeat(left) + text + " ".repeat(pad - left);
+        }
+
+        private int inputIntChoice(String prompt, int min, int max) {
+            while (true) {
+                System.out.print(prompt + " (" + min + "-" + max + "): ");
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                try {
+                    int value = Integer.parseInt(line);
+                    if (value >= min && value <= max) {
+                        System.out.println();
+                        return value;
+                    }
+                } catch (NumberFormatException e) {
+                    // continue retry until integer input
+                }
+                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+            }
+        }
+    }
+
     // ==================================================================
     public static class RewardManagementUI {
 

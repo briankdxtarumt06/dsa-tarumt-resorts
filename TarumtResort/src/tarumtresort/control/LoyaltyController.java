@@ -1,12 +1,15 @@
 package tarumtresort.control;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.MemberManagementUI;
+import tarumtresort.boundary.LoyaltyRewardsUI.NotificationCentreUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.PointsManagementUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.RewardManagementUI;
 import tarumtresort.dao.GuestDAO;
@@ -41,9 +44,13 @@ public class LoyaltyController {
     private MemberManagementUI memberUI;
     private RewardManagementUI rewardUI;
     private PointsManagementUI pointsUI;
+    private NotificationCentreUI notificationUI;
     private LoyaltyRewardsUI moduleUI;
 
     private static final int PAGE_SIZE = 20;
+
+    private static final DateTimeFormatter NOTIF_DATE_FMT =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public LoyaltyController() {
         this(new Scanner(System.in));
@@ -56,6 +63,7 @@ public class LoyaltyController {
         memberUI = new MemberManagementUI(scanner);
         rewardUI = new RewardManagementUI(scanner);
         pointsUI = new PointsManagementUI(scanner);
+        notificationUI = new NotificationCentreUI(scanner);
         moduleUI = new LoyaltyRewardsUI(scanner);
         reconcileTiersOnLoad();
     }
@@ -67,7 +75,7 @@ public class LoyaltyController {
             int choice;
 
             do {
-                choice = moduleUI.getMenuChoice();
+                choice = moduleUI.getMenuChoice(getUnreadNotificationCount());
 
                 switch (choice) {
                     case 1:
@@ -78,6 +86,9 @@ public class LoyaltyController {
                         break;
                     case 3:
                         runPointsMenu();
+                        break;
+                    case 4:
+                        runNotificationCentre();
                         break;
                     case 0:
                         System.out.println("\n  Returning to main menu...");
@@ -589,6 +600,204 @@ public class LoyaltyController {
             pointsUI.show("All notifications marked as read.");
         }
         pointsUI.pause();
+    }
+
+    /** Unread notification count across ALL members (module menu badge). */
+    public int getUnreadNotificationCount() {
+        int count = 0;
+        for (int i = 0; i < guestList.size(); i++) {
+            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
+            for (int j = 0; j < list.size(); j++) {
+                if (!list.get(j).isRead()) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /** Marks every notification across all members as read; returns how many were flipped. */
+    public int markAllNotificationsRead() {
+        int count = 0;
+        for (int i = 0; i < guestList.size(); i++) {
+            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
+            for (int j = 0; j < list.size(); j++) {
+                Notification n = list.get(j);
+                if (!n.isRead()) {
+                    n.setRead(true);
+                    count++;
+                }
+            }
+        }
+        if (count > 0) {
+            guestDAO.saveToFile(guestList);
+        }
+        return count;
+    }
+
+    /** Unread notification count for ONE member (member list column). */
+    public int getUnreadNotificationCount(String memberId) {
+        Member member = findMember(memberId);
+        if (member == null || member.getGuestId() == null) {
+            return 0;
+        }
+        int count = 0;
+        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+        for (int i = 0; i < list.size(); i++) {
+            if (!list.get(i).isRead()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Marks one member's notifications as read; returns how many were flipped. */
+    public int markMemberNotificationsRead(String memberId) {
+        Member member = findMember(memberId);
+        if (member == null || member.getGuestId() == null) {
+            return 0;
+        }
+        int count = 0;
+        Guest guest = findGuest(member.getGuestId());
+        if (guest == null) {
+            return 0;
+        }
+        LinkedListInterface<Notification> list = guest.getNotificationList();
+        for (int j = 0; j < list.size(); j++) {
+            Notification n = list.get(j);
+            if (!n.isRead()) {
+                n.setRead(true);
+                count++;
+            }
+        }
+        if (count > 0) {
+            guestDAO.saveToFile(guestList);
+        }
+        return count;
+    }
+
+    /** Notification centre: pick a member, then manage that member's notifications. */
+    private void runNotificationCentre() {
+        int memberPage = 0;
+        while (true) {
+            // level 1: all members with their unread counts
+            LinkedListInterface<Member> display = memberList;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (memberPage >= pageCount) {
+                memberPage = pageCount - 1;
+            }
+            LinkedListInterface<Member> pageList = pageOf(display, memberPage);
+
+            String[][] memberRows = new String[pageList.size()][];
+            for (int i = 0; i < pageList.size(); i++) {
+                Member m = pageList.get(i);
+                Guest g = m.getGuestId() == null ? null : findGuest(m.getGuestId());
+                memberRows[i] = new String[] {
+                    String.valueOf(i + 1), m.getMemberId(),
+                    g == null ? "-" : g.getName(),
+                    String.valueOf(getUnreadNotificationCount(m.getMemberId()))
+                };
+            }
+
+            int choice = notificationUI.printMemberListMenu(
+                    memberRows, memberPage, pageCount, getUnreadNotificationCount());
+            if (choice == 0) {
+                return;
+            }
+            int action = 1;
+            if (choice == action++) { // 1. View Notifications - pick a member
+                int index = notificationUI.inputListIndex("member number", pageList.size());
+                if (index == 0) {
+                    continue;
+                }
+                viewMemberNotificationsCentre(pageList.get(index - 1));
+            } else if (choice == action++) { // 2. Mark All Read (all members)
+                int marked = markAllNotificationsRead();
+                notificationUI.showMessage(marked + " notification(s) marked as read.");
+                notificationUI.pause();
+                memberPage = 0;
+            } else {
+                boolean matched = false;
+                if (memberPage < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        memberPage++;
+                    }
+                }
+                if (!matched && memberPage > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        memberPage--;
+                    }
+                }
+            }
+        }
+    }
+
+    /** Level 2: one member's notifications, newest first, with per-member mark-all-read. */
+    private void viewMemberNotificationsCentre(Member member) {
+        if (member.getGuestId() == null) {
+            notificationUI.showMessage("Member has no guest account linked.");
+            notificationUI.pause();
+            return;
+        }
+        int page = 0;
+        while (true) {
+            LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+            int pageCount = Math.max(1, (list.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+            int from = page * PAGE_SIZE;
+            String[][] rows = new String[Math.min(PAGE_SIZE, list.size() - from)][];
+            for (int k = 0; k < rows.length; k++) {
+                Notification n = list.get(from + k);
+                rows[k] = new String[] {
+                    String.valueOf(k + 1), n.getType(),
+                    truncate(n.getMessage(), 48),
+                    n.getDate().format(NOTIF_DATE_FMT),
+                    n.isRead() ? "READ" : "UNREAD"
+                };
+            }
+            Guest g = findGuest(member.getGuestId());
+            int choice = notificationUI.printMemberNotificationsMenu(
+                    member.getMemberId(), g == null ? null : g.getName(), rows, page, pageCount);
+            if (choice == 0) {
+                return;
+            }
+            int action = 1;
+            if (choice == action++) { // 1. Mark All Read (this member)
+                int marked = markMemberNotificationsRead(member.getMemberId());
+                notificationUI.showMessage(marked + " notification(s) marked as read.");
+                notificationUI.pause();
+                page = 0;
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page++;
+                    }
+                }
+                if (!matched && page > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page--;
+                    }
+                }
+            }
+        }
+    }
+
+    private static String truncate(String text, int max) {
+        if (text == null || text.length() <= max) {
+            return text == null ? "" : text;
+        }
+        return text.substring(0, max - 3) + "...";
     }
 
     // pick a member by its on-screen number from the current page (0 = cancel)
