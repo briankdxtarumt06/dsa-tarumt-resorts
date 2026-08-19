@@ -18,6 +18,7 @@ import tarumtresort.entity.Notification;
 import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
+import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
 
@@ -227,25 +228,28 @@ public class LoyaltyController {
 
     /** Reward catalogue list page (mirrors HousekeepingController.runTaskManagement). */
     public void runRewardMenu() {
-        String nameFilter = null;
+        Tier tierFilter = null;
+        int sortMode = 0; // 0 = default, 1 = points asc, 2 = points desc
         int page = 0;
 
         while (true) {
             LinkedListInterface<Reward> display;
-            if (nameFilter != null) {
-                display = getRewardsByName(nameFilter);
+            if (tierFilter != null) {
+                display = getRewardsByMinTier(tierFilter);
             } else {
                 display = rewardList;
             }
+            display = sortedRewardView(display, sortMode);
 
-            boolean hasFilter = nameFilter != null;
+            boolean hasFilter = tierFilter != null;
             int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
             if (page >= pageCount) {
                 page = pageCount - 1; // clamp after the list shrank
             }
 
             LinkedListInterface<Reward> pageList = pageOf(display, page);
-            int choice = rewardUI.printRewardListMenu(pageList, page, pageCount, hasFilter);
+            int choice = rewardUI.printRewardListMenu(pageList, page, pageCount, hasFilter,
+                    sortLabelOf(sortMode));
 
             if (choice == 0) {
                 break;
@@ -256,12 +260,15 @@ public class LoyaltyController {
                 viewReward(pageList);
             } else if (choice == action++) { // 2. Add New Reward
                 addRewardFlow();
-            } else if (choice == action++) { // 3. Filter by Name
-                String keyword = rewardUI.inputNameKeyword();
-                if (keyword != null) {
-                    nameFilter = keyword;
+            } else if (choice == action++) { // 3. Filter by Min Tier
+                Tier tier = rewardUI.inputMinTierFilter();
+                if (tier != null) {
+                    tierFilter = tier;
                     page = 0;
                 }
+            } else if (choice == action++) { // 4. Sort by Points
+                sortMode = (sortMode + 1) % 3;
+                page = 0;
             } else {
                 boolean matched = false;
                 if (page < pageCount - 1) { // Next Page
@@ -282,11 +289,35 @@ public class LoyaltyController {
                     matched = choice == action;
                     action++;
                     if (matched) {
-                        nameFilter = null;
+                        tierFilter = null;
                         page = 0;
                     }
                 }
             }
+        }
+    }
+
+    /** Rewards in the requested point-cost order. Mode 0 keeps the catalogue
+     *  order (already points-ascending), mode 1 = low→high, mode 2 = high→low. */
+    private LinkedListInterface<Reward> sortedRewardView(LinkedListInterface<Reward> source, int sortMode) {
+        if (sortMode == 2) {
+            LinkedListInterface<Reward> result = new LinkedList<>();
+            for (int i = source.size() - 1; i >= 0; i--) {
+                result.addBack(source.get(i));
+            }
+            return result;
+        }
+        return source;
+    }
+
+    private String sortLabelOf(int sortMode) {
+        switch (sortMode) {
+            case 1:
+                return "Points (Low -> High)";
+            case 2:
+                return "Points (High -> Low)";
+            default:
+                return "";
         }
     }
 
@@ -350,7 +381,37 @@ public class LoyaltyController {
             rewardUI.showMessage("Operation cancelled.");
             return;
         }
-        rewardUI.showMessage(updateReward(reward.getRewardId(), name, description, cost));
+        Tier minTier = rewardUI.promptTierWithDefault("New min tier",
+                reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier());
+        if (minTier == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        RoomType roomType = rewardUI.promptRoomTypeWithDefault("New room type", reward.getRoomType());
+        Integer voucherType = rewardUI.promptVoucherTypeWithDefault(reward);
+        if (voucherType == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        Double voucherValue = reward.getVoucherValue();
+        Integer discountPercent = reward.getDiscountPercent();
+        if (voucherType == 1) {
+            voucherValue = rewardUI.promptDoubleWithDefault("New voucher value (RM)", reward.getVoucherValue());
+            if (voucherValue == null && reward.getVoucherValue() != null) {
+                rewardUI.showMessage("Operation cancelled.");
+                return;
+            }
+            discountPercent = null;
+        } else if (voucherType == 2) {
+            discountPercent = rewardUI.promptPercentWithDefault("New discount percent (%)", reward.getDiscountPercent());
+            if (discountPercent == null && reward.getDiscountPercent() != null) {
+                rewardUI.showMessage("Operation cancelled.");
+                return;
+            }
+            voucherValue = null;
+        }
+        rewardUI.showMessage(updateReward(reward.getRewardId(), name, description, cost,
+                minTier, roomType, voucherValue, discountPercent));
     }
 
     public LinkedListInterface<Reward> getRewardsByName(String keyword) {
@@ -363,6 +424,32 @@ public class LoyaltyController {
             }
         }
         return filteredList;
+    }
+
+    /** Rewards whose minimum redeemable tier is exactly the given tier. */
+    public LinkedListInterface<Reward> getRewardsByMinTier(Tier tier) {
+        LinkedListInterface<Reward> filteredList = new LinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {
+            Reward reward = rewardList.get(i);
+            Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
+            if (minTier == tier) {
+                filteredList.addBack(reward);
+            }
+        }
+        return filteredList;
+    }
+
+    /** Rewards the given tier (and above) is allowed to redeem. */
+    public LinkedListInterface<Reward> getRewardsEligibleFor(Tier tier) {
+        LinkedListInterface<Reward> eligible = new LinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {
+            Reward reward = rewardList.get(i);
+            Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
+            if (tier != null && tier.ordinal() >= minTier.ordinal()) {
+                eligible.addBack(reward);
+            }
+        }
+        return eligible;
     }
 
     /** Points, redemption and notification list page (mirrors HousekeepingController.runAssignmentManagement). */
@@ -661,7 +748,8 @@ public class LoyaltyController {
         return "Reward removed: " + reward.getName() + " (" + rewardId + ").";
     }
 
-    public String updateReward(String rewardId, String name, String description, int pointCost) {
+    public String updateReward(String rewardId, String name, String description, int pointCost,
+            Tier minTier, RoomType roomType, Double voucherValue, Integer discountPercent) {
         Reward reward = findReward(rewardId);
         if (reward == null) {
             return "Reward not found: " + rewardId;
@@ -669,6 +757,10 @@ public class LoyaltyController {
         reward.setName(name);
         reward.setDescription(description);
         reward.setPointCost(pointCost);
+        reward.setMinTier(minTier);
+        reward.setRoomType(roomType);
+        reward.setVoucherValue(voucherValue);
+        reward.setDiscountPercent(discountPercent);
         LinkedListInterface<Reward> reordered = new LinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {
             reordered.addSorted(rewardList.get(i));
@@ -739,7 +831,12 @@ public class LoyaltyController {
         if (memberId == null) {
             return;
         }
-        String rewardId = pointsUI.selectReward(rewardList);
+        Member member = findMember(memberId);
+        if (member == null) {
+            return;
+        }
+        LinkedListInterface<Reward> eligible = getRewardsEligibleFor(member.getTier());
+        String rewardId = pointsUI.selectReward(eligible);
         if (rewardId == null) {
             return;
         }
@@ -858,6 +955,11 @@ public class LoyaltyController {
         if (reward == null) {
             return "Reward not found: " + rewardId;
         }
+        Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
+        if (member.getTier() == null || member.getTier().ordinal() < minTier.ordinal()) {
+            return "Tier not high enough: " + reward.getName() + " requires " + minTier
+                    + " but " + memberId + " is " + (member.getTier() == null ? "SILVER" : member.getTier()) + ".";
+        }
         expirePoints(memberId, now);
         int cost = reward.getPointCost();
         if (member.getPoints() < cost) {
@@ -911,13 +1013,22 @@ public class LoyaltyController {
         recomputeBalance(member);
         record.setStatus("APPROVED");
 
-        // voucher-type rewards: issue a redeemable code and lock in the RM value
+        // voucher-type rewards: issue a redeemable code and lock in the value
+        // (either a fixed RM amount or a percentage discount)
         String voucherNote = "";
         if (reward.getVoucherValue() != null && reward.getVoucherValue() > 0) {
             record.setVoucherCode(generateVoucherCode(redemptionId));
             record.setVoucherValue(reward.getVoucherValue());
+            record.setRoomType(reward.getRoomType());
             voucherNote = " Voucher code: " + record.getVoucherCode()
                     + " (worth RM" + String.format("%.2f", reward.getVoucherValue()) + ").";
+        } else if (reward.getDiscountPercent() != null && reward.getDiscountPercent() > 0) {
+            record.setVoucherCode(generateVoucherCode(redemptionId));
+            record.setDiscountPercent(reward.getDiscountPercent());
+            record.setRoomType(reward.getRoomType());
+            voucherNote = " Voucher code: " + record.getVoucherCode()
+                    + " (worth " + record.getDiscountPercent() + "% off "
+                    + (record.getRoomType() == null ? "any room" : record.getRoomType().name()) + ").";
         }
         notifyMember(member, "REDEMPTION_APPROVED",
                 "Your redemption request " + redemptionId + " (" + reward.getName() + ") has been approved."
@@ -925,7 +1036,10 @@ public class LoyaltyController {
         persistMembers();
         return "Approved " + redemptionId + " (" + reward.getName() + "):\n" + breakdown
                 + (voucherNote.isEmpty() ? "" : "  - voucher " + record.getVoucherCode()
-                        + " worth RM" + String.format("%.2f", record.getVoucherValue()) + "\n")
+                        + (record.getDiscountPercent() != null
+                            ? " worth " + record.getDiscountPercent() + "% off "
+                                    + (record.getRoomType() == null ? "any room" : record.getRoomType().name())
+                            : " worth RM" + String.format("%.2f", record.getVoucherValue())) + "\n")
                 + "New balance for " + member.getMemberId() + ": " + member.getPoints();
     }
 
@@ -948,7 +1062,8 @@ public class LoyaltyController {
             if ("APPROVED".equals(r.getStatus())
                     && !r.isUsed()
                     && r.getVoucherCode() != null
-                    && r.getVoucherValue() != null && r.getVoucherValue() > 0) {
+                    && ((r.getVoucherValue() != null && r.getVoucherValue() > 0)
+                        || (r.getDiscountPercent() != null && r.getDiscountPercent() > 0))) {
                 result.addBack(r);
             }
         }
@@ -984,8 +1099,10 @@ public class LoyaltyController {
                 }
                 r.setUsed(true);
                 persistMembers();
-                return "Voucher " + r.getVoucherCode() + " (RM"
-                        + String.format("%.2f", r.getVoucherValue()) + ") marked as used.";
+                String worth = r.getDiscountPercent() != null
+                        ? r.getDiscountPercent() + "% off " + (r.getRoomType() == null ? "any room" : r.getRoomType().name())
+                        : "RM" + String.format("%.2f", r.getVoucherValue());
+                return "Voucher " + r.getVoucherCode() + " (" + worth + ") marked as used.";
             }
         }
         return "Voucher not found: " + redemptionId;

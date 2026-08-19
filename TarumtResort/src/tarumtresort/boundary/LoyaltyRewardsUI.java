@@ -11,6 +11,7 @@ import tarumtresort.entity.Notification;
 import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
+import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
@@ -38,6 +39,17 @@ public class LoyaltyRewardsUI {
 
     public void run() {
         new LoyaltyController(scanner).run();
+    }
+
+    /** "RM20.00" for fixed-RM vouchers, "20%" for percentage vouchers, "-" otherwise. */
+    static String rewardValueLabel(Reward r) {
+        if (r.getDiscountPercent() != null) {
+            return r.getDiscountPercent() + "%";
+        }
+        if (r.getVoucherValue() != null) {
+            return "RM" + String.format("%.2f", r.getVoucherValue());
+        }
+        return "-";
     }
 
     public int getMenuChoice() {
@@ -466,21 +478,23 @@ public class LoyaltyRewardsUI {
         /** Lists the rewards and returns the chosen reward id, or null. */
         public String selectReward(LinkedListInterface<Reward> rewards) {
             if (rewards.isEmpty()) {
-                System.out.println("No rewards in the catalogue.");
+                System.out.println("No rewards available for this member's tier.");
                 ConsoleUtil.pressEnterToContinue(scanner);
                 return null;
             }
             System.out.println();
-            String[][] rows = new String[rewards.size()][3];
+            String[][] rows = new String[rewards.size()][5];
             for (int i = 0; i < rewards.size(); i++) {
                 Reward r = rewards.get(i);
                 rows[i] = new String[] {
                         String.valueOf(i + 1),
-                        r.getName(),
+                        truncate(r.getName(), 28),
+                        r.getRoomType() == null ? "Any" : r.getRoomType().name(),
+                        rewardValueLabel(r),
                         r.getPointCost() + " pts"
                 };
             }
-            TablePrinter.displayTable(new String[] { "#", "Reward", "Points" }, rows);
+            TablePrinter.displayTable(new String[] { "#", "Reward", "Room Type", "Value", "Points" }, rows);
             System.out.println(" 0. Cancel");
             int index = readInt("Select a reward") - 1;
             if (index < 0) {
@@ -686,19 +700,25 @@ public class LoyaltyRewardsUI {
         }
 
         public int printRewardListMenu(LinkedListInterface<Reward> pageList, int page, int pageCount,
-                boolean hasFilter) {
+                boolean hasFilter, String sortLabel) {
             clearScreen();
             printBanner("REWARD MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+            if (sortLabel != null && !sortLabel.isEmpty()) {
+                System.out.println("  Sort: " + sortLabel);
+            }
             if (pageList.isEmpty()) {
                 System.out.println("  (No rewards in the catalogue)");
             } else {
-                String[] header = new String[] { "No.", "Reward ID", "Name", "Cost (pts)" };
-                String[][] rows = new String[pageList.size()][4];
+                String[] header = new String[] { "No.", "Reward ID", "Name", "Min Tier", "Room Type", "Value", "Cost (pts)" };
+                String[][] rows = new String[pageList.size()][7];
                 for (int i = 0; i < pageList.size(); i++) {
                     Reward r = pageList.get(i);
                     rows[i] = new String[] {
                         String.valueOf(i + 1), r.getRewardId(),
-                        truncate(r.getName(), 22),
+                        truncate(r.getName(), 30),
+                        r.getMinTier() == null ? "SILVER" : r.getMinTier().name(),
+                        r.getRoomType() == null ? "Any" : r.getRoomType().name(),
+                        rewardValueLabel(r),
                         String.valueOf(r.getPointCost())
                     };
                 }
@@ -708,7 +728,8 @@ public class LoyaltyRewardsUI {
             int action = 1;
             System.out.println("  " + action++ + ". View Details");
             System.out.println("  " + action++ + ". Add New Reward");
-            System.out.println("  " + action++ + ". Filter by Name");
+            System.out.println("  " + action++ + ". Filter by Min Tier");
+            System.out.println("  " + action++ + ". Sort by Points");
             if (page < pageCount - 1) {
                 System.out.println("  " + action++ + ". Next Page");
             }
@@ -742,18 +763,21 @@ public class LoyaltyRewardsUI {
             System.out.println("Name         : " + r.getName());
             System.out.println("Description  : " + r.getDescription());
             System.out.println("Point cost   : " + r.getPointCost() + " pts");
-            System.out.println("Voucher value: " + (r.getVoucherValue() == null ? "-" : "RM" + r.getVoucherValue()));
+            System.out.println("Min tier     : " + (r.getMinTier() == null ? "SILVER" : r.getMinTier().name()));
+            System.out.println("Room type    : " + (r.getRoomType() == null ? "Any" : r.getRoomType().name()));
+            System.out.println("Voucher value: " + rewardValueLabel(r));
         }
 
-        public String inputNameKeyword() {
-            System.out.print("\nEnter name keyword (0 to cancel): ");
-            String keyword = scanner.nextLine().trim();
-            if (keyword.isEmpty() || keyword.equals("0")) {
+        public Tier inputMinTierFilter() {
+            System.out.println();
+            int choice = inputIntChoice(
+                    "Filter by min tier (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND, 0=cancel)", 0, 4);
+            if (choice == 0) {
                 System.out.println("Operation cancelled.");
                 ConsoleUtil.pressEnterToContinue(scanner);
                 return null;
             }
-            return keyword;
+            return Tier.values()[choice - 1];
         }
 
         public int inputListIndex(String entityLabel, int max) {
@@ -861,7 +885,32 @@ public class LoyaltyRewardsUI {
                     return null;
                 }
             }
-            return new Reward(rewardId, name, description, cost);
+
+            int tierChoice = inputIntChoice("Min tier (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND)", 1, 4);
+            Tier minTier = Tier.values()[tierChoice - 1];
+
+            int roomChoice = inputIntChoice(
+                    "Room type (0 = generic, 1=STANDARD_SINGLE, 2=STANDARD_DOUBLE, 3=STANDARD_TRIPLE,\n"
+                    + " 4=DELUXE_SINGLE, 5=DELUXE_DOUBLE, 6=DELUXE_TRIPLE, 7=SUITE)", 0, 7);
+            RoomType roomType = roomChoice == 0 ? null : RoomType.values()[roomChoice - 1];
+
+            int voucherType = inputIntChoice(
+                    "Voucher type (0=not a voucher, 1=Fixed RM, 2=Percentage %)", 0, 2);
+            Double voucherValue = null;
+            Integer discountPercent = null;
+            if (voucherType == 1) {
+                int value = readInt("Voucher value in RM (0 = cancel)");
+                if (value <= 0) {
+                    System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+                    return null;
+                }
+                voucherValue = (double) value;
+            } else if (voucherType == 2) {
+                discountPercent = inputIntChoice("Discount percent (1-100)", 1, 100);
+            }
+
+            return new Reward(rewardId, name, description, cost, voucherValue, minTier, roomType, discountPercent);
         }
 
         public String promptWithDefault(String prompt, String current) {
@@ -892,6 +941,130 @@ public class LoyaltyRewardsUI {
                 ConsoleUtil.printError("Invalid number, keeping current value.");
                 return current;
             }
+        }
+
+        /** Prompts for a tier (1-4), empty keeps the current tier, 0 cancels. */
+        public Tier promptTierWithDefault(String prompt, Tier current) {
+            System.out.print(prompt + " (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND)"
+                    + " (" + current + ") (0 to cancel): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) {
+                System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (input.isEmpty()) {
+                return current;
+            }
+            try {
+                int idx = Integer.parseInt(input);
+                if (idx >= 1 && idx <= Tier.values().length) {
+                    return Tier.values()[idx - 1];
+                }
+            } catch (NumberFormatException e) {
+                // fall through
+            }
+            ConsoleUtil.printError("Invalid tier, keeping current value.");
+            return current;
+        }
+
+        /** Prompts for a room type (1-7), 'none' clears it, empty keeps. No cancel - the
+         *  whole update is aborted at the earlier fields or at the voucher value prompt. */
+        public RoomType promptRoomTypeWithDefault(String prompt, RoomType current) {
+            System.out.print(prompt + " (1-7 = type, 'none' = generic, empty = keep"
+                    + " (" + (current == null ? "Any" : current.name()) + ")): ");
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                return current;
+            }
+            if (input.equalsIgnoreCase("none")) {
+                return null;
+            }
+            try {
+                int idx = Integer.parseInt(input);
+                if (idx >= 1 && idx <= RoomType.values().length) {
+                    return RoomType.values()[idx - 1];
+                }
+            } catch (NumberFormatException e) {
+                // fall through
+            }
+            ConsoleUtil.printError("Invalid room type, keeping current value.");
+            return current;
+        }
+
+        /** Prompts for a voucher value (RM); empty keeps, 0 cancels. */
+        public Double promptDoubleWithDefault(String prompt, Double current) {
+            System.out.print(prompt + " (" + (current == null ? "none" : "RM" + current) + ") (0 to cancel): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) {
+                System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (input.isEmpty()) {
+                return current;
+            }
+            try {
+                double value = Double.parseDouble(input);
+                if (value > 0) {
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                // fall through
+            }
+            ConsoleUtil.printError("Invalid value, keeping current value.");
+            return current;
+        }
+
+        /**
+         * Prompts for the voucher type during an update.
+         * Returns 1 = Fixed RM, 2 = Percentage, 0 = keep current (no change),
+         * or null = cancelled.
+         */
+        public Integer promptVoucherTypeWithDefault(Reward reward) {
+            String currentType = reward.getDiscountPercent() != null
+                    ? reward.getDiscountPercent() + "% OFF"
+                    : (reward.getVoucherValue() != null ? "RM" + reward.getVoucherValue() : "not a voucher");
+            System.out.print("New voucher type (1=Fixed RM, 2=Percentage %, empty=keep"
+                    + " (" + currentType + "), 0=cancel): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) {
+                System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (input.isEmpty()) {
+                return 0; // keep current
+            }
+            if (input.equals("1") || input.equals("2")) {
+                return Integer.parseInt(input);
+            }
+            ConsoleUtil.printError("Invalid voucher type, keeping current value.");
+            return 0;
+        }
+
+        /** Prompts for a discount percent (1-100); empty keeps, 0 cancels. */
+        public Integer promptPercentWithDefault(String prompt, Integer current) {
+            System.out.print(prompt + " (" + (current == null ? "none" : current + "%") + ") (0 to cancel): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("0")) {
+                System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            if (input.isEmpty()) {
+                return current;
+            }
+            try {
+                int value = Integer.parseInt(input);
+                if (value >= 1 && value <= 100) {
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                // fall through
+            }
+            ConsoleUtil.printError("Invalid percent (1-100), keeping current value.");
+            return current;
         }
 
         /** Prints an error message in red and waits for the user to press Enter. */

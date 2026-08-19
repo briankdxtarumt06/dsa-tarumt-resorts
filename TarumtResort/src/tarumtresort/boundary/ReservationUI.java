@@ -16,6 +16,10 @@ public class ReservationUI {
 
     Scanner scanner = new Scanner(System.in);
 
+    public Scanner getScanner() {
+        return scanner;
+    }
+
     private static final DateTimeFormatter DATE_TIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public String formatDateTime(LocalDateTime dateTime) {
