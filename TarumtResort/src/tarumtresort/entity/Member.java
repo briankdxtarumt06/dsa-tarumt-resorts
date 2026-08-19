@@ -12,6 +12,9 @@ public class Member implements Comparable<Member> {
     private LocalDateTime enrollmentDate;
     private String guestId;
     private boolean isDeleted;
+    private String promotionName;
+    private int promotionDiscountPercent;
+    private LocalDateTime promotionExpiry;
     private LinkedListInterface<PointTransaction> pointTransactionList = new LinkedList<>();
     private LinkedListInterface<RedemptionRecord> redemptionRecordList = new LinkedList<>();
 
@@ -74,13 +77,57 @@ public class Member implements Comparable<Member> {
         this.guestId = guestId;
     }
 
-    /** Soft-delete flag: the record stays for history/audit but is hidden from active views. */
+    /**
+     * Soft-delete flag: the record stays for history/audit but is hidden from
+     * active views.
+     */
     public boolean isDeleted() {
         return isDeleted;
     }
 
     public void setDeleted(boolean deleted) {
         isDeleted = deleted;
+    }
+
+    public String getPromotionName() {
+        return promotionName;
+    }
+
+    public void setPromotionName(String promotionName) {
+        this.promotionName = promotionName;
+    }
+
+    public int getPromotionDiscountPercent() {
+        return promotionDiscountPercent;
+    }
+
+    public void setPromotionDiscountPercent(int promotionDiscountPercent) {
+        this.promotionDiscountPercent = promotionDiscountPercent;
+    }
+
+    public LocalDateTime getPromotionExpiry() {
+        return promotionExpiry;
+    }
+
+    public void setPromotionExpiry(LocalDateTime promotionExpiry) {
+        this.promotionExpiry = promotionExpiry;
+    }
+
+    public boolean hasActivePromotion(LocalDateTime now) {
+        return promotionName != null && !promotionName.isBlank()
+                && promotionDiscountPercent > 0
+                && (promotionExpiry == null || promotionExpiry.isAfter(now));
+    }
+
+    public String promotionLabel(LocalDateTime now) {
+        if (!hasActivePromotion(now)) {
+            return null;
+        }
+        String label = promotionName + " (" + promotionDiscountPercent + "%)";
+        if (promotionExpiry != null) {
+            label += " expires " + promotionExpiry.toLocalDate().toString();
+        }
+        return label;
     }
 
     public LinkedListInterface<PointTransaction> getPointTransactionList() {

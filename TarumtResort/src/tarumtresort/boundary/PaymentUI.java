@@ -20,13 +20,22 @@ public class PaymentUI {
     }
 
     public void printBill(double roomCharge, int discountPercent, double discount,
+            String promoLabel, double promoDiscount,
             String[] voucherLabels, double[] voucherValues,
             double serviceCharge, double tax, double lateFee, double total) {
         printBillHeader();
-        printBillTable(roomCharge, discountPercent, discount,
+        printBillTable(roomCharge, discountPercent, discount, promoLabel, promoDiscount,
                 voucherLabels, voucherValues, serviceCharge, tax, lateFee, total);
         System.out.println("  " + Ansi.green("Thank you for choosing TARUMT Resort!"));
         System.out.println();
+    }
+
+    /** Backwards-compatible overload without a promotion. */
+    public void printBill(double roomCharge, int discountPercent, double discount,
+            String[] voucherLabels, double[] voucherValues,
+            double serviceCharge, double tax, double lateFee, double total) {
+        printBill(roomCharge, discountPercent, discount, null, 0.0,
+                voucherLabels, voucherValues, serviceCharge, tax, lateFee, total);
     }
 
     private void printBillHeader() {
@@ -38,6 +47,7 @@ public class PaymentUI {
     }
 
     private void printBillTable(double roomCharge, int discountPercent, double discount,
+            String promoLabel, double promoDiscount,
             String[] voucherLabels, double[] voucherValues,
             double serviceCharge, double tax, double lateFee, double total) {
         String[] header = {"Description", "Amount (RM)"};
@@ -54,6 +64,11 @@ public class PaymentUI {
         if (discount > 0) {
             rows.add(new String[]{"Member Discount (" + discountPercent + "%)",
                 "-" + String.format("%.2f", discount)});
+        }
+
+        if (promoDiscount > 0 && promoLabel != null) {
+            rows.add(new String[]{"Promotion: " + promoLabel,
+                "-" + String.format("%.2f", promoDiscount)});
         }
 
         rows.add(new String[]{"Service Charge (10%)", String.format("%.2f", serviceCharge)});

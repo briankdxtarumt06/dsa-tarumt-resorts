@@ -2291,16 +2291,22 @@ public class ReservationControl {
             }
             double chargeAfterVouchers = Math.max(0.0, totalRoomCharge - voucherTotal);
 
-            // member tier discount (applied to room charge after vouchers, before SC & tax)
+            // member tier discount + personalized promotion (both after vouchers, before SC & tax)
+            LocalDateTime billNow = LocalDateTime.now();
             int discountPercent = member == null ? 0 : member.getTier().getDiscountPercent();
             double discount = chargeAfterVouchers * discountPercent / 100.0;
-            double netRoomCharge = chargeAfterVouchers - discount;
+            String promoLabel = member == null ? null : member.promotionLabel(billNow);
+            int promoPercent = member != null && member.hasActivePromotion(billNow)
+                    ? member.getPromotionDiscountPercent() : 0;
+            double promoDiscount = chargeAfterVouchers * promoPercent / 100.0;
+            double netRoomCharge = chargeAfterVouchers - discount - promoDiscount;
 
             double serviceCharge = netRoomCharge * 0.10;
             double tax = (netRoomCharge + serviceCharge) * 0.06;
             double total = netRoomCharge + serviceCharge + tax;
 
             paymentUI.printBill(totalRoomCharge, discountPercent, discount,
+                    promoLabel, promoDiscount,
                     voucherLabels, voucherValues, serviceCharge, tax, 0.0, total);
 
             PaymentMethod method = askPaymentMethod(reservationControl.getReservationUI());
