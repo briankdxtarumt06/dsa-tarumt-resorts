@@ -6,6 +6,7 @@ import java.util.Scanner;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.PriorityReservation;
 import tarumtresort.entity.Reservation;
+import tarumtresort.entity.Staff;
 import tarumtresort.entity.enums.PriorityLevel;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
@@ -61,25 +62,16 @@ public class PriorityReservationUI {
         return " ".repeat(left) + text + " ".repeat(pad - left);
     }
 
-    public int printPriorityListMenu(LinkedListInterface<PriorityReservation> priorityReservationsList, int page,
-            int pageCount, boolean hasFilter) {
+    public int printPriorityListMenu(String[][] tableData, int page, int pageCount, boolean hasFilter) {
         clearScreen();
         printBanner("PRIORITY RESERVATION (Page " + (page + 1) + " of " + pageCount + ")");
-        if (priorityReservationsList.isEmpty()) {
+        if (tableData.length <= 1) {
             System.out.println("  (No priority reservations)");
         } else {
-            String[] header = new String[] { "No", "Reservation ID", "Priority Level", "Overridden By",
-                    "Override Reason" };
-            String[][] rows = new String[priorityReservationsList.size()][5];
-            for (int i = 0; i < priorityReservationsList.size(); i++) {
-                PriorityReservation pr = priorityReservationsList.get(i);
-                rows[i] = new String[] {
-                        String.valueOf(i + 1),
-                        pr.getReservationId(),
-                        pr.getPriorityLevel().name(),
-                        pr.getOverriddenBy(),
-                        pr.getOverrideReason()
-                };
+            String[] header = tableData[0];
+            String[][] rows = new String[tableData.length - 1][];
+            for (int i = 1; i < tableData.length; i++) {
+                rows[i - 1] = tableData[i];
             }
             TablePrinter.displayTable(header, rows);
         }
@@ -182,6 +174,64 @@ public class PriorityReservationUI {
     }
 
     // OVERRIDE
+    public Reservation selectReservation(LinkedListInterface<Reservation> reservations) {
+        clearScreen();
+        printBanner("SELECT RESERVATION (Non-Member, Waiting)");
+        if (reservations.isEmpty()) {
+            System.out.println("  No eligible non-member reservations found.");
+            printSeparator();
+            pause();
+            return null;
+        }
+        String[] header = { "No.", "Reservation ID", "Guest ID", "Room Type", "Registered" };
+        String[][] rows = new String[reservations.size()][5];
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+            rows[i] = new String[] {
+                    String.valueOf(i + 1),
+                    r.getReservationId(),
+                    r.getGuestId(),
+                    r.getRoomTypeRequested() == null ? "-" : r.getRoomTypeRequested().name(),
+                    formatRegistration(r)
+            };
+        }
+        TablePrinter.displayTable(header, rows);
+        int num = inputListIndex("reservation", reservations.size());
+        if (num == 0) {
+            return null;
+        }
+        return reservations.get(num - 1);
+    }
+
+    public Staff selectStaff(LinkedListInterface<Staff> staffList) {
+        clearScreen();
+        printBanner("SELECT STAFF");
+        if (staffList.isEmpty()) {
+            System.out.println("  No staff records found.");
+            printSeparator();
+            pause();
+            return null;
+        }
+        String[] header = { "No.", "Staff ID", "Name", "Role", "Availability" };
+        String[][] rows = new String[staffList.size()][5];
+        for (int i = 0; i < staffList.size(); i++) {
+            Staff s = staffList.get(i);
+            rows[i] = new String[] {
+                    String.valueOf(i + 1),
+                    s.getStaffId(),
+                    s.getStaffName(),
+                    s.getStaffRole(),
+                    s.getAvailabilityStatus() == null ? "-" : s.getAvailabilityStatus().name()
+            };
+        }
+        TablePrinter.displayTable(header, rows);
+        int num = inputListIndex("staff", staffList.size());
+        if (num == 0) {
+            return null;
+        }
+        return staffList.get(num - 1);
+    }
+
     public PriorityLevel selectPriorityLevel(String prompt) {
         System.out.println("\nSelect Priority Level:");
         System.out.println("  1. PENALTY");

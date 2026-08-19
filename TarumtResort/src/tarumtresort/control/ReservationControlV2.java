@@ -551,6 +551,9 @@ public class ReservationControlV2 {
             } else {
                 reservation.setStatus(ReservationStatus.BOOKED);
                 bookingList.addSorted(reservation);
+                // create the member's priority record now so a BOOKED member shows in the priority history
+                priorityReservationController.addPriorityReservation(
+                        reservation.getReservationId(), reservation.getGuestId());
             }
 
             reservations.addBack(reservation);
@@ -725,7 +728,7 @@ public class ReservationControlV2 {
             if (idx >= 0) {
                 vipList.removeIndex(idx);
             }
-            priorityReservationController.removePriorityReservationById(found.getReservationId());
+            // keep the priority record (now ASSIGNED) so it stays in the priority history
         } else {
             int idx = guestQueue.indexOf(found);
             if (idx >= 0) {
@@ -1068,7 +1071,7 @@ public class ReservationControlV2 {
         if (vipIndex >= 0) {
             vipList.removeIndex(vipIndex);
             r.setStatus(ReservationStatus.CANCELLED);
-            priorityReservationController.removePriorityReservationById(r.getReservationId());
+            // keep the priority record (now CANCELLED) so it stays in the priority history
             if (guest != null) removeReservationFromGuest(guest, r);
             saveGuestList();
             reservationDAO.saveAllReservations(reservations);
