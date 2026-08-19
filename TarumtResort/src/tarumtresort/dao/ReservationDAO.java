@@ -10,6 +10,7 @@ public class ReservationDAO {
     private final String BOOKING_LIST_FILE = "data/bookingList.json";
     private final String GUEST_QUEUE_FILE = "data/guestQueue.json";
     private final String ASSIGNED_LIST_FILE = "data/assignedList.json";
+    private final String VIP_QUEUE_FILE = "data/vipQueue.json";
     private final String ALL_RESERVATIONS_FILE = "data/allReservationList.json";
 
     public void saveBookingList(LinkedListInterface<Reservation> list) {
@@ -72,13 +73,40 @@ public class ReservationDAO {
         }
     }
 
-    public void saveAllReservations(LinkedListInterface<Reservation> bookingList, LinkedListInterface<Reservation> guestQueue, LinkedListInterface<Reservation> assignedList) {
+    public void saveVipQueue(LinkedListInterface<Reservation> list) {
+        try {
+            JsonFileHandler.saveList(list, Path.of(VIP_QUEUE_FILE));
+        } catch (java.io.IOException e) {
+            System.err.println("Failed to save " + VIP_QUEUE_FILE + ": " + e.getMessage());
+        }
+    }
+
+    public void loadVipQueue(LinkedListInterface<Reservation> list) {
+        list.clear();
+        try {
+            LinkedList<Reservation> loaded = JsonFileHandler.loadList(Path.of(VIP_QUEUE_FILE), Reservation.class);
+            for (int i = 0; i < loaded.size(); i++) {
+                list.addSorted(loaded.get(i));
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("Failed to load " + VIP_QUEUE_FILE + ": " + e.getMessage());
+        }
+    }
+
+    public void saveAllReservations(LinkedListInterface<Reservation> bookingList,
+            LinkedListInterface<Reservation> guestQueue,
+            LinkedListInterface<Reservation> assignedList,
+            LinkedListInterface<Reservation> vipQueue) {
 
         LinkedList<Reservation> all = new LinkedList<>();
-        
-        for (int i = 0; i < bookingList.size(); i++) all.addBack(bookingList.get(i));
-        for (int i = 0; i < guestQueue.size(); i++) all.addBack(guestQueue.get(i));
-        for (int i = 0; i < assignedList.size(); i++) all.addBack(assignedList.get(i));
+        for (int i = 0; i < bookingList.size(); i++)
+            all.addBack(bookingList.get(i));
+        for (int i = 0; i < guestQueue.size(); i++)
+            all.addBack(guestQueue.get(i));
+        for (int i = 0; i < vipQueue.size(); i++)
+            all.addBack(vipQueue.get(i));
+        for (int i = 0; i < assignedList.size(); i++)
+            all.addBack(assignedList.get(i));
 
         try {
             JsonFileHandler.saveList(all, Path.of(ALL_RESERVATIONS_FILE));
@@ -91,7 +119,7 @@ public class ReservationDAO {
         list.clear();
         try {
             LinkedList<Reservation> loaded = JsonFileHandler.loadList(
-                Path.of(ALL_RESERVATIONS_FILE), Reservation.class);
+                    Path.of(ALL_RESERVATIONS_FILE), Reservation.class);
             for (int i = 0; i < loaded.size(); i++) {
                 list.addBack(loaded.get(i));
             }

@@ -69,7 +69,7 @@ public class Reservation implements Comparable<Reservation> {
         this.status = status;
     }
 
-    public void serIsNoShow(boolean isNoShow) {
+    public void setIsNoShow(boolean isNoShow) {
         this.isNoShow = isNoShow;
     }
 
