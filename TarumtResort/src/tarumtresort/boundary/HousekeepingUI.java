@@ -86,7 +86,7 @@ public class HousekeepingUI {
         printBanner("HOUSEKEEPING MODULE");
         System.out.println("  1. Task Management");
         System.out.println("  2. Staff Management");
-        System.out.println("  3. Room Turnover Report");
+        System.out.println("  3. Room Cleaning Performance Report");
         System.out.println("  4. Staff Productivity Report");
         System.out.println("  0. Exit");
         printSeparator();

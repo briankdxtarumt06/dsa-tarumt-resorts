@@ -110,7 +110,7 @@ public class HousekeepingController {
             switch (choice) {
                 case 1 -> runTaskManagement();
                 case 2 -> runStaffManagement();
-                case 3 -> reportController.generateRoomTurnoverReport();
+                case 3 -> reportController.generateRoomCleaningPerformanceReport();
                 case 4 -> reportController.generateStaffProductivityReport();
                 default -> ui.printInvalidChoice();
             }

@@ -1,16 +1,16 @@
 package tarumtresort.report.HousekeepingReport;
 
-public class RoomTurnoverUI {
+public class RoomCleaningPerformanceUI {
 
-    private static final String TITLE = "ROOM TURNOVER REPORT";
+    private static final String TITLE = "ROOM CLEANING PERFORMANCE REPORT";
 
     private final HousekeepingReportUI ui;
 
-    public RoomTurnoverUI(HousekeepingReportUI ui) {
+    public RoomCleaningPerformanceUI(HousekeepingReportUI ui) {
         this.ui = ui;
     }
 
-    public void render(RoomTurnoverReport.Result result) {
+    public void render(RoomCleaningPerformanceReport.Result result) {
         ui.printDocumentHeader(TITLE);
         ui.printTableSection(result.getTable());
         ui.printChartSection(TITLE, result.getCharts());

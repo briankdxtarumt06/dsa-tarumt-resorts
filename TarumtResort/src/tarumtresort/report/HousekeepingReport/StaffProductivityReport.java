@@ -2,18 +2,16 @@ package tarumtresort.report.HousekeepingReport;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Comparator;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.entity.Room;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.entity.enums.StaffRole;
 import tarumtresort.entity.enums.TaskStatus;
-import tarumtresort.entity.enums.TaskType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
@@ -23,16 +21,14 @@ public class StaffProductivityReport {
     private final LinkedListInterface<Task> taskList;
     private final LinkedListInterface<TaskAssignment> assignmentList;
     private final LinkedListInterface<TaskAssignmentChange> changeList;
-    private final LinkedListInterface<Room> roomList;
 
     public StaffProductivityReport(LinkedListInterface<Staff> staffList,
             LinkedListInterface<Task> taskList, LinkedListInterface<TaskAssignment> assignmentList,
-            LinkedListInterface<TaskAssignmentChange> changeList, LinkedListInterface<Room> roomList) {
+            LinkedListInterface<TaskAssignmentChange> changeList) {
         this.staffList = staffList == null ? new LinkedList<>() : staffList;
         this.taskList = taskList == null ? new LinkedList<>() : taskList;
         this.assignmentList = assignmentList == null ? new LinkedList<>() : assignmentList;
         this.changeList = changeList == null ? new LinkedList<>() : changeList;
-        this.roomList = roomList == null ? new LinkedList<>() : roomList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to) {
@@ -55,23 +51,12 @@ public class StaffProductivityReport {
                 if (!inRange(assignment.getDateTimeAssigned(), from, to)) {
                     continue;
                 }
-                Task task = findTask(assignment.getAssignedTaskId());
-                if (!relevantTask(task == null ? null : task.getTaskType(), staff.getStaffRole())) {
-                    continue;
-                }
                 Long minutes = assignmentDuration(assignment);
                 if (minutes == null) {
                     continue;
                 }
                 row.completed++;
                 row.totalMinutes += minutes;
-                if (row.fastest == 0 || minutes < row.fastest) {
-                    row.fastest = minutes;
-                }
-                if (minutes > row.slowest) {
-                    row.slowest = minutes;
-                }
-                row.servedRooms.add(roomLabel(task));
             }
             if (row.completed > 0) {
                 rows.addSorted(row);
@@ -96,28 +81,6 @@ public class StaffProductivityReport {
 
     private boolean isTrackedRole(StaffRole role) {
         return role == StaffRole.CLEANER || role == StaffRole.SUPERVISOR;
-    }
-
-    private boolean relevantTask(TaskType type, StaffRole role) {
-        if (role == StaffRole.CLEANER) {
-            return type == TaskType.CHECKOUT_CLEAN || type == TaskType.ROOM_SERVICE;
-        }
-        if (role == StaffRole.SUPERVISOR) {
-            return type == TaskType.INSPECTION;
-        }
-        return false;
-    }
-
-    private Task findTask(String taskId) {
-        if (taskId == null) {
-            return null;
-        }
-        for (int i = 0; i < taskList.size(); i++) {
-            if (taskId.equalsIgnoreCase(taskList.get(i).getTaskId())) {
-                return taskList.get(i);
-            }
-        }
-        return null;
     }
 
     private Long assignmentDuration(TaskAssignment assignment) {
@@ -165,24 +128,10 @@ public class StaffProductivityReport {
                 || status.equalsIgnoreCase("Inspected");
     }
 
-    private String roomLabel(Task task) {
-        if (task == null || task.getRoomId() == null) {
-            return "-";
-        }
-        for (int i = 0; i < roomList.size(); i++) {
-            Room room = roomList.get(i);
-            if (task.getRoomId().equalsIgnoreCase(room.getRoomId())) {
-                return room.getRoomId() + " (" + room.getRoomNumber() + " "
-                        + (room.getRoomType() == null ? "-" : room.getRoomType().name()) + ")";
-            }
-        }
-        return task.getRoomId();
-    }
-
     private String[][] toTable(LinkedListInterface<StaffRow> rows) {
         String[][] table = new String[rows.size() + 1][7];
         table[0] = new String[] { "Staff ID", "Name", "Role", "Department",
-                "Tasks Completed", "Avg (min)", "Rooms" };
+                "Tasks Completed", "Avg (min)", "Per Hr" };
         for (int i = 0; i < rows.size(); i++) {
             StaffRow row = rows.get(i);
             Staff staff = row.staff;
@@ -193,7 +142,7 @@ public class StaffProductivityReport {
                     staff.getDepartment() == null ? "-" : staff.getDepartment().name(),
                     String.valueOf(row.completed),
                     String.valueOf(Math.round(row.average())),
-                    String.valueOf(row.servedRooms.size())
+                    String.format("%.2f", row.perHour())
             };
         }
         return table;
@@ -201,18 +150,28 @@ public class StaffProductivityReport {
 
     private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<StaffRow> rows) {
         LinkedListInterface<ReportChart> charts = new LinkedList<>();
-        charts.addBack(buildRoleChart(rows, StaffRole.CLEANER, "Cleaner Completion Speed (min)"));
-        charts.addBack(buildRoleChart(rows, StaffRole.SUPERVISOR, "Supervisor Completion Speed (min)"));
+        charts.addBack(buildCompletedChart(rows));
+        charts.addBack(buildAverageChart(rows));
         return charts;
     }
 
-    private ReportChart buildRoleChart(LinkedListInterface<StaffRow> rows, StaffRole role, String title) {
-        ReportChart chart = new ReportChart(title);
-        for (int i = 0; i < rows.size(); i++) {
-            StaffRow row = rows.get(i);
-            if (row.staff.getStaffRole() != role) {
-                continue;
-            }
+    private ReportChart buildCompletedChart(LinkedListInterface<StaffRow> rows) {
+        ReportChart chart = new ReportChart("Completed Tasks per Staff");
+        StaffRow[] sorted = toSorted(rows, Comparator.comparingInt((StaffRow r) -> r.completed).reversed()
+                .thenComparingDouble(StaffRow::average));
+        for (StaffRow row : sorted) {
+            chart.addBar(row.staff.getStaffName() + "\n" + row.staff.getStaffId(),
+                    row.completed,
+                    "(" + row.completed + " task" + (row.completed == 1 ? "" : "s") + ")");
+        }
+        return chart;
+    }
+
+    private ReportChart buildAverageChart(LinkedListInterface<StaffRow> rows) {
+        ReportChart chart = new ReportChart("Average Completion Time per Staff (min)");
+        StaffRow[] sorted = toSorted(rows, Comparator.comparingDouble(StaffRow::average)
+                .thenComparingInt(r -> r.completed));
+        for (StaffRow row : sorted) {
             chart.addBar(row.staff.getStaffName() + "\n" + row.staff.getStaffId(),
                     row.average(),
                     "(" + row.completed + " task" + (row.completed == 1 ? "" : "s")
@@ -221,55 +180,57 @@ public class StaffProductivityReport {
         return chart;
     }
 
+    private StaffRow[] toSorted(LinkedListInterface<StaffRow> rows, Comparator<StaffRow> comparator) {
+        StaffRow[] array = new StaffRow[rows.size()];
+        for (int i = 0; i < rows.size(); i++) {
+            array[i] = rows.get(i);
+        }
+        Arrays.sort(array, comparator);
+        return array;
+    }
+
     private String[] buildSummary(LinkedListInterface<StaffRow> rows) {
-        int cleanerTasks = 0;
-        long cleanerMinutes = 0;
-        int supervisorTasks = 0;
-        long supervisorMinutes = 0;
-        StaffRow topCleaner = null;
-        StaffRow topSupervisor = null;
-        StaffRow mostTasks = null;
+        StaffRow topPerformer = null;
+        StaffRow fastest = null;
+        StaffRow slowest = null;
+        StaffRow mostProductive = null;
+        int totalCompleted = 0;
 
         for (int i = 0; i < rows.size(); i++) {
             StaffRow row = rows.get(i);
-            if (row.staff.getStaffRole() == StaffRole.CLEANER) {
-                cleanerTasks += row.completed;
-                cleanerMinutes += row.totalMinutes;
-                if (topCleaner == null || row.average() < topCleaner.average()) {
-                    topCleaner = row;
-                }
-            } else if (row.staff.getStaffRole() == StaffRole.SUPERVISOR) {
-                supervisorTasks += row.completed;
-                supervisorMinutes += row.totalMinutes;
-                if (topSupervisor == null || row.average() < topSupervisor.average()) {
-                    topSupervisor = row;
-                }
+            totalCompleted += row.completed;
+            if (topPerformer == null || row.completed > topPerformer.completed) {
+                topPerformer = row;
             }
-            if (mostTasks == null || row.completed > mostTasks.completed) {
-                mostTasks = row;
+            if (fastest == null || row.average() < fastest.average()) {
+                fastest = row;
+            }
+            if (slowest == null || row.average() > slowest.average()) {
+                slowest = row;
+            }
+            if (mostProductive == null || row.perHour() > mostProductive.perHour()) {
+                mostProductive = row;
             }
         }
 
-        double cleanerAvg = cleanerTasks == 0 ? 0 : (double) cleanerMinutes / cleanerTasks;
-        double supervisorAvg = supervisorTasks == 0 ? 0 : (double) supervisorMinutes / supervisorTasks;
-
         return new String[] {
-                Ansi.bold("Staff Tracked: ") + rows.size(),
-                Ansi.bold("Cleaner Average Completion: ") + Math.round(cleanerAvg) + " min",
-                Ansi.bold("Supervisor Average Completion: ") + Math.round(supervisorAvg) + " min",
-                Ansi.bold("Top Cleaner: ")
-                        + (topCleaner == null ? "-"
-                                : topCleaner.staff.getStaffName() + " (" + Math.round(topCleaner.average())
-                                        + " min, " + topCleaner.completed + " task"
-                                        + (topCleaner.completed == 1 ? "" : "s") + ")"),
-                Ansi.bold("Top Supervisor: ")
-                        + (topSupervisor == null ? "-"
-                                : topSupervisor.staff.getStaffName() + " (" + Math.round(topSupervisor.average())
-                                        + " min, " + topSupervisor.completed + " task"
-                                        + (topSupervisor.completed == 1 ? "" : "s") + ")"),
-                Ansi.bold("Most Tasks Completed: ")
-                        + (mostTasks == null ? "-"
-                                : mostTasks.staff.getStaffName() + " (" + mostTasks.completed + " tasks)")
+                Ansi.bold("Top Performer: ")
+                        + (topPerformer == null ? "-"
+                                : topPerformer.staff.getStaffName() + " (" + topPerformer.completed
+                                        + " task" + (topPerformer.completed == 1 ? "" : "s") + ")"),
+                Ansi.bold("Fastest Staff: ")
+                        + (fastest == null ? "-"
+                                : fastest.staff.getStaffName() + " (" + Math.round(fastest.average())
+                                        + " min avg)"),
+                Ansi.bold("Slowest Staff: ")
+                        + (slowest == null ? "-"
+                                : slowest.staff.getStaffName() + " (" + Math.round(slowest.average())
+                                        + " min avg)"),
+                Ansi.bold("Most Productive Staff: ")
+                        + (mostProductive == null ? "-"
+                                : mostProductive.staff.getStaffName() + " ("
+                                        + String.format("%.2f", mostProductive.perHour()) + " tasks/hr)"),
+                Ansi.bold("Total Completed Tasks: ") + totalCompleted
         };
     }
 
@@ -277,9 +238,6 @@ public class StaffProductivityReport {
         final Staff staff;
         int completed;
         long totalMinutes;
-        long fastest;
-        long slowest;
-        final Set<String> servedRooms = new LinkedHashSet<>();
 
         StaffRow(Staff staff) {
             this.staff = staff;
@@ -289,13 +247,20 @@ public class StaffProductivityReport {
             return completed == 0 ? 0 : (double) totalMinutes / completed;
         }
 
+        double perHour() {
+            if (totalMinutes == 0) {
+                return 0;
+            }
+            return completed / (totalMinutes / 60.0);
+        }
+
         @Override
         public int compareTo(StaffRow other) {
-            int c = Double.compare(average(), other.average());
+            int c = Integer.compare(other.completed, completed);
             if (c != 0) {
                 return c;
             }
-            c = Integer.compare(other.completed, completed);
+            c = Double.compare(average(), other.average());
             if (c != 0) {
                 return c;
             }
