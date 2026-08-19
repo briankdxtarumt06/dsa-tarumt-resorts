@@ -32,15 +32,18 @@ import tarumtresort.utility.ConsoleUtil;
 public class HousekeepingController {
 
     private static final int PAGE_SIZE = 10;
-    private static final int INDEX_NOT_FOUND = -1;
 
+    // UI declaration
     private HousekeepingUI ui;
+
+    // DAO declaration
     private final TaskDAO taskDAO = new TaskDAO();
     private final StaffDAO staffDAO = new StaffDAO();
     private final TaskAssignmentDAO taskAssignmentDAO = new TaskAssignmentDAO();
     private final TaskAssignmentChangeDAO taskAssignmentChangeDAO = new TaskAssignmentChangeDAO();
     private final RoomDAO roomDAO = new RoomDAO();
 
+    // list declaration
     private final LinkedListInterface<Task> taskList = new LinkedList<>();
     private final LinkedListInterface<Staff> staffList = new LinkedList<>();
     private final LinkedListInterface<TaskAssignment> taskAssignmentList = new LinkedList<>();
