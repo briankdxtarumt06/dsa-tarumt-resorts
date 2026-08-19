@@ -12,13 +12,12 @@ public class Reservation implements Comparable<Reservation> {
     private int numberOfNights;
     private ReservationType reservationType;
     private ReservationStatus status;
-    private boolean isNoShow;
     private ReservationTimestamps timestamps;
 
     // constructors
     public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId,
             RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType,
-            ReservationStatus status, boolean isNoShow, ReservationTimestamps timestamps) {
+            ReservationStatus status, ReservationTimestamps timestamps) {
         this.reservationId = reservationId;
         this.confirmationNumber = confirmationNumber;
         this.guestId = guestId;
@@ -28,7 +27,6 @@ public class Reservation implements Comparable<Reservation> {
         this.numberOfNights = numberOfNights;
         this.reservationType = reservationType;
         this.status = status;
-        this.isNoShow = isNoShow;
         this.timestamps = timestamps;
     }
 
@@ -67,10 +65,6 @@ public class Reservation implements Comparable<Reservation> {
 
     public void setStatus(ReservationStatus status) {
         this.status = status;
-    }
-
-    public void setIsNoShow(boolean isNoShow) {
-        this.isNoShow = isNoShow;
     }
 
     public void setTimestamps(ReservationTimestamps timestamps) {
@@ -112,10 +106,6 @@ public class Reservation implements Comparable<Reservation> {
 
     public ReservationStatus getStatus() {
         return status;
-    }
-
-    public boolean getIsNoShow() {
-        return isNoShow;
     }
 
     public ReservationTimestamps getTimestamps() {
