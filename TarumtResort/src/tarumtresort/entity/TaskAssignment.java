@@ -2,21 +2,30 @@ package tarumtresort.entity;
 
 // imports
 import java.time.LocalDateTime;
+import tarumtresort.entity.enums.TaskStatus;
 
 /**
  *
  * @author Brian
+ *
+ * Assignment of a staff member to a task. Status shares the TaskStatus enum:
+ * PENDING / IN_PROGRESS are active, COMPLETED and CANCELLED are terminal.
+ * dateTimeEnded is set when the assignment becomes COMPLETED or CANCELLED and
+ * drives the earliest-available staff rotation. isDeleted hides the record
+ * from all normal views without destroying history.
  */
 public class TaskAssignment implements Comparable<TaskAssignment> {
     private String taskAssignmentId;
-    private String status;
+    private TaskStatus status;
     private LocalDateTime dateTimeAssigned;
+    private LocalDateTime dateTimeEnded;
+    private boolean isDeleted;
     private String assignedStaffId;
     private String assignedTaskId;
 
     public TaskAssignment() { }
 
-    public TaskAssignment(String taskAssignmentId, String status, LocalDateTime dateTimeAssigned, String assignedStaffId, String assignedTaskId) {
+    public TaskAssignment(String taskAssignmentId, TaskStatus status, LocalDateTime dateTimeAssigned, String assignedStaffId, String assignedTaskId) {
         this.taskAssignmentId = taskAssignmentId;
         this.status = status;
         this.dateTimeAssigned = dateTimeAssigned;
@@ -32,11 +41,11 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         this.taskAssignmentId = taskAssignmentId;
     }
 
-    public String getStatus() {
+    public TaskStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(TaskStatus status) {
         this.status = status;
     }
 
@@ -46,6 +55,22 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
 
     public void setDateTimeAssigned(LocalDateTime dateTimeAssigned) {
         this.dateTimeAssigned = dateTimeAssigned;
+    }
+
+    public LocalDateTime getDateTimeEnded() {
+        return dateTimeEnded;
+    }
+
+    public void setDateTimeEnded(LocalDateTime dateTimeEnded) {
+        this.dateTimeEnded = dateTimeEnded;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public String getAssignedStaffId() {
@@ -64,11 +89,17 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         this.assignedTaskId = assignedTaskId;
     }
 
+    /** True when the assignment is still active (not completed / cancelled). */
+    public boolean isActive() {
+        return status != TaskStatus.COMPLETED && status != TaskStatus.CANCELLED;
+    }
+
 @Override
     public String toString() {
         return "Task Assignment Details:" + 
                "\nstatus=" + status +
                ",\ndateTimeAssigned=" + dateTimeAssigned + 
+               ",\ndateTimeEnded=" + dateTimeEnded +
                ",\nassignedStaffId=" + assignedStaffId + 
                ",\nassignedTaskId=" + assignedTaskId;
     }

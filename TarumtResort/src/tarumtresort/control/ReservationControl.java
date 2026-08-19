@@ -27,6 +27,7 @@ public class ReservationControl {
     private GuestControl guestControl = new GuestControl();
     private PaymentControl paymentControl = new PaymentControl();
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
+    private HousekeepingController housekeepingController = new HousekeepingController();
     
     // list declared
     private LinkedListInterface <Reservation> bookingList = new LinkedList<>();
@@ -731,7 +732,7 @@ public class ReservationControl {
             r.setStatus(ReservationStatus.CHECKED_OUT);
             r.getTimestamps().setActualCheckOutTime(now);
             roomControl.updateRoomStatus(r.getRoomId(), RoomStatus.CLEANING);
-            // TODO: call Brian's cleaning function.
+            housekeepingController.createCheckoutTask(r.getRoomId());
         }
 
         reservationDAO.saveAssignedList(assignedList);

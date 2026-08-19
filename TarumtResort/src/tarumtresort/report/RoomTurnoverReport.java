@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
@@ -18,17 +19,19 @@ import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.TaskStatus;
+import tarumtresort.entity.enums.TaskType;
 import tarumtresort.utility.Ansi;
 
 /**
  *
  * @author Brian
  *
- * Room Turnover &amp; Readiness Report: how fast rooms go from dirty to
+* Room Turnover &amp; Readiness Report: how fast rooms go from dirty to
  * ready, and which rooms are lagging.
  *
- * Dependencies: Room, Task, TaskAssignment, TaskAssignmentChange (4 classes).
- * Filters: date range (task start), task type = Housekeeping.
+ * Dependencies: Room, Task, TaskAssignment, TaskAssignmentChange, Reservation
+ * (5 classes).
+ * Filters: date range (task start).
  *
  * Turnover workflow: the cleaner is given a 60-minute window per task but may
  * finish early ("Completed" / "Work Finished" assignment change); the
@@ -37,30 +40,38 @@ import tarumtresort.utility.Ansi;
  * COMPLETED change of the task. Tasks without a task-level COMPLETED change
  * are still listed with "In progress" as their turnover time.
  *
- * Enum mapping (spec -> model): TURNOVER_CLEAN / CHECKOUT_CLEAN -> "Housekeeping"
- * task type; OUT_OF_ORDER room status -> MAINTENANCE.
+ * Hourly readiness vs. check-in curve: rooms readied per hour (supervisor
+ * sign-off hour) is charted against guest check-ins per hour (reservation
+ * actualCheckInTime hour) over the hotel check-in window (10:00-21:00) so
+ * housekeeping can see whether rooms are ready before arrivals peak.
+ *
+ * Enum mapping (spec -> model): TURNOVER_CLEAN / CHECKOUT_CLEAN ->
+ * TaskType.CHECKOUT_CLEAN; OUT_OF_ORDER room status -> MAINTENANCE.
  */
 public class RoomTurnoverReport {
 
-    // spec's TURNOVER_CLEAN / CHECKOUT_CLEAN task types; the model stores
-    // the free-form type "Housekeeping"
-    private static final String TURNOVER_TASK_TYPE = "Housekeeping";
-
     // rooms are flagged for attention when their last turnover exceeds this
     private static final int ATTENTION_MINUTES = 45;
+
+    // hourly curve window: the hotel check-in window shown on the charts
+    private static final int CURVE_FIRST_HOUR = 10;
+    private static final int CURVE_LAST_HOUR = 21;
 
     private final LinkedListInterface<Room> roomList;
     private final LinkedListInterface<Task> taskList;
     private final LinkedListInterface<TaskAssignment> assignmentList;
     private final LinkedListInterface<TaskAssignmentChange> changeList;
+    private final LinkedListInterface<Reservation> reservationList;
 
     public RoomTurnoverReport(LinkedListInterface<Room> roomList,
             LinkedListInterface<Task> taskList, LinkedListInterface<TaskAssignment> assignmentList,
-            LinkedListInterface<TaskAssignmentChange> changeList) {
+            LinkedListInterface<TaskAssignmentChange> changeList,
+            LinkedListInterface<Reservation> reservationList) {
         this.roomList = roomList == null ? new LinkedList<>() : roomList;
         this.taskList = taskList == null ? new LinkedList<>() : taskList;
         this.assignmentList = assignmentList == null ? new LinkedList<>() : assignmentList;
         this.changeList = changeList == null ? new LinkedList<>() : changeList;
+        this.reservationList = reservationList == null ? new LinkedList<>() : reservationList;
     }
 
     /**
@@ -76,7 +87,7 @@ public class RoomTurnoverReport {
             Task task = taskList.get(i);
 
             // filter: only turnover/cleaning tasks started within the period
-            if (task.getTaskType() == null || !TURNOVER_TASK_TYPE.equalsIgnoreCase(task.getTaskType())) {
+            if (task.isDeleted() || task.getTaskType() != TaskType.CHECKOUT_CLEAN) {
                 continue;
             }
             if (!inRange(task.getStartDateTime(), from, to)) {
@@ -102,7 +113,7 @@ public class RoomTurnoverReport {
         return new ReportResult(
                 toTable(rows),
                 summary(rows.size(), trackedRooms.size(), completedCount),
-                buildCharts(rows),
+                buildCharts(rows, from, to),
                 buildCallouts(rows));
     }
 
@@ -185,7 +196,8 @@ public class RoomTurnoverReport {
                 continue;
             }
             if (assignment.getAssignedStaffId() == null
-                    || "Cancelled".equalsIgnoreCase(assignment.getStatus())) {
+                    || assignment.getStatus() == TaskStatus.CANCELLED
+                    || assignment.isDeleted()) {
                 continue;
             }
             if (latest == null || isAfter(assignment, latest)) {
@@ -233,7 +245,7 @@ public class RoomTurnoverReport {
         };
     }
 
-    private List<ReportChart> buildCharts(List<TaskRow> rows) {
+    private List<ReportChart> buildCharts(List<TaskRow> rows, LocalDateTime from, LocalDateTime to) {
         List<ReportChart> charts = new ArrayList<>();
 
         // chart 1: average turnover time by room type (completed tasks only)
@@ -273,6 +285,55 @@ public class RoomTurnoverReport {
             }
         }
         charts.add(chart2);
+
+        // chart 3 & 4: hourly room readiness rate vs guest check-in arrival
+        // curve over the check-in window (both share the same hour axis so
+        // readiness can be compared directly against arrivals)
+        int[] readyByHour = new int[24];
+        for (TaskRow row : rows) {
+            if (row.completedAt == null || !inRange(row.completedAt, from, to)) {
+                continue;
+            }
+            readyByHour[row.completedAt.getHour()]++;
+        }
+        int[] checkInByHour = new int[24];
+        for (int i = 0; i < reservationList.size(); i++) {
+            Reservation reservation = reservationList.get(i);
+            if (reservation.getTimestamps() == null
+                    || reservation.getTimestamps().getActualCheckInTime() == null) {
+                continue;
+            }
+            LocalDateTime checkIn = reservation.getTimestamps().getActualCheckInTime();
+            if (!inRange(checkIn, from, to)) {
+                continue;
+            }
+            checkInByHour[checkIn.getHour()]++;
+        }
+
+        ReportChart chart3 = new ReportChart("Rooms Readied per Hour (" + CURVE_FIRST_HOUR + ":00-" + CURVE_LAST_HOUR + ":00)");
+        ReportChart chart4 = new ReportChart("Guest Check-ins per Hour (" + CURVE_FIRST_HOUR + ":00-" + CURVE_LAST_HOUR + ":00)");
+        boolean readyAny = false;
+        boolean checkInAny = false;
+        for (int h = CURVE_FIRST_HOUR; h <= CURVE_LAST_HOUR; h++) {
+            int ready = readyByHour[h];
+            if (ready > 0) {
+                readyAny = true;
+            }
+            chart3.addBar(String.format("%02d", h), ready,
+                    ready == 0 ? "(0)" : "(" + ready + " room" + (ready == 1 ? "" : "s") + ")");
+            int checkIn = checkInByHour[h];
+            if (checkIn > 0) {
+                checkInAny = true;
+            }
+            chart4.addBar(String.format("%02d", h), checkIn,
+                    checkIn == 0 ? "(0)" : "(" + checkIn + " guest" + (checkIn == 1 ? "" : "s") + ")");
+        }
+        if (readyAny) {
+            charts.add(chart3);
+        }
+        if (checkInAny) {
+            charts.add(chart4);
+        }
 
         return charts;
     }

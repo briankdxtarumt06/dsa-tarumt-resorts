@@ -13,6 +13,8 @@ import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
+import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.utility.Ansi;
 
 /**
@@ -34,8 +36,8 @@ import tarumtresort.utility.Ansi;
  * Enum mapping (spec -> model): REASSIGNED / CANCELLED assignment changes are
  * both counted as "reassigned" (the model has no REASSIGNED status; a drop or
  * decline is recorded as a CANCELLED change). ASSIGNED availability status ->
- * a staff member holding at least one active (non-cancelled, non-completed)
- * assignment is counted as utilized.
+ * AvailabilityStatus.AVAILABLE / BUSY: a staff member holding at least one
+ * active (non-cancelled, non-completed) assignment is counted as utilized.
  */
 public class StaffProductivityReport {
 
@@ -67,12 +69,15 @@ public class StaffProductivityReport {
 
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
+            if (staff.isDeleted()) {
+                continue;
+            }
             StaffRow row = new StaffRow(staff);
 
             for (int j = 0; j < assignmentList.size(); j++) {
                 TaskAssignment assignment = assignmentList.get(j);
 
-                if (assignment.getAssignedStaffId() == null
+                if (assignment.isDeleted() || assignment.getAssignedStaffId() == null
                         || !assignment.getAssignedStaffId().equals(staff.getStaffId())) {
                     continue;
                 }
@@ -110,7 +115,7 @@ public class StaffProductivityReport {
 
             // summary totals only count active staff so the denominator
             // matches the "Total Active Staff" figure
-            if (!"Resigned".equalsIgnoreCase(staff.getAvailabilityStatus())) {
+            if (staff.getAvailabilityStatus() != AvailabilityStatus.RESIGNED) {
                 totalAssignments += row.assignments;
                 totalReassigned += row.reassigned;
             }
@@ -184,6 +189,10 @@ public class StaffProductivityReport {
                 || "Inspected".equalsIgnoreCase(status);
     }
 
+    private boolean isCompletedStatus(TaskStatus status) {
+        return status == TaskStatus.COMPLETED;
+    }
+
     private boolean isReassignedStatus(String status) {
         return "Reassigned".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status);
     }
@@ -203,7 +212,7 @@ public class StaffProductivityReport {
                     String.valueOf(row.completed),
                     String.valueOf(row.reassigned),
                     row.completed == 0 ? "-" : String.valueOf(Math.round(row.averageCompletion())),
-                    staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus()
+                    staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()
             };
         }
         return table;
@@ -214,7 +223,7 @@ public class StaffProductivityReport {
         int utilizedStaff = 0;
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
-            if ("Resigned".equalsIgnoreCase(staff.getAvailabilityStatus())) {
+            if (staff.isDeleted() || staff.getAvailabilityStatus() == AvailabilityStatus.RESIGNED) {
                 continue;
             }
             activeStaff++;
@@ -239,19 +248,19 @@ public class StaffProductivityReport {
     }
 
     // a staff is "utilized" when holding at least one active assignment
-    // (assignments finished via "Work Finished" / "Inspected" are terminal
-    // and no longer count as active work)
+    // (assignments finished via COMPLETED / CANCELLED are terminal and no
+    // longer count as active work)
     private boolean isCurrentlyUtilized(Staff staff) {
         for (int i = 0; i < assignmentList.size(); i++) {
             TaskAssignment assignment = assignmentList.get(i);
-            if (assignment.getAssignedStaffId() == null
+            if (assignment.isDeleted() || assignment.getAssignedStaffId() == null
                     || !assignment.getAssignedStaffId().equals(staff.getStaffId())) {
                 continue;
             }
             if (assignment.getStatus() != null && isCompletedStatus(assignment.getStatus())) {
                 continue;
             }
-            if ("Cancelled".equalsIgnoreCase(assignment.getStatus())) {
+            if (assignment.getStatus() == TaskStatus.CANCELLED) {
                 continue;
             }
             return true;
