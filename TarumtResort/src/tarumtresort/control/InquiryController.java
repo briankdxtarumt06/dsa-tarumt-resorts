@@ -22,7 +22,6 @@ import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.report.ReportChart;
 import tarumtresort.report.ReportResult;
 
@@ -148,7 +147,7 @@ public class InquiryController {
         pendingInquiryList.addSorted(newInquiry);
         inquiryDAO.savePendingInquiryList(pendingInquiryList);
 
-        ui.printInquiryDetails(displayInquiryDetails(newInquiry));
+        ui.printInquiryDetails(ui.buildInquiryDetails(newInquiry));
         ui.printSuccess();
     }
 
@@ -163,7 +162,7 @@ public class InquiryController {
         inquiry.setStatus(InquiryStatus.IN_PROGRESS);
         inquiryDAO.savePendingInquiryList(pendingInquiryList);
 
-        ui.printInquiryDetails(displayInquiryDetails(inquiry));
+        ui.printInquiryDetails(ui.buildInquiryDetails(inquiry));
 
         Object extra = retrieveAdditionalInfo(inquiry);
         ui.printAdditionalInfo(inquiry, extra);
@@ -338,15 +337,11 @@ public class InquiryController {
                 return buildRoomAvailabilityInfo(reservation);
 
             case ROOMSERVICE:
-                Task task = housekeepingController.createCleaningTask(
-                        reservation.getRoomId(),
-                        "Housekeeping",
-                        TaskPriority.HIGH,
-                        LocalDateTime.now());
-                if (task != null) {
+                String taskId = housekeepingController.createRoomServiceTask(reservation.getRoomId());
+                if (taskId != null) {
                     resolveInquiry(inquiry);
                 }
-                return task;
+                return housekeepingController.getTaskById(taskId);
 
             default:
                 return null;
@@ -355,10 +350,6 @@ public class InquiryController {
 
     // Inquiry -> Reservation -> Room dependency chain
     private String buildRoomAvailabilityInfo(Reservation reservation) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Reservation Status : ").append(reservation.getStatus()).append("\n");
-        sb.append("Requested Room Type: ").append(reservation.getRoomTypeRequested()).append("\n");
-
         if (reservation.getStatus() == ReservationStatus.WAITING) {
             RoomType type = reservation.getRoomTypeRequested();
             LinkedListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
@@ -368,16 +359,11 @@ public class InquiryController {
                     availableCount++;
                 }
             }
-            sb.append("Available Rooms of this Type: ").append(availableCount)
-              .append(" out of ").append(roomsOfType.size()).append("\n");
+            return ui.buildRoomAvailabilityInfo(reservation, availableCount, roomsOfType.size(), null);
         } else {
             Room room = reservationControl.getRoomById(reservation.getRoomId());
-            if (room != null) {
-                sb.append("Assigned Room No.  : ").append(room.getRoomNumber()).append("\n");
-                sb.append("Room Status        : ").append(room.getRoomStatus()).append("\n");
-            }
+            return ui.buildRoomAvailabilityInfo(reservation, 0, 0, room);
         }
-        return sb.toString();
     }
 
     // IN_PROGRESS -> RESOLVED
@@ -389,21 +375,6 @@ public class InquiryController {
         inquiry.setResolvedTime(LocalDateTime.now());
         resolvedInquiryList.addBack(inquiry);
         inquiryDAO.saveResolvedInquiryList(resolvedInquiryList);
-    }
-
-    private String displayInquiryDetails(Inquiry inquiry) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Inquiry ID       : ").append(inquiry.getInquiryId()).append("\n");
-        sb.append("Confirmation No. : ").append(inquiry.getConfirmationNumber()).append("\n");
-        sb.append("Type             : ").append(inquiry.getInquiryType())
-                .append(" (").append(inquiry.getInquiryType().getPriority()).append(")\n");
-        sb.append("Description      : ").append(inquiry.getDescription()).append("\n");
-        sb.append("Status           : ").append(inquiry.getStatus()).append("\n");
-        sb.append("Created Time     : ").append(inquiry.getCreatedTime()).append("\n");
-        if (inquiry.getResolvedTime() != null) {
-            sb.append("Resolved Time    : ").append(inquiry.getResolvedTime()).append("\n");
-        }
-        return sb.toString();
     }
 
     // convert inquiry list to 2D table

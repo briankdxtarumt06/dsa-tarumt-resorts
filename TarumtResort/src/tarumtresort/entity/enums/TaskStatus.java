@@ -19,6 +19,10 @@ public enum TaskStatus {
             case "IN_PROGRESS" -> IN_PROGRESS;
             case "COMPLETED" -> COMPLETED;
             case "CANCELLED" -> CANCELLED;
+            case "WORK_FINISHED" -> COMPLETED;
+            case "INSPECTED" -> COMPLETED;
+            case "HANDED_OFF" -> IN_PROGRESS;
+            case "PAUSED" -> IN_PROGRESS;
             default -> null;
         };
     }

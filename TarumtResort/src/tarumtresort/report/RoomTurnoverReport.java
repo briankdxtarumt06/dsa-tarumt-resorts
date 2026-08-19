@@ -2,15 +2,13 @@ package tarumtresort.report;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
@@ -18,17 +16,19 @@ import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.TaskStatus;
+import tarumtresort.entity.enums.TaskType;
 import tarumtresort.utility.Ansi;
 
 /**
  *
  * @author Brian
  *
- * Room Turnover &amp; Readiness Report: how fast rooms go from dirty to
+* Room Turnover &amp; Readiness Report: how fast rooms go from dirty to
  * ready, and which rooms are lagging.
  *
- * Dependencies: Room, Task, TaskAssignment, TaskAssignmentChange (4 classes).
- * Filters: date range (task start), task type = Housekeeping.
+ * Dependencies: Room, Task, TaskAssignment, TaskAssignmentChange, Reservation
+ * (5 classes).
+ * Filters: date range (task start).
  *
  * Turnover workflow: the cleaner is given a 60-minute window per task but may
  * finish early ("Completed" / "Work Finished" assignment change); the
@@ -37,30 +37,38 @@ import tarumtresort.utility.Ansi;
  * COMPLETED change of the task. Tasks without a task-level COMPLETED change
  * are still listed with "In progress" as their turnover time.
  *
- * Enum mapping (spec -> model): TURNOVER_CLEAN / CHECKOUT_CLEAN -> "Housekeeping"
- * task type; OUT_OF_ORDER room status -> MAINTENANCE.
+ * Hourly readiness vs. check-in curve: rooms readied per hour (supervisor
+ * sign-off hour) is charted against guest check-ins per hour (reservation
+ * actualCheckInTime hour) over the hotel check-in window (10:00-21:00) so
+ * housekeeping can see whether rooms are ready before arrivals peak.
+ *
+ * Enum mapping (spec -> model): TURNOVER_CLEAN / CHECKOUT_CLEAN ->
+ * TaskType.CHECKOUT_CLEAN; OUT_OF_ORDER room status -> MAINTENANCE.
  */
 public class RoomTurnoverReport {
 
-    // spec's TURNOVER_CLEAN / CHECKOUT_CLEAN task types; the model stores
-    // the free-form type "Housekeeping"
-    private static final String TURNOVER_TASK_TYPE = "Housekeeping";
-
     // rooms are flagged for attention when their last turnover exceeds this
     private static final int ATTENTION_MINUTES = 45;
+
+    // hourly curve window: the hotel check-in window shown on the charts
+    private static final int CURVE_FIRST_HOUR = 10;
+    private static final int CURVE_LAST_HOUR = 21;
 
     private final LinkedListInterface<Room> roomList;
     private final LinkedListInterface<Task> taskList;
     private final LinkedListInterface<TaskAssignment> assignmentList;
     private final LinkedListInterface<TaskAssignmentChange> changeList;
+    private final LinkedListInterface<Reservation> reservationList;
 
     public RoomTurnoverReport(LinkedListInterface<Room> roomList,
             LinkedListInterface<Task> taskList, LinkedListInterface<TaskAssignment> assignmentList,
-            LinkedListInterface<TaskAssignmentChange> changeList) {
+            LinkedListInterface<TaskAssignmentChange> changeList,
+            LinkedListInterface<Reservation> reservationList) {
         this.roomList = roomList == null ? new LinkedList<>() : roomList;
         this.taskList = taskList == null ? new LinkedList<>() : taskList;
         this.assignmentList = assignmentList == null ? new LinkedList<>() : assignmentList;
         this.changeList = changeList == null ? new LinkedList<>() : changeList;
+        this.reservationList = reservationList == null ? new LinkedList<>() : reservationList;
     }
 
     /**
@@ -68,7 +76,7 @@ public class RoomTurnoverReport {
      */
     public ReportResult generate(LocalDateTime from, LocalDateTime to) {
 
-        List<TaskRow> rows = new ArrayList<>();
+        LinkedListInterface<TaskRow> rows = new LinkedList<>();
         Set<String> trackedRooms = new LinkedHashSet<>();
         int completedCount = 0;
 
@@ -76,7 +84,7 @@ public class RoomTurnoverReport {
             Task task = taskList.get(i);
 
             // filter: only turnover/cleaning tasks started within the period
-            if (task.getTaskType() == null || !TURNOVER_TASK_TYPE.equalsIgnoreCase(task.getTaskType())) {
+            if (task.isDeleted() || task.getTaskType() != TaskType.CHECKOUT_CLEAN) {
                 continue;
             }
             if (!inRange(task.getStartDateTime(), from, to)) {
@@ -96,13 +104,13 @@ public class RoomTurnoverReport {
             if (task.getRoomId() != null) {
                 trackedRooms.add(task.getRoomId());
             }
-            rows.add(row);
+            rows.addBack(row);
         }
 
         return new ReportResult(
                 toTable(rows),
                 summary(rows.size(), trackedRooms.size(), completedCount),
-                buildCharts(rows),
+                buildCharts(rows, from, to),
                 buildCallouts(rows));
     }
 
@@ -185,7 +193,8 @@ public class RoomTurnoverReport {
                 continue;
             }
             if (assignment.getAssignedStaffId() == null
-                    || "Cancelled".equalsIgnoreCase(assignment.getStatus())) {
+                    || assignment.getStatus() == TaskStatus.CANCELLED
+                    || assignment.isDeleted()) {
                 continue;
             }
             if (latest == null || isAfter(assignment, latest)) {
@@ -201,7 +210,7 @@ public class RoomTurnoverReport {
                         || candidate.getDateTimeAssigned().isAfter(current.getDateTimeAssigned()));
     }
 
-    private String[][] toTable(List<TaskRow> rows) {
+    private String[][] toTable(LinkedListInterface<TaskRow> rows) {
         String[][] table = new String[rows.size() + 1][7];
         table[0] = new String[] { "Room ID", "Room No.", "Room Type", "Current Status",
                 "Last Task Status", "Turnover Time (min)", "Assigned Staff ID" };
@@ -233,8 +242,8 @@ public class RoomTurnoverReport {
         };
     }
 
-    private List<ReportChart> buildCharts(List<TaskRow> rows) {
-        List<ReportChart> charts = new ArrayList<>();
+    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<TaskRow> rows, LocalDateTime from, LocalDateTime to) {
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
 
         // chart 1: average turnover time by room type (completed tasks only)
         ReportChart chart1 = new ReportChart("Average Turnover Time by Room Type (min)");
@@ -254,7 +263,7 @@ public class RoomTurnoverReport {
                 chart1.addBar(type.name(), avg, "(" + acc[1] + " task" + (acc[1] == 1 ? "" : "s") + ")");
             }
         }
-        charts.add(chart1);
+        charts.addBack(chart1);
 
         // chart 2: room status distribution across all tracked rooms
         ReportChart chart2 = new ReportChart("Room Status Distribution");
@@ -272,36 +281,84 @@ public class RoomTurnoverReport {
                 chart2.addBar(status.name(), count, "(room" + (count == 1 ? "" : "s") + ")");
             }
         }
-        charts.add(chart2);
+        charts.addBack(chart2);
+
+        // chart 3 & 4: hourly room readiness rate vs guest check-in arrival
+        // curve over the check-in window (both share the same hour axis so
+        // readiness can be compared directly against arrivals)
+        int[] readyByHour = new int[24];
+        for (TaskRow row : rows) {
+            if (row.completedAt == null || !inRange(row.completedAt, from, to)) {
+                continue;
+            }
+            readyByHour[row.completedAt.getHour()]++;
+        }
+        int[] checkInByHour = new int[24];
+        for (int i = 0; i < reservationList.size(); i++) {
+            Reservation reservation = reservationList.get(i);
+            if (reservation.getTimestamps() == null
+                    || reservation.getTimestamps().getActualCheckInTime() == null) {
+                continue;
+            }
+            LocalDateTime checkIn = reservation.getTimestamps().getActualCheckInTime();
+            if (!inRange(checkIn, from, to)) {
+                continue;
+            }
+            checkInByHour[checkIn.getHour()]++;
+        }
+
+        ReportChart chart3 = new ReportChart("Rooms Readied per Hour (" + CURVE_FIRST_HOUR + ":00-" + CURVE_LAST_HOUR + ":00)");
+        ReportChart chart4 = new ReportChart("Guest Check-ins per Hour (" + CURVE_FIRST_HOUR + ":00-" + CURVE_LAST_HOUR + ":00)");
+        boolean readyAny = false;
+        boolean checkInAny = false;
+        for (int h = CURVE_FIRST_HOUR; h <= CURVE_LAST_HOUR; h++) {
+            int ready = readyByHour[h];
+            if (ready > 0) {
+                readyAny = true;
+            }
+            chart3.addBar(String.format("%02d", h), ready,
+                    ready == 0 ? "(0)" : "(" + ready + " room" + (ready == 1 ? "" : "s") + ")");
+            int checkIn = checkInByHour[h];
+            if (checkIn > 0) {
+                checkInAny = true;
+            }
+            chart4.addBar(String.format("%02d", h), checkIn,
+                    checkIn == 0 ? "(0)" : "(" + checkIn + " guest" + (checkIn == 1 ? "" : "s") + ")");
+        }
+        if (readyAny) {
+            charts.addBack(chart3);
+        }
+        if (checkInAny) {
+            charts.addBack(chart4);
+        }
 
         return charts;
     }
 
-    private List<String> buildCallouts(List<TaskRow> rows) {
-        List<String> callouts = new ArrayList<>();
+    private LinkedListInterface<String> buildCallouts(LinkedListInterface<TaskRow> rows) {
+        LinkedListInterface<String> callouts = new LinkedList<>();
 
         // callout 1: fastest turnovers (top 3 by turnover time ascending)
-        List<TaskRow> completed = new ArrayList<>();
+        LinkedListInterface<TaskRow> completed = new LinkedList<>();
         for (TaskRow row : rows) {
             if (row.turnoverMinutes != null) {
-                completed.add(row);
+                completed.addSorted(row);
             }
         }
-        Collections.sort(completed, (a, b) -> Long.compare(a.turnoverMinutes, b.turnoverMinutes));
 
-        callouts.add(Ansi.green(Ansi.bold("◆ Fastest Turnovers (top 3)")));
+        callouts.addBack(Ansi.green(Ansi.bold("◆ Fastest Turnovers (top 3)")));
         if (completed.isEmpty()) {
-            callouts.add(Ansi.green("  (no completed turnovers in range)"));
+            callouts.addBack(Ansi.green("  (no completed turnovers in range)"));
         } else {
             for (int i = 0; i < Math.min(3, completed.size()); i++) {
                 TaskRow row = completed.get(i);
-                callouts.add(Ansi.green("  " + (i + 1) + ". " + roomLabel(row) + " - "
+                callouts.addBack(Ansi.green("  " + (i + 1) + ". " + roomLabel(row) + " - "
                         + row.turnoverMinutes + " min (" + row.task.getTaskId() + ")"));
             }
         }
 
         // callout 2: rooms requiring attention (out of order or > 45 min)
-        callouts.add(Ansi.red(Ansi.bold("⚠ Rooms Requiring Attention")));
+        callouts.addBack(Ansi.red(Ansi.bold("⚠ Rooms Requiring Attention")));
         boolean any = false;
         for (TaskRow row : rows) {
             boolean outOfOrder = row.room != null && row.room.getRoomStatus() == RoomStatus.MAINTENANCE;
@@ -312,10 +369,10 @@ public class RoomTurnoverReport {
             any = true;
             String reason = outOfOrder ? "OUT OF ORDER"
                     : row.turnoverMinutes + " min turnover (> " + ATTENTION_MINUTES + ")";
-            callouts.add(Ansi.red("  ⚠ " + roomLabel(row) + " - " + reason));
+            callouts.addBack(Ansi.red("  ⚠ " + roomLabel(row) + " - " + reason));
         }
         if (!any) {
-            callouts.add(Ansi.red("  (none)"));
+            callouts.addBack(Ansi.red("  (none)"));
         }
 
         return callouts;
@@ -331,7 +388,7 @@ public class RoomTurnoverReport {
         return row.room.getRoomId() + " (" + roomNumber + " " + roomType + ")";
     }
 
-    private static class TaskRow {
+    private static class TaskRow implements Comparable<TaskRow> {
         final Task task;
         Room room;
         LocalDateTime completedAt;
@@ -340,6 +397,21 @@ public class RoomTurnoverReport {
 
         TaskRow(Task task) {
             this.task = task;
+        }
+
+        @Override
+        public int compareTo(TaskRow other) {
+            if (turnoverMinutes == null && other.turnoverMinutes == null) {
+                return 0;
+            }
+            if (turnoverMinutes == null) {
+                return 1;
+            }
+            if (other.turnoverMinutes == null) {
+                return -1;
+            }
+            int c = Long.compare(turnoverMinutes, other.turnoverMinutes);
+            return c != 0 ? c : task.getTaskId().compareToIgnoreCase(other.task.getTaskId());
         }
     }
 }

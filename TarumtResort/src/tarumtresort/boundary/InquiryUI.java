@@ -4,9 +4,12 @@ import java.util.Scanner;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Payment;
+import tarumtresort.entity.Reservation;
+import tarumtresort.entity.Room;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
+import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.report.ReportResult;
@@ -118,6 +121,38 @@ public class InquiryUI {
         System.out.println(details);
     }
 
+    public String buildInquiryDetails(Inquiry inquiry) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Inquiry ID       : ").append(inquiry.getInquiryId()).append("\n");
+        sb.append("Confirmation No. : ").append(inquiry.getConfirmationNumber()).append("\n");
+        sb.append("Type             : ").append(inquiry.getInquiryType())
+                .append(" (").append(inquiry.getInquiryType().getPriority()).append(")\n");
+        sb.append("Description      : ").append(inquiry.getDescription()).append("\n");
+        sb.append("Status           : ").append(inquiry.getStatus()).append("\n");
+        sb.append("Created Time     : ").append(inquiry.getCreatedTime()).append("\n");
+        if (inquiry.getResolvedTime() != null) {
+            sb.append("Resolved Time    : ").append(inquiry.getResolvedTime()).append("\n");
+        }
+        return sb.toString();
+    }
+
+    public String buildRoomAvailabilityInfo(Reservation reservation, int availableCount, int totalRooms, Room assignedRoom) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Reservation Status : ").append(reservation.getStatus()).append("\n");
+        sb.append("Requested Room Type: ").append(reservation.getRoomTypeRequested()).append("\n");
+
+        if (reservation.getStatus() == ReservationStatus.WAITING) {
+            sb.append("Available Rooms of this Type: ").append(availableCount)
+              .append(" out of ").append(totalRooms).append("\n");
+        } else {
+            if (assignedRoom != null) {
+                sb.append("Assigned Room No.  : ").append(assignedRoom.getRoomNumber()).append("\n");
+                sb.append("Room Status        : ").append(assignedRoom.getRoomStatus()).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
     public void printAdditionalInfo(Inquiry inquiry, Object extra) {
         System.out.println("\n--- Additional Information ---");
 
@@ -149,6 +184,10 @@ public class InquiryUI {
             System.out.println("Payment Method : " + payment.getPaymentMethod());
             System.out.println("Payment Status : " + payment.getPaymentStatus());
             System.out.println("Payment Date   : " + payment.getPaymentDateTime());
+            if (payment.getRefundedAmount() > 0) {
+                System.out.println("Refunded Amount: RM " + String.format("%.2f", payment.getRefundedAmount()));
+                System.out.println("Refund Date    : " + payment.getRefundDateTime());
+            }
         } else if (extra instanceof Task) {
             Task task = (Task) extra;
             System.out.println("Housekeeping Task Created: " + task.getTaskId());

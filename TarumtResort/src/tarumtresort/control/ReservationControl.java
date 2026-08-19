@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.PaymentUI;
@@ -65,6 +64,7 @@ public class ReservationControl {
     // Controller
     private PaymentControl paymentControl = new PaymentControl();
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
+    private HousekeepingController housekeepingController = new HousekeepingController();
 
     // Constructors
     public ReservationControl() {
@@ -978,7 +978,7 @@ public class ReservationControl {
             r.setStatus(ReservationStatus.CHECKED_OUT);
             r.getTimestamps().setActualCheckOutTime(now);
             updateRoomStatus(r.getRoomId(), RoomStatus.CLEANING);
-            // TODO: call Brian's cleaning function.
+            housekeepingController.createCheckoutTask(r.getRoomId());
         }
 
         reservationDAO.saveAssignedList(assignedList);
