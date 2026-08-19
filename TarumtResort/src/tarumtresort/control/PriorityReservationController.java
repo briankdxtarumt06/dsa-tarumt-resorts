@@ -20,7 +20,7 @@ public class PriorityReservationController {
 
     // DAO
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
-    private ReservationDAOV2 reservationDAO = new ReservationDAOV2();
+    private ReservationDAO reservationDAO = new ReservationDAO();
     private StaffDAO staffDAO = new StaffDAO();
 
     // Controllers
