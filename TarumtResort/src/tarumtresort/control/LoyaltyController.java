@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.MemberManagementUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.PointsManagementUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.RewardManagementUI;
@@ -18,6 +19,7 @@ import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
+import tarumtresort.utility.ConsoleUtil;
 
 /**
  * Combined controller for the loyalty module: member management, reward
@@ -38,6 +40,9 @@ public class LoyaltyController {
     private MemberManagementUI memberUI;
     private RewardManagementUI rewardUI;
     private PointsManagementUI pointsUI;
+    private LoyaltyRewardsUI moduleUI;
+
+    private static final int PAGE_SIZE = 20;
 
     public LoyaltyController() {
         this(new Scanner(System.in));
@@ -50,178 +55,495 @@ public class LoyaltyController {
         memberUI = new MemberManagementUI(scanner);
         rewardUI = new RewardManagementUI(scanner);
         pointsUI = new PointsManagementUI(scanner);
+        moduleUI = new LoyaltyRewardsUI(scanner);
         reconcileTiersOnLoad();
+    }
+
+    // entry point for the loyalty module (mirrors HousekeepingController.runHousekeeping)
+    public void run() {
+        try {
+            ConsoleUtil.clearScreen();
+            int choice;
+
+            do {
+                choice = moduleUI.getMenuChoice();
+
+                switch (choice) {
+                    case 1:
+                        runMemberMenu();
+                        break;
+                    case 2:
+                        runRewardMenu();
+                        break;
+                    case 3:
+                        runPointsMenu();
+                        break;
+                    case 0:
+                        System.out.println("\n  Returning to main menu...");
+                        break;
+                    default:
+                        System.out.println("\n  ✗ Invalid choice! Please try again.");
+                }
+            } while (choice != 0);
+        } catch (Exception e) {
+            ConsoleUtil.printError("An unexpected error occurred in Loyalty & Rewards module: " + e.getMessage());
+        }
     }
 
     // ======================= MENU ENTRY POINTS =======================
 
-    /** Member management menu (was MemberController.run). */
+    /** Member management list page (mirrors HousekeepingController.runStaffManagement). */
     public void runMemberMenu() {
-        int choice;
-        do {
-            choice = memberUI.getMenuChoice();
-            switch (choice) {
-                case 1:
-                    addMemberFlow();
-                    break;
-                case 2:
-                    updateMemberFlow();
-                    break;
-                case 3:
-                    removeMemberFlow();
-                    break;
-                case 4:
-                    listMembersFlow();
-                    break;
-                case 0:
-                    memberUI.showMessage("Returning to main menu...");
-                    break;
-                default:
-                    memberUI.showError("Invalid choice. Please enter 1 - 4 or 0 to exit.");
+        String tierFilter = null;
+        int page = 0;
+
+        while (true) {
+            LinkedListInterface<Member> display;
+            if (tierFilter != null) {
+                display = getMembersByTier(tierFilter);
+            } else {
+                display = memberList;
             }
-        } while (choice != 0);
+
+            boolean hasFilter = tierFilter != null;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1; // clamp after the list shrank
+            }
+
+            LinkedListInterface<Member> pageList = pageOf(display, page);
+            int choice = memberUI.printMemberListMenu(pageList, page, pageCount, hasFilter, this::findGuest);
+
+            if (choice == 0) {
+                break;
+            }
+
+            int action = 1;
+            if (choice == action++) { // 1. View Details
+                viewMember(pageList);
+            } else if (choice == action++) { // 2. Filter by Tier
+                String tier = memberUI.inputTierFilter();
+                if (tier != null) {
+                    tierFilter = tier;
+                    page = 0;
+                }
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page++;
+                    }
+                }
+                if (!matched && page > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page--;
+                    }
+                }
+                if (!matched && hasFilter) { // Clear Filter
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        tierFilter = null;
+                        page = 0;
+                    }
+                }
+            }
+        }
     }
 
-    /** Reward catalogue menu (was RewardController.run). */
+    // view flow: pick a member from the current page, then run its action menu
+    private void viewMember(LinkedListInterface<Member> pageList) {
+        if (pageList.isEmpty()) {
+            memberUI.showMessage("(No member records)");
+            return;
+        }
+        int num = memberUI.inputListIndex("member", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        Member member = pageList.get(num - 1);
+        if (member != null) {
+            handleMemberActions(member);
+        }
+    }
+
+    // select-entity action loop for one member: details -> action -> details
+    private void handleMemberActions(Member member) {
+        while (true) {
+            memberUI.displayProfile(member, findGuest(member.getGuestId()));
+
+            int action = memberUI.getMemberActionChoice();
+            if (action == 0) {
+                return;
+            }
+
+            switch (action) {
+                case 1: // Update Member Tier
+                    memberUI.show("Current tier: " + member.getTier());
+                    Tier tier = memberUI.selectTier();
+                    if (tier != null) {
+                        memberUI.showMessage(updateMember(member.getMemberId(), tier));
+                    }
+                    break;
+                case 2: // Remove Member
+                    memberUI.showMessage(removeMember(member.getMemberId()));
+                    return; // member is gone; back to the list
+                default:
+                    break;
+            }
+
+            member = findMember(member.getMemberId()); // re-read so details stay fresh
+            if (member == null) {
+                return;
+            }
+        }
+    }
+
+    public LinkedListInterface<Member> getMembersByTier(String tier) {
+        LinkedListInterface<Member> filteredList = new LinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            Member member = memberList.get(i);
+            if (member.getTier() != null && member.getTier().name().equalsIgnoreCase(tier)) {
+                filteredList.addBack(member);
+            }
+        }
+        return filteredList;
+    }
+
+    // the rows of one page (PAGE_SIZE at most), starting at page * PAGE_SIZE
+    private <T extends Comparable<T>> LinkedList<T> pageOf(LinkedListInterface<T> list, int page) {
+        LinkedList<T> result = new LinkedList<>();
+        int start = page * PAGE_SIZE;
+        int end = Math.min(list.size(), start + PAGE_SIZE);
+        for (int i = start; i < end; i++) {
+            result.addBack(list.get(i));
+        }
+        return result;
+    }
+
+    /** Reward catalogue list page (mirrors HousekeepingController.runTaskManagement). */
     public void runRewardMenu() {
-        int choice;
-        do {
-            choice = rewardUI.getMenuChoice();
-            switch (choice) {
-                case 1:
-                    addRewardFlow();
-                    break;
-                case 2:
-                    removeRewardFlow();
-                    break;
-                case 3:
-                    updateRewardFlow();
-                    break;
-                case 4:
-                    rewardUI.displayRewards(rewardList);
-                    rewardUI.pause();
-                    break;
-                case 0:
-                    rewardUI.showMessage("Returning to main menu...");
-                    break;
-                default:
-                    rewardUI.showError("Invalid choice. Please enter 1 - 4 or 0 to exit.");
+        String nameFilter = null;
+        int page = 0;
+
+        while (true) {
+            LinkedListInterface<Reward> display;
+            if (nameFilter != null) {
+                display = getRewardsByName(nameFilter);
+            } else {
+                display = rewardList;
             }
-        } while (choice != 0);
+
+            boolean hasFilter = nameFilter != null;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1; // clamp after the list shrank
+            }
+
+            LinkedListInterface<Reward> pageList = pageOf(display, page);
+            int choice = rewardUI.printRewardListMenu(pageList, page, pageCount, hasFilter);
+
+            if (choice == 0) {
+                break;
+            }
+
+            int action = 1;
+            if (choice == action++) { // 1. View Details
+                viewReward(pageList);
+            } else if (choice == action++) { // 2. Add New Reward
+                addRewardFlow();
+            } else if (choice == action++) { // 3. Filter by Name
+                String keyword = rewardUI.inputNameKeyword();
+                if (keyword != null) {
+                    nameFilter = keyword;
+                    page = 0;
+                }
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page++;
+                    }
+                }
+                if (!matched && page > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page--;
+                    }
+                }
+                if (!matched && hasFilter) { // Clear Filter
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        nameFilter = null;
+                        page = 0;
+                    }
+                }
+            }
+        }
     }
 
-    /** Points, redemption and notification menu (was PointsController.run). */
+    // view flow: pick a reward from the current page, then run its action menu
+    private void viewReward(LinkedListInterface<Reward> pageList) {
+        if (pageList.isEmpty()) {
+            rewardUI.showMessage("(No rewards in the catalogue)");
+            return;
+        }
+        int num = rewardUI.inputListIndex("reward", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        Reward reward = pageList.get(num - 1);
+        if (reward != null) {
+            handleRewardActions(reward);
+        }
+    }
+
+    // select-entity action loop for one reward: details -> action -> details
+    private void handleRewardActions(Reward reward) {
+        while (true) {
+            rewardUI.displayRewardDetails(reward);
+
+            int action = rewardUI.getRewardActionChoice();
+            if (action == 0) {
+                return;
+            }
+
+            switch (action) {
+                case 1: // Update Reward
+                    updateRewardPrompt(reward);
+                    break;
+                case 2: // Remove Reward
+                    rewardUI.showMessage(removeReward(reward.getRewardId()));
+                    return; // reward is gone; back to the list
+                default:
+                    break;
+            }
+
+            reward = findReward(reward.getRewardId()); // re-read so details stay fresh
+            if (reward == null) {
+                return;
+            }
+        }
+    }
+
+    private void updateRewardPrompt(Reward reward) {
+        String name = rewardUI.promptWithDefault("New name", reward.getName());
+        if (name == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        String description = rewardUI.promptWithDefault("New description", reward.getDescription());
+        if (description == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        Integer cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
+        if (cost == null) {
+            rewardUI.showMessage("Operation cancelled.");
+            return;
+        }
+        rewardUI.showMessage(updateReward(reward.getRewardId(), name, description, cost));
+    }
+
+    public LinkedListInterface<Reward> getRewardsByName(String keyword) {
+        LinkedListInterface<Reward> filteredList = new LinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {
+            Reward reward = rewardList.get(i);
+            if (reward.getName() != null
+                    && reward.getName().toLowerCase().contains(keyword.toLowerCase())) {
+                filteredList.addBack(reward);
+            }
+        }
+        return filteredList;
+    }
+
+    /** Points, redemption and notification list page (mirrors HousekeepingController.runAssignmentManagement). */
     public void runPointsMenu() {
         String alert = generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
             pointsUI.show(alert);
         }
-        int choice;
-        do {
-            choice = pointsUI.getMenuChoice();
-            switch (choice) {
-                case 1:
-                    viewBalanceFlow();
-                    break;
-                case 2:
-                    earnPointsFlow();
-                    break;
-                case 3:
-                    requestRedemptionFlow();
-                    break;
-                case 4:
-                    runExpiryCheckFlow();
-                    break;
-                case 5:
-                    viewHistoryFlow();
-                    break;
-                case 6:
-                    viewTierProgressFlow();
-                    break;
-                case 7:
-                    pointsUI.showMessage(generateExpiryAlerts(LocalDateTime.now()));
-                    break;
-                case 8:
-                    viewNotificationsFlow();
-                    break;
-                case 9:
-                    processRedemptionRequestsFlow();
-                    break;
-                case 0:
-                    pointsUI.showMessage("Returning to main menu...");
-                    break;
-                default:
-                    pointsUI.showError("Invalid choice. Please enter 1 - 9 or 0 to exit.");
+        String tierFilter = null;
+        int page = 0;
+
+        while (true) {
+            LinkedListInterface<Member> display;
+            if (tierFilter != null) {
+                display = getMembersByTier(tierFilter);
+            } else {
+                display = memberList;
             }
-        } while (choice != 0);
-    }
 
-    // ======================= MEMBER MANAGEMENT =======================
+            boolean hasFilter = tierFilter != null;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1; // clamp after the list shrank
+            }
 
-    private void addMemberFlow() {
-        String guestId = generateGuestId();
-        Member member = memberUI.inputNewMember(nextMemberId(), guestId);
-        if (member == null) {
-            memberUI.showMessage("Operation cancelled.");
-            return;
-        }
-        memberUI.showMessage(addMember(member));
-    }
+            LinkedListInterface<Member> pageList = pageOf(display, page);
+            int choice = pointsUI.printPointsListMenu(pageList, page, pageCount, hasFilter,
+                    this::findGuest, m -> getAvailableBalance(m.getMemberId(), LocalDateTime.now()));
 
-    // scan the loaded guest list for the highest "GSTxxx" id, malformed ids are skipped
-    private String generateGuestId() {
-        int max = 0;
-        for (int i = 0; i < guestList.size(); i++) {
-            String guestId = guestList.get(i).getGuestId();
-            if (guestId != null && guestId.startsWith("GST")) {
-                try {
-                    int number = Integer.parseInt(guestId.substring(3));
-                    if (number > max) {
-                        max = number;
+            if (choice == 0) {
+                break;
+            }
+
+            int action = 1;
+            if (choice == action++) { // 1. View Details
+                viewMemberPoints(pageList);
+            } else if (choice == action++) { // 2. Earn Points
+                earnPointsFlow(pageList);
+            } else if (choice == action++) { // 3. Request Redemption
+                requestRedemptionFlow(pageList);
+            } else if (choice == action++) { // 4. Process Redemption Requests
+                processRedemptionRequestsFlow();
+            } else if (choice == action++) { // 5. Generate Expiry Alerts
+                pointsUI.showMessage(generateExpiryAlerts(LocalDateTime.now()));
+            } else if (choice == action++) { // 6. Filter by Tier
+                String tier = pointsUI.inputTierFilter();
+                if (tier != null) {
+                    tierFilter = tier;
+                    page = 0;
+                }
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) { // Next Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page++;
                     }
-                } catch (NumberFormatException ignored) {
+                }
+                if (!matched && page > 0) { // Previous Page
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        page--;
+                    }
+                }
+                if (!matched && hasFilter) { // Clear Filter
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        tierFilter = null;
+                        page = 0;
+                    }
                 }
             }
         }
-        return String.format("GST%03d", max + 1);
     }
 
-    private void updateMemberFlow() {
-        String memberId = memberUI.selectMember(memberList, "Select a member to update");
+    // view flow: pick a member from the current page, then run its points action menu
+    private void viewMemberPoints(LinkedListInterface<Member> pageList) {
+        String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
         }
         Member member = findMember(memberId);
-        memberUI.show("Current tier: " + member.getTier());
-        Tier tier = memberUI.selectTier();
-        if (tier == null) {
-            return;
+        if (member != null) {
+            handleMemberPointsActions(member);
         }
-        memberUI.showMessage(updateMember(memberId, tier));
     }
 
-    private void removeMemberFlow() {
-        String memberId = memberUI.selectMember(memberList, "Select a member to remove");
-        if (memberId == null) {
-            return;
-        }
-        memberUI.showMessage(removeMember(memberId));
-    }
-
-    /** Paginated member list; selecting a member opens its full profile. */
-    private void listMembersFlow() {
+    // select-entity action loop for one member's points: balance -> action -> balance
+    private void handleMemberPointsActions(Member member) {
         while (true) {
-            String memberId = memberUI.displayMembersPaginated(memberList, this::findGuest);
-            if (memberId == null) {
+            pointsUI.displayBalance(member, getAvailableBalance(member.getMemberId(), LocalDateTime.now()));
+
+            int action = pointsUI.getMemberPointsActionChoice();
+            if (action == 0) {
                 return;
             }
-            Member member = findMember(memberId);
-            if (member == null) {
-                continue;
+
+            switch (action) {
+                case 1: // Run Expiry Check
+                    pointsUI.showMessage(expirePoints(member.getMemberId(), LocalDateTime.now()));
+                    break;
+                case 2: // View Transaction History
+                    pointsUI.displayTransactions(getTransactions(member.getMemberId()));
+                    pointsUI.pause();
+                    break;
+                case 3: // View Tier Progression
+                    pointsUI.showMessage(getTierProgress(member.getMemberId()));
+                    break;
+                case 4: // View Notifications
+                    viewMemberNotifications(member);
+                    break;
+                default:
+                    break;
             }
-            memberUI.displayProfile(member, findGuest(member.getGuestId()));
-            memberUI.pause();
+
+            member = findMember(member.getMemberId()); // re-read so balance stays fresh
+            if (member == null) {
+                return;
+            }
         }
+    }
+
+    private void viewMemberNotifications(Member member) {
+        if (member.getGuestId() == null) {
+            pointsUI.showMessage("Member has no guest account linked.");
+            return;
+        }
+        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+        pointsUI.displayNotifications(list);
+        if (pointsUI.confirmMarkAllRead()) {
+            for (int i = 0; i < list.size(); i++) {
+                markNotificationRead(list.get(i).getNotificationId());
+            }
+            pointsUI.show("All notifications marked as read.");
+        }
+        pointsUI.pause();
+    }
+
+    // pick a member by its on-screen number from the current page (0 = cancel)
+    private String pickMemberFromPage(LinkedListInterface<Member> pageList) {
+        if (pageList.isEmpty()) {
+            pointsUI.showMessage("(No member records)");
+            return null;
+        }
+        int num = pointsUI.inputListIndex("member", pageList.size());
+        if (num == 0) {
+            return null;
+        }
+        Member member = pageList.get(num - 1);
+        return member == null ? null : member.getMemberId();
+    }
+
+    // ======================= MEMBER MANAGEMENT =======================
+
+    /** Registers an existing guest as a member (called from Guest Management). */
+    public String registerMember(Guest guest) {
+        if (guest == null || guest.getGuestId() == null) {
+            return "Guest cannot be null and must have an id.";
+        }
+        Member existing = findMemberByGuestId(guest.getGuestId());
+        if (existing != null) {
+            return "This guest is already registered as member: " + existing.getMemberId() + ".";
+        }
+        Member member = new Member(nextMemberId(), 0, Tier.SILVER, LocalDateTime.now(), guest.getGuestId());
+        memberList.addSorted(member);
+        persistMembers();
+        return "Guest " + guest.getName() + " registered as member " + member.getMemberId()
+                + " (Tier: " + member.getTier() + ").";
+    }
+
+    public Member findMemberByGuestId(String guestId) {
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (m.getGuestId() != null && m.getGuestId().equals(guestId)) {
+                return m;
+            }
+        }
+        return null;
     }
 
     public LinkedListInterface<Member> getMembers() {
@@ -235,18 +557,6 @@ public class LoyaltyController {
             }
         }
         return null;
-    }
-
-    public String addMember(Member member) {
-        if (member == null || member.getMemberId() == null) {
-            return "Member cannot be null and must have an id.";
-        }
-        if (findMember(member.getMemberId()) != null) {
-            return "Member id already exists: " + member.getMemberId();
-        }
-        memberList.addSorted(member);
-        persistMembers();
-        return "Member added: " + member.getMemberId() + " (Tier: " + member.getTier() + ").";
     }
 
     public String removeMember(String memberId) {
@@ -305,38 +615,6 @@ public class LoyaltyController {
             return;
         }
         rewardUI.showMessage(addReward(reward));
-    }
-
-    private void removeRewardFlow() {
-        String rewardId = rewardUI.selectRewardId(rewardList, "Select a reward to remove");
-        if (rewardId == null) {
-            return;
-        }
-        rewardUI.showMessage(removeReward(rewardId));
-    }
-
-    private void updateRewardFlow() {
-        String rewardId = rewardUI.selectRewardId(rewardList, "Select a reward to update");
-        if (rewardId == null) {
-            return;
-        }
-        Reward reward = findReward(rewardId);
-        String name = rewardUI.promptWithDefault("New name", reward.getName());
-        if (name == null) {
-            rewardUI.showMessage("Operation cancelled.");
-            return;
-        }
-        String description = rewardUI.promptWithDefault("New description", reward.getDescription());
-        if (description == null) {
-            rewardUI.showMessage("Operation cancelled.");
-            return;
-        }
-        Integer cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
-        if (cost == null) {
-            rewardUI.showMessage("Operation cancelled.");
-            return;
-        }
-        rewardUI.showMessage(updateReward(rewardId, name, description, cost));
     }
 
     public LinkedListInterface<Reward> getRewards() {
@@ -438,18 +716,8 @@ public class LoyaltyController {
         }
     }
 
-    private void viewBalanceFlow() {
-        String memberId = pointsUI.selectMember(memberList);
-        if (memberId == null) {
-            return;
-        }
-        Member member = findMember(memberId);
-        pointsUI.displayBalance(member, getAvailableBalance(memberId, LocalDateTime.now()));
-        pointsUI.pause();
-    }
-
-    private void earnPointsFlow() {
-        String memberId = pointsUI.selectMember(memberList);
+    private void earnPointsFlow(LinkedListInterface<Member> pageList) {
+        String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
         }
@@ -466,8 +734,8 @@ public class LoyaltyController {
         pointsUI.showMessage(earnPoints(memberId, amount, description, LocalDateTime.now()));
     }
 
-    private void requestRedemptionFlow() {
-        String memberId = pointsUI.selectMember(memberList);
+    private void requestRedemptionFlow(LinkedListInterface<Member> pageList) {
+        String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
         }
@@ -476,52 +744,6 @@ public class LoyaltyController {
             return;
         }
         pointsUI.showMessage(requestRedemption(memberId, rewardId, LocalDateTime.now()));
-    }
-
-    private void runExpiryCheckFlow() {
-        String memberId = pointsUI.selectMember(memberList);
-        if (memberId == null) {
-            return;
-        }
-        pointsUI.showMessage(expirePoints(memberId, LocalDateTime.now()));
-    }
-
-    private void viewHistoryFlow() {
-        String memberId = pointsUI.selectMember(memberList);
-        if (memberId == null) {
-            return;
-        }
-        pointsUI.displayTransactions(getTransactions(memberId));
-        pointsUI.pause();
-    }
-
-    private void viewTierProgressFlow() {
-        String memberId = pointsUI.selectMember(memberList);
-        if (memberId == null) {
-            return;
-        }
-        pointsUI.showMessage(getTierProgress(memberId));
-    }
-
-    private void viewNotificationsFlow() {
-        String memberId = pointsUI.selectMember(memberList);
-        if (memberId == null) {
-            return;
-        }
-        Member member = findMember(memberId);
-        if (member == null || member.getGuestId() == null) {
-            pointsUI.showMessage("Member has no guest account linked.");
-            return;
-        }
-        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
-        pointsUI.displayNotifications(list);
-        if (pointsUI.confirmMarkAllRead()) {
-            for (int i = 0; i < list.size(); i++) {
-                markNotificationRead(list.get(i).getNotificationId());
-            }
-            pointsUI.show("All notifications marked as read.");
-        }
-        pointsUI.pause();
     }
 
     private void processRedemptionRequestsFlow() {

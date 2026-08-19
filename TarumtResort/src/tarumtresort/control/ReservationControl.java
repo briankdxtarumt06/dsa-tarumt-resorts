@@ -196,6 +196,10 @@ public class ReservationControl {
                     reservationUI.pressEnterToContinue();
                     System.err.println();
                     break;
+                case 2:
+                    System.out.println("\n  " + new LoyaltyController().registerMember(guest));
+                    reservationUI.pressEnterToContinue();
+                    break;
                 default:
                     break;
             }

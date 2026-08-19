@@ -37,28 +37,12 @@ public class LoyaltyRewardsUI {
     }
 
     public void run() {
-        int choice;
-        do {
-            printMenu();
-            choice = getIntInput("Enter choice (0-3): ", 0, 3);
+        new LoyaltyController(scanner).run();
+    }
 
-            switch (choice) {
-                case 1:
-                    new LoyaltyController(scanner).runMemberMenu();
-                    break;
-                case 2:
-                    new LoyaltyController(scanner).runRewardMenu();
-                    break;
-                case 3:
-                    new LoyaltyController(scanner).runPointsMenu();
-                    break;
-                case 0:
-                    System.out.println("\n  Returning to main menu...");
-                    break;
-                default:
-                    System.out.println("\n  ✗ Invalid choice! Please try again.");
-            }
-        } while (choice != 0);
+    public int getMenuChoice() {
+        printMenu();
+        return getIntInput("Enter choice (0-3): ", 0, 3);
     }
 
     private void printMenu() {
@@ -118,153 +102,134 @@ public class LoyaltyRewardsUI {
             this.scanner = scanner;
         }
 
-        public int getMenuChoice() {
-            ConsoleUtil.clearScreen();
-            System.out.println();
-            System.out.println("========================================");
-            System.out.println("   MEMBER MANAGEMENT");
-            System.out.println("========================================");
-            System.out.println(" 1. Add Member");
-            System.out.println(" 2. Update Member Tier");
-            System.out.println(" 3. Remove Member");
-            System.out.println(" 4. List Members");
-            System.out.println(" 0. Exit");
-            System.out.println("===========================");
-            return readInt("Enter your choice");
-        }
-
-        public Member inputNewMember(String memberId, String guestId) {
-            System.out.println("New member id: " + memberId);
-            System.out.println("Guest id (auto-generated): " + guestId);
-            Tier tier = selectTier();
-            if (tier == null) {
-                return null;
-            }
-            return new Member(memberId, 0, tier, LocalDateTime.now(), guestId);
-        }
-
-        public String selectMember(LinkedListInterface<Member> members, String prompt) {
-            if (members.isEmpty()) {
-                System.out.println("No members registered yet.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            System.out.println();
-            for (int i = 0; i < members.size(); i++) {
-                Member m = members.get(i);
-                System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
-            }
-            System.out.println(" 0. Cancel");
-            int index = readInt(prompt) - 1;
-            if (index < 0) {
-                System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (index >= members.size()) {
-                ConsoleUtil.printError("Invalid selection.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return members.get(index).getMemberId();
-        }
-
         /**
-     * Displays members in pages of 20. The user can page back/forward and pick a
-     * member (by its on-screen number) to view the full profile. Returns the chosen
-     * member id, or {@code null} if the user chose to go back.
-     */
-    public String displayMembersPaginated(LinkedListInterface<Member> members,
-            java.util.function.Function<String, Guest> guestResolver) {
-        if (members.isEmpty()) {
-            System.out.println("No members registered yet.");
-            pause();
-            return null;
-        }
-        final int PAGE_SIZE = 20;
-        int totalPages = (members.size() + PAGE_SIZE - 1) / PAGE_SIZE;
-        int page = 0;
-        while (true) {
-            ConsoleUtil.clearScreen();
-            int start = page * PAGE_SIZE;
-            int end = Math.min(start + PAGE_SIZE, members.size());
-            System.out.println();
-            System.out.println("========================================");
-            System.out.println("   MEMBERS  (page " + (page + 1) + "/" + totalPages
-                    + ", showing " + (start + 1) + "-" + end + " of " + members.size() + ")");
-            System.out.println("========================================");
-            String[][] rows = new String[end - start][7];
-            for (int i = start; i < end; i++) {
-                Member m = members.get(i);
-                Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
-                rows[i - start] = new String[] {
-                        String.valueOf(i - start + 1),
-                        m.getMemberId(),
+         * Member list page: paginated table + action bar (mirrors
+         * HousekeepingUI.printStaffListMenu). Returns the chosen action number.
+         */
+        public int printMemberListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+                boolean hasFilter, java.util.function.Function<String, Guest> guestResolver) {
+            clearScreen();
+            printBanner("MEMBER MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+            if (pageList.isEmpty()) {
+                System.out.println("  (No member records)");
+            } else {
+                String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
+                String[][] rows = new String[pageList.size()][5];
+                for (int i = 0; i < pageList.size(); i++) {
+                    Member m = pageList.get(i);
+                    Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
+                    rows[i] = new String[] {
+                        String.valueOf(i + 1), m.getMemberId(),
                         g != null && g.getName() != null ? g.getName() : "-",
-                        g != null && g.getContactNumber() != null ? g.getContactNumber() : "-",
-                        m.getTier().name(),
-                        String.valueOf(m.getPoints()),
-                        m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)
-                };
+                        m.getTier() == null ? "-" : m.getTier().name(),
+                        String.valueOf(m.getPoints())
+                    };
+                }
+                TablePrinter.displayTable(header, rows);
             }
-            TablePrinter.displayTable(
-                    new String[] { "#", "Member ID", "Name", "Phone", "Tier", "Points", "Enrolled" }, rows);
-            System.out.println();
-            StringBuilder nav = new StringBuilder("Enter [number] to view that member's profile");
+            printSection("Actions");
+            int action = 1;
+            System.out.println("  " + action++ + ". View Details");
+            System.out.println("  " + action++ + ". Filter by Tier");
+            if (page < pageCount - 1) {
+                System.out.println("  " + action++ + ". Next Page");
+            }
             if (page > 0) {
-                nav.append("   |   [p] Previous");
+                System.out.println("  " + action++ + ". Previous Page");
             }
-            if (page < totalPages - 1) {
-                nav.append("   |   [n] Next");
+            if (hasFilter) {
+                System.out.println("  " + action++ + ". Clear Filter");
             }
-            nav.append("   |   [0] Back to menu");
-            System.out.println(nav.toString());
-            String cmd = readLine("Choice");
-            if (cmd == null) {
-                return null;
-            }
-            cmd = cmd.trim();
-            if (cmd.equals("0")) {
-                return null;
-            }
-            if (cmd.equalsIgnoreCase("n")) {
-                if (page < totalPages - 1) {
-                    page++;
-                } else {
-                    ConsoleUtil.printError("Already on the last page.");
-                    pause();
-                }
-                continue;
-            }
-            if (cmd.equalsIgnoreCase("p")) {
-                if (page > 0) {
-                    page--;
-                } else {
-                    ConsoleUtil.printError("Already on the first page.");
-                    pause();
-                }
-                continue;
-            }
-            try {
-                int sel = Integer.parseInt(cmd) - 1;
-                if (sel >= 0 && sel < (end - start)) {
-                    return members.get(start + sel).getMemberId();
-                }
-            } catch (NumberFormatException e) {
-                // fall through to invalid message
-            }
-            ConsoleUtil.printError("Invalid choice. Enter a number shown, n, p, or 0.");
-            pause();
+            System.out.println("  0. Back");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, action - 1);
         }
-    }
 
-    private String readLine(String prompt) {
-        System.out.print(prompt + ": ");
-        if (!scanner.hasNextLine()) {
-            return null;
+        public int getMemberActionChoice() {
+            printSection("Member Actions");
+            System.out.println("  1. Update Member Tier");
+            System.out.println("  2. Remove Member");
+            System.out.println("  0. Back to List");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, 2);
         }
-        return scanner.nextLine().trim();
-    }
+
+        public String inputTierFilter() {
+            System.out.println("\nSelect Tier:");
+            Tier[] tiers = Tier.values();
+            for (int i = 0; i < tiers.length; i++) {
+                System.out.println("  " + (i + 1) + ". " + tiers[i]);
+            }
+            return tiers[inputIntChoice("Enter tier", 1, tiers.length) - 1].name();
+        }
+
+        public int inputListIndex(String entityLabel, int max) {
+            return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
+        }
+
+        // ----- banner / menu helpers (mirror HousekeepingUI) -----
+        private static final int BANNER_WIDTH = 32;
+        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+
+        private static void printBanner(String title) {
+            System.out.println("\n" + BANNER_LINE);
+            System.out.println(center(title, BANNER_WIDTH));
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSeparator() {
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSection(String text) {
+            if (text == null) {
+                text = "";
+            }
+            if (text.isEmpty()) {
+                System.out.println("\n" + BANNER_LINE);
+                return;
+            }
+            String core = " " + text + " ";
+            int available = BANNER_WIDTH - core.length();
+            int left = available / 2;
+            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+        }
+
+        private static String center(String text, int width) {
+            if (text == null) {
+                text = "";
+            }
+            if (text.length() >= width) {
+                return text;
+            }
+            int pad = width - text.length();
+            int left = pad / 2;
+            return " ".repeat(left) + text + " ".repeat(pad - left);
+        }
+
+        private void clearScreen() {
+            ConsoleUtil.clearScreen();
+        }
+
+        private int inputIntChoice(String prompt, int min, int max) {
+            while (true) {
+                System.out.print(prompt + " (" + min + "-" + max + "): ");
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                try {
+                    int value = Integer.parseInt(line);
+                    if (value >= min && value <= max) {
+                        System.out.println();
+                        return value;
+                    }
+                } catch (NumberFormatException e) {
+                    // continue retry until integer input
+                }
+                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+            }
+        }
 
         public void displayProfile(Member m, Guest g) {
             System.out.println();
@@ -361,51 +326,141 @@ public class LoyaltyRewardsUI {
             this.scanner = scanner;
         }
 
-        public int getMenuChoice() {
-            ConsoleUtil.clearScreen();
-            System.out.println();
-            System.out.println("========================================");
-            System.out.println("   POINTS & REDEMPTION MANAGEMENT");
-            System.out.println("========================================");
-            System.out.println(" 1. View Member Points Balance");
-            System.out.println(" 2. Earn Points");
-            System.out.println(" 3. Request Reward Redemption");
-            System.out.println(" 4. Run Expiry Check (auto removal)");
-            System.out.println(" 5. View Transaction History");
-            System.out.println(" 6. Member Tier Progression");
-            System.out.println(" 7. Generate Expiry Alerts (7 days)");
-            System.out.println(" 8. View Notifications");
-            System.out.println(" 9. Process Redemption Requests");
-            System.out.println(" 0. Exit");
-            System.out.println("===========================");
-            return readInt("Enter your choice");
+        /**
+         * Member points list page: paginated table + action bar (mirrors
+         * HousekeepingUI.printStaffListMenu). Returns the chosen action number.
+         */
+        public int printPointsListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+                boolean hasFilter, java.util.function.Function<String, Guest> guestResolver,
+                java.util.function.Function<Member, Integer> balanceResolver) {
+            clearScreen();
+            printBanner("POINTS & REDEMPTION MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+            if (pageList.isEmpty()) {
+                System.out.println("  (No member records)");
+            } else {
+                String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
+                String[][] rows = new String[pageList.size()][5];
+                for (int i = 0; i < pageList.size(); i++) {
+                    Member m = pageList.get(i);
+                    Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
+                    Integer balance = balanceResolver == null ? null : balanceResolver.apply(m);
+                    rows[i] = new String[] {
+                        String.valueOf(i + 1), m.getMemberId(),
+                        g != null && g.getName() != null ? g.getName() : "-",
+                        m.getTier() == null ? "-" : m.getTier().name(),
+                        balance == null ? "-" : String.valueOf(balance)
+                    };
+                }
+                TablePrinter.displayTable(header, rows);
+            }
+            printSection("Actions");
+            int action = 1;
+            System.out.println("  " + action++ + ". View Details");
+            System.out.println("  " + action++ + ". Earn Points");
+            System.out.println("  " + action++ + ". Request Redemption");
+            System.out.println("  " + action++ + ". Process Redemption Requests");
+            System.out.println("  " + action++ + ". Generate Expiry Alerts");
+            System.out.println("  " + action++ + ". Filter by Tier");
+            if (page < pageCount - 1) {
+                System.out.println("  " + action++ + ". Next Page");
+            }
+            if (page > 0) {
+                System.out.println("  " + action++ + ". Previous Page");
+            }
+            if (hasFilter) {
+                System.out.println("  " + action++ + ". Clear Filter");
+            }
+            System.out.println("  0. Back");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, action - 1);
         }
 
-        /** Lists the members and returns the chosen member id, or null. */
-        public String selectMember(LinkedListInterface<Member> members) {
-            if (members.isEmpty()) {
-                System.out.println("No members registered yet.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
+        public int getMemberPointsActionChoice() {
+            printSection("Member Points Actions");
+            System.out.println("  1. Run Expiry Check");
+            System.out.println("  2. View Transaction History");
+            System.out.println("  3. View Tier Progression");
+            System.out.println("  4. View Notifications");
+            System.out.println("  0. Back to List");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, 4);
+        }
+
+        public String inputTierFilter() {
+            System.out.println("\nSelect Tier:");
+            Tier[] tiers = Tier.values();
+            for (int i = 0; i < tiers.length; i++) {
+                System.out.println("  " + (i + 1) + ". " + tiers[i]);
             }
-            System.out.println();
-            for (int i = 0; i < members.size(); i++) {
-                Member m = members.get(i);
-                System.out.printf(" %d. %s (Tier: %s)%n", i + 1, m.getMemberId(), m.getTier());
+            return tiers[inputIntChoice("Enter tier", 1, tiers.length) - 1].name();
+        }
+
+        public int inputListIndex(String entityLabel, int max) {
+            return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
+        }
+
+        // ----- banner / menu helpers (mirror HousekeepingUI) -----
+        private static final int BANNER_WIDTH = 32;
+        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+
+        private static void printBanner(String title) {
+            System.out.println("\n" + BANNER_LINE);
+            System.out.println(center(title, BANNER_WIDTH));
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSeparator() {
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSection(String text) {
+            if (text == null) {
+                text = "";
             }
-            System.out.println(" 0. Cancel");
-            int index = readInt("Select a member") - 1;
-            if (index < 0) {
-                System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
+            if (text.isEmpty()) {
+                System.out.println("\n" + BANNER_LINE);
+                return;
             }
-            if (index >= members.size()) {
-                ConsoleUtil.printError("Invalid selection.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
+            String core = " " + text + " ";
+            int available = BANNER_WIDTH - core.length();
+            int left = available / 2;
+            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+        }
+
+        private static String center(String text, int width) {
+            if (text == null) {
+                text = "";
             }
-            return members.get(index).getMemberId();
+            if (text.length() >= width) {
+                return text;
+            }
+            int pad = width - text.length();
+            int left = pad / 2;
+            return " ".repeat(left) + text + " ".repeat(pad - left);
+        }
+
+        private void clearScreen() {
+            ConsoleUtil.clearScreen();
+        }
+
+        private int inputIntChoice(String prompt, int min, int max) {
+            while (true) {
+                System.out.print(prompt + " (" + min + "-" + max + "): ");
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                try {
+                    int value = Integer.parseInt(line);
+                    if (value >= min && value <= max) {
+                        System.out.println();
+                        return value;
+                    }
+                } catch (NumberFormatException e) {
+                    // continue retry until integer input
+                }
+                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+            }
         }
 
         /** Lists the rewards and returns the chosen reward id, or null. */
@@ -630,19 +685,143 @@ public class LoyaltyRewardsUI {
             this.scanner = scanner;
         }
 
-        public int getMenuChoice() {
-            ConsoleUtil.clearScreen();
+        public int printRewardListMenu(LinkedListInterface<Reward> pageList, int page, int pageCount,
+                boolean hasFilter) {
+            clearScreen();
+            printBanner("REWARD MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+            if (pageList.isEmpty()) {
+                System.out.println("  (No rewards in the catalogue)");
+            } else {
+                String[] header = new String[] { "No.", "Reward ID", "Name", "Cost (pts)" };
+                String[][] rows = new String[pageList.size()][4];
+                for (int i = 0; i < pageList.size(); i++) {
+                    Reward r = pageList.get(i);
+                    rows[i] = new String[] {
+                        String.valueOf(i + 1), r.getRewardId(),
+                        truncate(r.getName(), 22),
+                        String.valueOf(r.getPointCost())
+                    };
+                }
+                TablePrinter.displayTable(header, rows);
+            }
+            printSection("Actions");
+            int action = 1;
+            System.out.println("  " + action++ + ". View Details");
+            System.out.println("  " + action++ + ". Add New Reward");
+            System.out.println("  " + action++ + ". Filter by Name");
+            if (page < pageCount - 1) {
+                System.out.println("  " + action++ + ". Next Page");
+            }
+            if (page > 0) {
+                System.out.println("  " + action++ + ". Previous Page");
+            }
+            if (hasFilter) {
+                System.out.println("  " + action++ + ". Clear Filter");
+            }
+            System.out.println("  0. Back");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, action - 1);
+        }
+
+        public int getRewardActionChoice() {
+            printSection("Reward Actions");
+            System.out.println("  1. Update Reward");
+            System.out.println("  2. Remove Reward");
+            System.out.println("  0. Back to List");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, 2);
+        }
+
+        public void displayRewardDetails(Reward r) {
             System.out.println();
-            System.out.println("========================================");
-            System.out.println("   REWARD MANAGEMENT");
-            System.out.println("========================================");
-            System.out.println(" 1. Add Reward");
-            System.out.println(" 2. Remove Reward");
-            System.out.println(" 3. Update Reward");
-            System.out.println(" 4. List Rewards");
-            System.out.println(" 0. Exit");
-            System.out.println("===========================");
-            return readInt("Enter your choice");
+            if (r == null) {
+                System.out.println("Reward not found.");
+                return;
+            }
+            System.out.println("Reward ID    : " + r.getRewardId());
+            System.out.println("Name         : " + r.getName());
+            System.out.println("Description  : " + r.getDescription());
+            System.out.println("Point cost   : " + r.getPointCost() + " pts");
+            System.out.println("Voucher value: " + (r.getVoucherValue() == null ? "-" : "RM" + r.getVoucherValue()));
+        }
+
+        public String inputNameKeyword() {
+            System.out.print("\nEnter name keyword (0 to cancel): ");
+            String keyword = scanner.nextLine().trim();
+            if (keyword.isEmpty() || keyword.equals("0")) {
+                System.out.println("Operation cancelled.");
+                ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
+            }
+            return keyword;
+        }
+
+        public int inputListIndex(String entityLabel, int max) {
+            return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
+        }
+
+        // ----- banner / menu helpers (mirror HousekeepingUI) -----
+        private static final int BANNER_WIDTH = 32;
+        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+
+        private static void printBanner(String title) {
+            System.out.println("\n" + BANNER_LINE);
+            System.out.println(center(title, BANNER_WIDTH));
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSeparator() {
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSection(String text) {
+            if (text == null) {
+                text = "";
+            }
+            if (text.isEmpty()) {
+                System.out.println("\n" + BANNER_LINE);
+                return;
+            }
+            String core = " " + text + " ";
+            int available = BANNER_WIDTH - core.length();
+            int left = available / 2;
+            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+        }
+
+        private static String center(String text, int width) {
+            if (text == null) {
+                text = "";
+            }
+            if (text.length() >= width) {
+                return text;
+            }
+            int pad = width - text.length();
+            int left = pad / 2;
+            return " ".repeat(left) + text + " ".repeat(pad - left);
+        }
+
+        private void clearScreen() {
+            ConsoleUtil.clearScreen();
+        }
+
+        private int inputIntChoice(String prompt, int min, int max) {
+            while (true) {
+                System.out.print(prompt + " (" + min + "-" + max + "): ");
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                try {
+                    int value = Integer.parseInt(line);
+                    if (value >= min && value <= max) {
+                        System.out.println();
+                        return value;
+                    }
+                } catch (NumberFormatException e) {
+                    // continue retry until integer input
+                }
+                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+            }
         }
 
         public Reward inputNewReward(String rewardId) {
@@ -685,49 +864,6 @@ public class LoyaltyRewardsUI {
             return new Reward(rewardId, name, description, cost);
         }
 
-        public String selectRewardId(LinkedListInterface<Reward> rewards, String prompt) {
-            if (rewards.isEmpty()) {
-                System.out.println("No rewards in the catalogue.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            displayRewards(rewards);
-            System.out.println(" 0. Cancel");
-            int index = readInt(prompt) - 1;
-            if (index < 0) {
-                System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (index >= rewards.size()) {
-                ConsoleUtil.printError("Invalid selection.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return rewards.get(index).getRewardId();
-        }
-
-        public void displayRewards(LinkedListInterface<Reward> rewards) {
-            if (rewards.isEmpty()) {
-                System.out.println("No rewards in the catalogue.");
-                return;
-            }
-            System.out.println();
-            String[][] rows = new String[rewards.size()][4];
-            for (int i = 0; i < rewards.size(); i++) {
-                Reward r = rewards.get(i);
-                rows[i] = new String[] {
-                        r.getRewardId(),
-                        truncate(r.getName(), 22),
-                        String.valueOf(r.getPointCost()),
-                        r.getDescription()
-                };
-            }
-            TablePrinter.displayTable(
-                    new String[] { "Reward ID", "Name", "Cost", "Description" }, rows);
-        }
-
-        /** Prompts for a string, returning the current value if the input is empty. */
         public String promptWithDefault(String prompt, String current) {
             System.out.print(prompt + " (" + current + ") (0 to cancel): ");
             String input = scanner.nextLine().trim();

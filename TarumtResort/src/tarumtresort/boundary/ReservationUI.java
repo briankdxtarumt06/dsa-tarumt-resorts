@@ -82,9 +82,10 @@ public class ReservationUI {
         System.err.println();
         System.out.print("==========Actions==========");
         System.out.println("\n  1. View Reservation History");
+        System.out.println("  2. Register as Member");
         System.out.println("  0. Back to List");
         System.out.println("===========================");
-        return inputIntChoice("Enter choice", 0, 1);
+        return inputIntChoice("Enter choice", 0, 2);
     }
 
     public void printGuestReservationHistory(LinkedListInterface<Reservation> reservations) {

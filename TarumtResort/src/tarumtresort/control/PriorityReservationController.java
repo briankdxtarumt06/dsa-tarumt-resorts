@@ -16,7 +16,6 @@ import java.util.Scanner;
 public class PriorityReservationController {
     // ADT declaration
     private LinkedListInterface<PriorityReservation> priorityReservations = new LinkedList<>();
-    private LinkedListInterface<Member> members = new LinkedList<>();
     private LinkedListInterface<Reservation> vipQueue = new LinkedList<>();
 
     // DAO
@@ -40,7 +39,7 @@ public class PriorityReservationController {
     }
 
     public boolean addPriorityReservation(String reservationId, String guestId) {
-        Member member = findMemberByGuestId(guestId);
+        Member member = loyaltyController.findMemberByGuestId(guestId);
         if (member == null) {
             return false;
         }
@@ -107,16 +106,6 @@ public class PriorityReservationController {
             }
         }
         return result;
-    }
-
-    public Member findMemberByGuestId(String guestId) { // need move to member control
-        members = loyaltyController.getMembers();
-        for (int i = 0; i < members.size(); i++) {
-            if (guestId.equals(members.get(i).getGuestId())) {
-                return members.get(i);
-            }
-        }
-        return null;
     }
 
     public LinkedListInterface<Reservation> generateVIPQueue(LinkedListInterface<Reservation> reservations) {
