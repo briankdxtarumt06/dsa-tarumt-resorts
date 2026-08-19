@@ -31,4 +31,14 @@ public class TaskAssignmentChangeDAO {
             return new LinkedList<>();
         }
     }
+
+    public TaskAssignmentChange getTaskAssignmentChangeById(String changeId) {
+        LinkedListInterface<TaskAssignmentChange> changeList = retrieveTaskAssignmentChangeList();
+        for (int i = 0; i < changeList.size(); i++) {
+            if (changeId != null && changeId.equals(changeList.get(i).getChangeId())) {
+                return changeList.get(i);
+            }
+        }
+        return null;
+    }
 }

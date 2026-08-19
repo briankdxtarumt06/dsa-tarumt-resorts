@@ -193,7 +193,7 @@ public class InquiryUI {
             System.out.println("Housekeeping Task Created: " + task.getTaskId());
             System.out.println("Room: " + task.getRoomId());
             System.out.println("Status: " + task.getTaskStatus());
-            System.out.println("Scheduled Start: " + task.getStartDateTime());
+            System.out.println("Scheduled Start: " + tarumtresort.utility.DateTimeUtil.readable(task.getStartDateTime()));
         } else {
             System.out.println(extra.toString());
         }

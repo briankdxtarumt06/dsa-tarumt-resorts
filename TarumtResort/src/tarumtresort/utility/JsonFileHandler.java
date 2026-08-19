@@ -27,6 +27,9 @@ import java.util.function.Function;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.Department;
+import tarumtresort.entity.enums.RoomStatus;
+import tarumtresort.entity.enums.StaffRole;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
 
@@ -40,6 +43,9 @@ public class JsonFileHandler {
             .registerTypeAdapter(AvailabilityStatus.class,
                     new EnumNormalizerAdapter<>(AvailabilityStatus::fromString, AvailabilityStatus.AVAILABLE))
             .registerTypeAdapter(TaskStatus.class, new EnumNormalizerAdapter<>(TaskStatus::fromString, null))
+            .registerTypeAdapter(RoomStatus.class, new EnumNormalizerAdapter<>(RoomStatus::fromString, null))
+            .registerTypeAdapter(StaffRole.class, new EnumNormalizerAdapter<>(StaffRole::fromString, StaffRole.UNKNOWN))
+            .registerTypeAdapter(Department.class, new EnumNormalizerAdapter<>(Department::fromString, Department.UNKNOWN))
             .create();
 
     private JsonFileHandler() { 

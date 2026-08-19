@@ -19,9 +19,9 @@ public class TaskAssignmentChange implements Comparable<TaskAssignmentChange> {
     private String changeId;
     private String taskAssignmentId;
     private String status;
-    private LocalDateTime changedAt;
     private String staffId;
     private String taskId;
+    private LocalDateTime changedAt;
 
     public TaskAssignmentChange() { }
 

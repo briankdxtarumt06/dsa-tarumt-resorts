@@ -3,6 +3,8 @@ package tarumtresort.entity;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.Department;
+import tarumtresort.entity.enums.StaffRole;
 
 /**
  *
@@ -11,15 +13,15 @@ import tarumtresort.entity.enums.AvailabilityStatus;
 public class Staff implements Comparable<Staff> {
     private String staffId;
     private String staffName;
-    private String department;
-    private String staffRole;
+    private Department department;
+    private StaffRole staffRole;
     private AvailabilityStatus availabilityStatus;
     private boolean isDeleted;
     private LinkedListInterface<TaskAssignment> taskAssignments;
     
     public Staff(){ }
 
-    public Staff(String staffId, String staffName, String department, String staffRole, AvailabilityStatus availabilityStatus) {
+    public Staff(String staffId, String staffName, Department department, StaffRole staffRole, AvailabilityStatus availabilityStatus) {
         this.staffId = staffId;
         this.staffName = staffName;
         this.department = department; // Housekeeping
@@ -43,19 +45,19 @@ public class Staff implements Comparable<Staff> {
         this.staffName = staffName;
     }
 
-    public String getDepartment() {
+    public Department getDepartment() {
         return department;
     }
 
-    public void setDepartment(String department) {
+    public void setDepartment(Department department) {
         this.department = department;
     }
 
-    public String getStaffRole() {
+    public StaffRole getStaffRole() {
         return staffRole;
     }
 
-    public void setStaffRole(String staffRole) {
+    public void setStaffRole(StaffRole staffRole) {
         this.staffRole = staffRole;
     }
 

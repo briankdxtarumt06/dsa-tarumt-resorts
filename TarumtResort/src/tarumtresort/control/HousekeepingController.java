@@ -16,13 +16,15 @@ import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.entity.TaskStatusChange;
 import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.Department;
 import tarumtresort.entity.enums.RoomStatus;
+import tarumtresort.entity.enums.StaffRole;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
-import tarumtresort.report.ReportMenu;
-import tarumtresort.report.ReportUI;
+import tarumtresort.report.HousekeepingReport.HousekeepingReportController;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.DateTimeUtil;
 
 /**
  * 
@@ -97,11 +99,8 @@ public class HousekeepingController {
         }
     }
 
-    /**
-     * Runs the Housekeeping module; 1 = task management, 2 = staff
-     * management, 3 = reports, 0 = back to main menu.
-     */
     public void runHousekeeping() {
+        HousekeepingReportController reportController = new HousekeepingReportController(ui.getScanner());
         while (true) {
             int choice = ui.getMenuChoice();
             if (choice == 0) {
@@ -111,7 +110,8 @@ public class HousekeepingController {
             switch (choice) {
                 case 1 -> runTaskManagement();
                 case 2 -> runStaffManagement();
-                case 3 -> new ReportMenu(new ReportUI(ui.getScanner())).run();
+                case 3 -> reportController.generateRoomTurnoverReport();
+                case 4 -> reportController.generateStaffProductivityReport();
                 default -> ui.printInvalidChoice();
             }
         }
@@ -478,6 +478,18 @@ public class HousekeepingController {
     }
 
     private void updateAssignmentStatusMenu(TaskAssignment assignment) {
+        while (true) {
+            int choice = ui.getAssignmentActionChoice(assignment);
+            if (choice == 0) {
+                return;
+            }
+            if (choice == 1) {
+                ui.listAllChanges(changeListToTable(getChangesByAssignment(assignment.getTaskAssignmentId())));
+                ui.pressEnterToContinue();
+                continue;
+            }
+            break;
+        }
         TaskStatus[] options = getAllowedAssignmentTransitions(assignment.getStatus());
         if (options.length == 0) {
             ui.printTaskStatusDenied();
@@ -525,8 +537,8 @@ public class HousekeepingController {
     // =============== staff management ===============
 
     private void runStaffManagement() {
-        String departmentFilter = null;
-        String roleFilter = null;
+        Department departmentFilter = null;
+        StaffRole roleFilter = null;
         String searchTerm = null;
         int page = 0;
 
@@ -629,9 +641,10 @@ public class HousekeepingController {
             }
             switch (action) {
                 case 1 -> editStaffDetailsMenu(staff);
-                case 2 -> viewStaffAssignmentHistory(staff);
-                case 3 -> resignStaffMenu(staff);
-                case 4 -> viewStaffChangeHistory(staff);
+                case 2 -> startFirstTaskMenu(staff);
+                case 3 -> viewStaffAssignmentHistory(staff);
+                case 4 -> resignStaffMenu(staff);
+                case 5 -> viewStaffChangeHistory(staff);
                 default -> ui.printInvalidChoice();
             }
             staff = getStaffById(staff.getStaffId());
@@ -643,8 +656,8 @@ public class HousekeepingController {
 
     private void addStaffMenu() {
         String staffName = null;
-        String department = null;
-        String staffRole = null;
+        Department department = null;
+        StaffRole staffRole = null;
         while (true) {
             if (staffName == null) {
                 staffName = ui.inputStaffName();
@@ -682,8 +695,8 @@ public class HousekeepingController {
 
     private void editStaffDetailsMenu(Staff staff) {
         String name = staff.getStaffName();
-        String department = staff.getDepartment();
-        String staffRole = staff.getStaffRole();
+        Department department = staff.getDepartment();
+        StaffRole staffRole = staff.getStaffRole();
         boolean changed = false;
         while (true) {
             int field = ui.inputStaffFieldChoice();
@@ -771,6 +784,102 @@ public class HousekeepingController {
         ui.pressEnterToContinue();
     }
 
+    /**
+     * Queue = the staff member's active (non-terminal) assignments ordered by
+     * dateTimeAssigned, i.e. the order they were assigned.
+     *
+     * @param staff staff member to inspect
+     * @return queue list (may be empty)
+     */
+    private LinkedListInterface<TaskAssignment> getStaffTaskQueue(Staff staff) {
+        LinkedListInterface<TaskAssignment> queue = new LinkedList<>();
+        if (staff == null || staff.getStaffId() == null) {
+            return queue;
+        }
+        refreshTaskAssignments();
+        for (int i = 0; i < taskAssignmentList.size(); i++) {
+            TaskAssignment assignment = taskAssignmentList.get(i);
+            if (assignment.isDeleted() || !assignment.isActive()
+                    || !staff.getStaffId().equals(assignment.getAssignedStaffId())) {
+                continue;
+            }
+            queue.addSorted(assignment);
+        }
+        return queue;
+    }
+
+    /**
+     * Shows the first task in the staff member's queue and asks for
+     * confirmation before starting it.
+     *
+     * @param staff staff member to start a task for
+     */
+    private void startFirstTaskMenu(Staff staff) {
+        LinkedListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
+        if (queue.isEmpty()) {
+            ui.printNoTasksInQueue();
+            return;
+        }
+        TaskAssignment first = queue.get(0);
+        if (first.getStatus() == TaskStatus.IN_PROGRESS) {
+            ui.printTaskAlreadyStarted();
+            return;
+        }
+        Task task = first.getAssignedTaskId() == null ? null : getTaskById(first.getAssignedTaskId());
+        if (task == null) {
+            ui.printNotFound();
+            return;
+        }
+        ui.printTaskDetails(task, first);
+        if (!ui.confirm("Start this task?")) {
+            return;
+        }
+        switch (startFirstTask(staff)) {
+            case "STARTED" -> ui.printTaskStarted(task.getTaskName());
+            case "ALREADY_STARTED" -> ui.printTaskAlreadyStarted();
+            default -> ui.printWarning("Failed to start the task.");
+        }
+    }
+
+    /**
+     * Starts the first task in the staff member's queue: the earliest
+     * assigned active assignment is moved to IN_PROGRESS. Only the
+     * assignment status changes; the task-level status remains under the
+     * supervisor's control.
+     *
+     * @param staff staff member to start a task for
+     * @return outcome code
+     */
+    public String startFirstTask(Staff staff) {
+        if (staff == null || staff.getStaffId() == null) {
+            return "NO_STAFF";
+        }
+        LinkedListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
+        if (queue.isEmpty()) {
+            return "EMPTY_QUEUE";
+        }
+        TaskAssignment first = queue.get(0);
+        if (first.getStatus() == TaskStatus.IN_PROGRESS) {
+            return "ALREADY_STARTED";
+        }
+        refreshTaskAssignments();
+        TaskAssignment target = null;
+        for (int i = 0; i < taskAssignmentList.size(); i++) {
+            TaskAssignment candidate = taskAssignmentList.get(i);
+            if (first.getTaskAssignmentId().equals(candidate.getTaskAssignmentId())) {
+                target = candidate;
+                break;
+            }
+        }
+        if (target == null) {
+            return "UPDATE_FAILED";
+        }
+        target.setStatus(TaskStatus.IN_PROGRESS);
+        taskAssignmentDAO.saveTaskAssignmentList(taskAssignmentList);
+        appendAssignmentChange(target, "In Progress", LocalDateTime.now());
+        return "STARTED";
+    }
+
     // =============== task queries ===============
 
     private LinkedListInterface<Task> getTasksByStatus(TaskStatus status) {
@@ -820,24 +929,24 @@ public class HousekeepingController {
 
     // =============== staff queries ===============
 
-    private LinkedListInterface<Staff> getStaffsByDepartment(String department) {
+    private LinkedListInterface<Staff> getStaffsByDepartment(Department department) {
         LinkedListInterface<Staff> filtered = new LinkedList<>();
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
             if (!staff.isDeleted()
                     && staff.getDepartment() != null
-                    && staff.getDepartment().equalsIgnoreCase(department)) {
+                    && staff.getDepartment() == department) {
                 filtered.addBack(staff);
             }
         }
         return filtered;
     }
 
-    private LinkedListInterface<Staff> getStaffsByRole(String role) {
+    private LinkedListInterface<Staff> getStaffsByRole(StaffRole role) {
         LinkedListInterface<Staff> filtered = new LinkedList<>();
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
-            if (!staff.isDeleted() && staff.getStaffRole() != null && staff.getStaffRole().equalsIgnoreCase(role)) {
+            if (!staff.isDeleted() && staff.getStaffRole() == role) {
                 filtered.addBack(staff);
             }
         }
@@ -890,7 +999,7 @@ public class HousekeepingController {
             return null;
         }
         String taskId = generateTaskId();
-        Task task = new Task(taskId, taskName, taskType, TaskStatus.PENDING, taskPriority, startDateTime, roomId);
+        Task task = new Task(taskId, taskName, taskType, TaskStatus.PENDING, taskPriority, startDateTime, null, roomId);
         task.getStatusHistory().addFront(new TaskStatusChange(TaskStatus.PENDING, null, LocalDateTime.now()));
         taskList.addSorted(task);
         taskDAO.saveTaskList(taskList);
@@ -905,7 +1014,7 @@ public class HousekeepingController {
      * @param staffRole  role within the department (e.g. Cleaner)
      * @return new staff ID, or null on failure
      */
-    public String createStaff(String staffName, String department, String staffRole) {
+    public String createStaff(String staffName, Department department, StaffRole staffRole) {
         if (staffName == null || department == null || staffRole == null) {
             return null;
         }
@@ -1013,6 +1122,7 @@ public class HousekeepingController {
                     endAssignment(assignment, TaskStatus.CANCELLED);
                 }
             } else if (newStatus == TaskStatus.COMPLETED) {
+                task.setEndDateTime(LocalDateTime.now());
                 if (task.getTaskType() == TaskType.INSPECTION) {
                     setRoomStatus(task.getRoomId(), RoomStatus.AVAILABLE);
                 }
@@ -1091,6 +1201,7 @@ public class HousekeepingController {
                         task.getStatusHistory().addFront(new TaskStatusChange(current, null, LocalDateTime.now()));
                     }
                     task.setTaskStatus(TaskStatus.COMPLETED);
+                    task.setEndDateTime(LocalDateTime.now());
                     if (task.getTaskType() == TaskType.INSPECTION) {
                         setRoomStatus(task.getRoomId(), RoomStatus.AVAILABLE);
                     }
@@ -1136,6 +1247,7 @@ public class HousekeepingController {
         task.setTaskStatus(previous);
         try {
             if (current == TaskStatus.COMPLETED) {
+                task.setEndDateTime(null);
                 setRoomStatus(task.getRoomId(), RoomStatus.CLEANING);
             }
         } catch (Exception e) {
@@ -1187,20 +1299,20 @@ public class HousekeepingController {
      */
     public LinkedListInterface<Staff> getEligibleStaffByRole(TaskType taskType) {
         LinkedListInterface<Staff> eligible = new LinkedList<>();
-        String requiredRole = switch (taskType) {
-            case CHECKOUT_CLEAN, ROOM_SERVICE -> "Cleaner";
-            case INSPECTION -> "Supervisor";
-            default -> "Technician";
+        StaffRole requiredRole = switch (taskType) {
+            case CHECKOUT_CLEAN, ROOM_SERVICE, MAINTENANCE -> StaffRole.CLEANER;
+            case INSPECTION -> StaffRole.SUPERVISOR;
+            default -> StaffRole.UNKNOWN;
         };
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
             if (staff.isDeleted() || staff.getAvailabilityStatus() != AvailabilityStatus.AVAILABLE) {
                 continue;
             }
-            if (staff.getDepartment() == null || !staff.getDepartment().equalsIgnoreCase("Housekeeping")) {
+            if (staff.getDepartment() != Department.HOUSEKEEPING) {
                 continue;
             }
-            if (staff.getStaffRole() != null && staff.getStaffRole().equalsIgnoreCase(requiredRole)) {
+            if (staff.getStaffRole() == requiredRole) {
                 eligible.addBack(staff);
             }
         }
@@ -1529,8 +1641,12 @@ public class HousekeepingController {
         if (assignment == null || status == null) {
             return null;
         }
-        return insertChange(new TaskAssignmentChange(generateChangeId(), assignment.getTaskAssignmentId(), status,
-                dateTime, assignment.getAssignedStaffId(), assignment.getAssignedTaskId()));
+        TaskAssignmentChange change = insertChange(new TaskAssignmentChange(generateChangeId(),
+                assignment.getTaskAssignmentId(), status, dateTime,
+                assignment.getAssignedStaffId(), assignment.getAssignedTaskId()));
+        assignment.addChange(change);
+        taskAssignmentDAO.saveTaskAssignmentList(taskAssignmentList);
+        return change;
     }
 
     private TaskAssignmentChange insertChange(TaskAssignmentChange change) {
@@ -1562,6 +1678,17 @@ public class HousekeepingController {
         return filtered;
     }
 
+    private LinkedListInterface<TaskAssignmentChange> getChangesByAssignment(String taskAssignmentId) {
+        LinkedListInterface<TaskAssignmentChange> filtered = new LinkedList<>();
+        for (int i = 0; i < taskAssignmentChangeList.size(); i++) {
+            TaskAssignmentChange change = taskAssignmentChangeList.get(i);
+            if (change.getTaskAssignmentId() != null && change.getTaskAssignmentId().equals(taskAssignmentId)) {
+                filtered.addBack(change);
+            }
+        }
+        return filtered;
+    }
+
     // =============== table rendering ===============
 
     private String[][] assignmentListToTable(LinkedListInterface<TaskAssignment> assignmentList) {
@@ -1577,8 +1704,8 @@ public class HousekeepingController {
                     staff == null ? "-" : staff.getStaffId() + " (" + staff.getStaffName() + ")",
                     task == null ? "-" : task.getTaskId() + " (" + task.getTaskName() + ")",
                     assignment.getStatus() == null ? "-" : assignment.getStatus().name(),
-                    assignment.getDateTimeAssigned() == null ? "-" : assignment.getDateTimeAssigned().toString(),
-                    assignment.getDateTimeEnded() == null ? "-" : assignment.getDateTimeEnded().toString()
+                    DateTimeUtil.readable(assignment.getDateTimeAssigned()),
+                    DateTimeUtil.readable(assignment.getDateTimeEnded())
             };
         }
         return data;
@@ -1597,7 +1724,7 @@ public class HousekeepingController {
                     change.getTaskAssignmentId() == null ? "-" : change.getTaskAssignmentId(),
                     change.getStatus() == null ? "-" : change.getStatus(),
                     staff == null ? "-" : staff.getStaffId() + " (" + staff.getStaffName() + ")",
-                    change.getChangedAt() == null ? "-" : change.getChangedAt().toString()
+                    DateTimeUtil.readable(change.getChangedAt())
             };
         }
         return data;
