@@ -8,7 +8,6 @@ public class PriorityReservation implements Comparable<PriorityReservation> {
     private PriorityLevel priorityLevel;
     private String overriddenBy;
     private String overrideReason;
-    private boolean isDeleted = false;
 
     public PriorityReservation() {
     }
@@ -18,16 +17,14 @@ public class PriorityReservation implements Comparable<PriorityReservation> {
         this.priorityLevel = priorityLevel;
         this.overriddenBy = null;
         this.overrideReason = null;
-        this.isDeleted = false;
     }
 
     public PriorityReservation(String reservationId, PriorityLevel priorityLevel, String overriddenBy,
-            String overrideReason, boolean isDeleted) {
+            String overrideReason) {
         this.reservationId = reservationId;
         this.priorityLevel = priorityLevel;
         this.overriddenBy = overriddenBy;
         this.overrideReason = overrideReason;
-        this.isDeleted = isDeleted;
     }
 
     public String getReservationId() {
@@ -60,14 +57,6 @@ public class PriorityReservation implements Comparable<PriorityReservation> {
 
     public void setOverrideReason(String overrideReason) {
         this.overrideReason = overrideReason;
-    }
-
-    public boolean isDeleted() {
-        return isDeleted;
-    }
-
-    public void setDeleted(boolean isDeleted) {
-        this.isDeleted = isDeleted;
     }
 
     public int compareTo(PriorityReservation other) {

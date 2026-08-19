@@ -527,8 +527,7 @@ public class ReservationControl {
                 numberOfNights,
                 reservationType,
                 ReservationStatus.WAITING,
-                timestamps,
-                false
+                timestamps
             );
 
             if (reservationType == ReservationType.WALK_IN) {
@@ -724,7 +723,7 @@ public class ReservationControl {
             guestQueue.removeIndex(queueIndex);
         }
 
-        priorityReservationController.removePriorityReservationById(found.getReservationId());
+        priorityReservationController.removeById(found.getReservationId());
 
         found.setRoomId(availableRoom.getRoomId());
         found.setStatus(ReservationStatus.ASSIGNED);

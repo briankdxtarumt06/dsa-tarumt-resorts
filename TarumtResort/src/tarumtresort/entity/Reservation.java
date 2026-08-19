@@ -13,12 +13,11 @@ public class Reservation implements Comparable<Reservation> {
     private ReservationType reservationType;
     private ReservationStatus status;
     private ReservationTimestamps timestamps;
-    private boolean isDeleted = false;
 
     // constructors
     public Reservation(String reservationId, String confirmationNumber, String guestId, String roomId,
             RoomType roomTypeRequested, int numberOfGuests, int numberOfNights, ReservationType reservationType,
-            ReservationStatus status, ReservationTimestamps timestamps, boolean isDeleted) {
+            ReservationStatus status, ReservationTimestamps timestamps) {
         this.reservationId = reservationId;
         this.confirmationNumber = confirmationNumber;
         this.guestId = guestId;
@@ -29,7 +28,6 @@ public class Reservation implements Comparable<Reservation> {
         this.reservationType = reservationType;
         this.status = status;
         this.timestamps = timestamps;
-        this.isDeleted = isDeleted;
     }
 
     // setters
@@ -73,10 +71,6 @@ public class Reservation implements Comparable<Reservation> {
         this.timestamps = timestamps;
     }
 
-    public void setDeleted(boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
     // getters
     public String getReservationId() {
         return reservationId;
@@ -118,10 +112,6 @@ public class Reservation implements Comparable<Reservation> {
         return timestamps;
     }
 
-    public boolean isDeleted() {
-        return isDeleted;
-    }
-
     // toString
     @Override
     public String toString() {
@@ -136,7 +126,6 @@ public class Reservation implements Comparable<Reservation> {
                 ", reservationType='" + reservationType + '\'' +
                 ", status='" + status + '\'' +
                 ", timestamps=" + timestamps +
-                ", isDeleted=" + isDeleted +
                 '}';
     }
 
@@ -151,5 +140,4 @@ public class Reservation implements Comparable<Reservation> {
         return this.timestamps.getRegistrationTimestamp()
                 .compareTo(other.timestamps.getRegistrationTimestamp());
     }
-
 }
