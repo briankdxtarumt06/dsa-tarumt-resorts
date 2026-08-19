@@ -220,14 +220,15 @@ public class ReservationUI {
         System.out.println("  9. Check Out");
         System.out.println("  10. Check Queue Position");
         System.out.println("  11. Cancel Reservation");
+        System.out.println("  12. Delete Reservation");
         if (hasFilter) {
-            System.out.println("  12. Clear Filter");
-            return inputIntChoice("Enter choice", 0, 12);
+            System.out.println("  13. Clear Filter");
+            return inputIntChoice("Enter choice", 0, 13);
         }
         System.out.println("  0. Back to Main Menu");
 
         System.out.println("===========================");
-        return inputIntChoice("Enter choice", 0, 11);
+        return inputIntChoice("Enter choice", 0, 12);
     }
 
     public int inputNumberOfGuests() {
