@@ -8,11 +8,6 @@ import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.LoyaltyRewardsUI;
-import tarumtresort.boundary.LoyaltyRewardsUI.MemberManagementUI;
-import tarumtresort.boundary.LoyaltyRewardsUI.NotificationCentreUI;
-import tarumtresort.boundary.LoyaltyRewardsUI.PointsManagementUI;
-import tarumtresort.boundary.LoyaltyRewardsUI.ReportsUI;
-import tarumtresort.boundary.LoyaltyRewardsUI.RewardManagementUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
 import tarumtresort.dao.RewardDAO;
@@ -45,11 +40,6 @@ public class LoyaltyController {
     private RewardDAO rewardDAO = new RewardDAO();
     private GuestDAO guestDAO = new GuestDAO();
 
-    private MemberManagementUI memberUI;
-    private RewardManagementUI rewardUI;
-    private PointsManagementUI pointsUI;
-    private NotificationCentreUI notificationUI;
-    private ReportsUI reportsUI;
     private ReportUI reportUI;
     private LoyaltyRewardsUI moduleUI;
 
@@ -66,11 +56,6 @@ public class LoyaltyController {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
         guestDAO.loadFromFile(guestList);
-        memberUI = new MemberManagementUI(scanner);
-        rewardUI = new RewardManagementUI(scanner);
-        pointsUI = new PointsManagementUI(scanner);
-        notificationUI = new NotificationCentreUI(scanner);
-        reportsUI = new ReportsUI(scanner);
         reportUI = new ReportUI(scanner, "LOYALTY & REWARDS MODULE SUBSYSTEM");
         moduleUI = new LoyaltyRewardsUI(scanner);
         reconcileTiersOnLoad();
@@ -144,7 +129,7 @@ public class LoyaltyController {
             }
 
             LinkedListInterface<Member> pageList = pageOf(display, page);
-            int choice = memberUI.printMemberListMenu(pageList, page, pageCount, hasFilter,
+            int choice = moduleUI.printMemberListMenu(pageList, page, pageCount, hasFilter,
                     hasDeleted, this::findGuest);
 
             if (choice == 0) {
@@ -155,7 +140,7 @@ public class LoyaltyController {
             if (choice == action++) { // 1. View Details
                 viewMember(pageList);
             } else if (choice == action++) { // 2. Filter by Tier
-                String tier = memberUI.inputTierFilter();
+                String tier = moduleUI.inputTierFilter();
                 if (tier != null) {
                     tierFilter = tier;
                     page = 0;
@@ -200,19 +185,19 @@ public class LoyaltyController {
                 page = pageCount - 1;
             }
             LinkedListInterface<Member> pageList = pageOf(deleted, page);
-            int choice = memberUI.printDeletedMembersMenu(pageList, page, pageCount, this::findGuest);
+            int choice = moduleUI.printDeletedMembersMenu(pageList, page, pageCount, this::findGuest);
             if (choice == 0) {
                 return;
             }
             int action = 1;
             if (choice == action++) { // 1. Restore Selected Member
-                int index = memberUI.inputListIndex("member", pageList.size());
+                int index = moduleUI.inputListIndex("member", pageList.size());
                 if (index == 0) {
                     continue;
                 }
                 Member member = pageList.get(index - 1);
-                if (member != null && memberUI.confirm("Restore member " + member.getMemberId() + "?")) {
-                    memberUI.showMessage(restoreMember(member.getMemberId()));
+                if (member != null && moduleUI.confirm("Restore member " + member.getMemberId() + "?")) {
+                    moduleUI.showMessage(restoreMember(member.getMemberId()));
                 }
                 return;
             } else {
@@ -238,10 +223,10 @@ public class LoyaltyController {
     // view flow: pick a member from the current page, then run its action menu
     private void viewMember(LinkedListInterface<Member> pageList) {
         if (pageList.isEmpty()) {
-            memberUI.showMessage("(No member records)");
+            moduleUI.showMessage("(No member records)");
             return;
         }
-        int num = memberUI.inputListIndex("member", pageList.size());
+        int num = moduleUI.inputListIndex("member", pageList.size());
         if (num == 0) {
             return;
         }
@@ -254,25 +239,25 @@ public class LoyaltyController {
     // select-entity action loop for one member: details -> action -> details
     private void handleMemberActions(Member member) {
         while (true) {
-            memberUI.displayProfile(member, findGuest(member.getGuestId()));
+            moduleUI.displayProfile(member, findGuest(member.getGuestId()));
 
-            int action = memberUI.getMemberActionChoice();
+            int action = moduleUI.getMemberActionChoice();
             if (action == 0) {
                 return;
             }
 
             switch (action) {
                 case 1: // Update Member Tier
-                    memberUI.show("Current tier: " + member.getTier());
-                    Tier tier = memberUI.selectTier();
+                    moduleUI.show("Current tier: " + member.getTier());
+                    Tier tier = moduleUI.selectTier();
                     if (tier != null) {
-                        memberUI.showMessage(updateMember(member.getMemberId(), tier));
+                        moduleUI.showMessage(updateMember(member.getMemberId(), tier));
                     }
                     break;
                 case 2: // Remove Member
-                    if (memberUI.confirm("Remove member " + member.getMemberId()
+                    if (moduleUI.confirm("Remove member " + member.getMemberId()
                             + "? (soft delete - can be restored later)")) {
-                        memberUI.showMessage(removeMember(member.getMemberId()));
+                        moduleUI.showMessage(removeMember(member.getMemberId()));
                     }
                     return; // member is gone; back to the list
                 case 3: // Set / Edit Promotion
@@ -280,11 +265,11 @@ public class LoyaltyController {
                     break;
                 case 4: // Clear Promotion
                     if (member.getPromotionName() != null) {
-                        if (memberUI.confirm("Clear promotion for " + member.getMemberId() + "?")) {
-                            memberUI.showMessage(clearPromotion(member.getMemberId()));
+                        if (moduleUI.confirm("Clear promotion for " + member.getMemberId() + "?")) {
+                            moduleUI.showMessage(clearPromotion(member.getMemberId()));
                         }
                     } else {
-                        memberUI.showMessage("No promotion set for " + member.getMemberId() + ".");
+                        moduleUI.showMessage("No promotion set for " + member.getMemberId() + ".");
                     }
                     break;
                 default:
@@ -300,22 +285,22 @@ public class LoyaltyController {
 
     /** Prompts for and applies a personalized promotion to a member. */
     private void setPromotionFlow(Member member) {
-        String name = memberUI.inputPromotionName();
+        String name = moduleUI.inputPromotionName();
         if (name == null) {
             return; // cancelled
         }
-        int percent = memberUI.inputPromotionPercent();
+        int percent = moduleUI.inputPromotionPercent();
         if (percent == 0) {
             return; // cancelled
         }
-        String expiryInput = memberUI.inputPromotionExpiryString();
+        String expiryInput = moduleUI.inputPromotionExpiryString();
         if (expiryInput == null) {
             return; // cancelled
         }
         LocalDateTime expiry = expiryInput.isBlank()
                 ? null
                 : java.time.LocalDate.parse(expiryInput).atStartOfDay();
-        memberUI.showMessage(setPromotion(member.getMemberId(), name, percent, expiry, LocalDateTime.now()));
+        moduleUI.showMessage(setPromotion(member.getMemberId(), name, percent, expiry, LocalDateTime.now()));
     }
 
     /** Assigns a personalized promotion (percent off stays) to a member and notifies them. */
@@ -399,7 +384,7 @@ public class LoyaltyController {
             }
 
             LinkedListInterface<Reward> pageList = pageOf(display, page);
-            int choice = rewardUI.printRewardListMenu(pageList, page, pageCount, hasFilter,
+            int choice = moduleUI.printRewardListMenu(pageList, page, pageCount, hasFilter,
                     hasDeleted, sortLabelOf(sortMode));
 
             if (choice == 0) {
@@ -412,7 +397,7 @@ public class LoyaltyController {
             } else if (choice == action++) { // 2. Add New Reward
                 addRewardFlow();
             } else if (choice == action++) { // 3. Filter by Min Tier
-                Tier tier = rewardUI.inputMinTierFilter();
+                Tier tier = moduleUI.inputMinTierFilter();
                 if (tier != null) {
                     tierFilter = tier;
                     page = 0;
@@ -460,20 +445,20 @@ public class LoyaltyController {
                 page = pageCount - 1;
             }
             LinkedListInterface<Reward> pageList = pageOf(deleted, page);
-            int choice = rewardUI.printDeletedRewardsMenu(pageList, page, pageCount);
+            int choice = moduleUI.printDeletedRewardsMenu(pageList, page, pageCount);
             if (choice == 0) {
                 return;
             }
             int action = 1;
             if (choice == action++) { // 1. Restore Selected Reward
-                int index = rewardUI.inputListIndex("reward", pageList.size());
+                int index = moduleUI.inputListIndex("reward", pageList.size());
                 if (index == 0) {
                     continue;
                 }
                 Reward reward = pageList.get(index - 1);
-                if (reward != null && rewardUI.confirm("Restore reward " + reward.getRewardId()
+                if (reward != null && moduleUI.confirm("Restore reward " + reward.getRewardId()
                         + " (" + reward.getName() + ")?")) {
-                    rewardUI.showMessage(restoreReward(reward.getRewardId()));
+                    moduleUI.showMessage(restoreReward(reward.getRewardId()));
                 }
                 return;
             } else {
@@ -523,10 +508,10 @@ public class LoyaltyController {
     // view flow: pick a reward from the current page, then run its action menu
     private void viewReward(LinkedListInterface<Reward> pageList) {
         if (pageList.isEmpty()) {
-            rewardUI.showMessage("(No rewards in the catalogue)");
+            moduleUI.showMessage("(No rewards in the catalogue)");
             return;
         }
-        int num = rewardUI.inputListIndex("reward", pageList.size());
+        int num = moduleUI.inputListIndex("reward", pageList.size());
         if (num == 0) {
             return;
         }
@@ -539,9 +524,9 @@ public class LoyaltyController {
     // select-entity action loop for one reward: details -> action -> details
     private void handleRewardActions(Reward reward) {
         while (true) {
-            rewardUI.displayRewardDetails(reward);
+            moduleUI.displayRewardDetails(reward);
 
-            int action = rewardUI.getRewardActionChoice();
+            int action = moduleUI.getRewardActionChoice();
             if (action == 0) {
                 return;
             }
@@ -551,9 +536,9 @@ public class LoyaltyController {
                     updateRewardPrompt(reward);
                     break;
                 case 2: // Remove Reward
-                    if (rewardUI.confirm("Remove reward " + reward.getRewardId()
+                    if (moduleUI.confirm("Remove reward " + reward.getRewardId()
                             + " (" + reward.getName() + ")? (soft delete - can be restored later)")) {
-                        rewardUI.showMessage(removeReward(reward.getRewardId()));
+                        moduleUI.showMessage(removeReward(reward.getRewardId()));
                     }
                     return; // reward is gone; back to the list
                 default:
@@ -568,51 +553,51 @@ public class LoyaltyController {
     }
 
     private void updateRewardPrompt(Reward reward) {
-        String name = rewardUI.promptWithDefault("New name", reward.getName());
+        String name = moduleUI.promptWithDefault("New name", reward.getName());
         if (name == null) {
-            rewardUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        String description = rewardUI.promptWithDefault("New description", reward.getDescription());
+        String description = moduleUI.promptWithDefault("New description", reward.getDescription());
         if (description == null) {
-            rewardUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        Integer cost = rewardUI.promptIntWithDefault("New point cost", reward.getPointCost());
+        Integer cost = moduleUI.promptIntWithDefault("New point cost", reward.getPointCost());
         if (cost == null) {
-            rewardUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        Tier minTier = rewardUI.promptTierWithDefault("New min tier",
+        Tier minTier = moduleUI.promptTierWithDefault("New min tier",
                 reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier());
         if (minTier == null) {
-            rewardUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        RoomType roomType = rewardUI.promptRoomTypeWithDefault("New room type", reward.getRoomType());
-        Integer voucherType = rewardUI.promptVoucherTypeWithDefault(reward);
+        RoomType roomType = moduleUI.promptRoomTypeWithDefault("New room type", reward.getRoomType());
+        Integer voucherType = moduleUI.promptVoucherTypeWithDefault(reward);
         if (voucherType == null) {
-            rewardUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
         Double voucherValue = reward.getVoucherValue();
         Integer discountPercent = reward.getDiscountPercent();
         if (voucherType == 1) {
-            voucherValue = rewardUI.promptDoubleWithDefault("New voucher value (RM)", reward.getVoucherValue());
+            voucherValue = moduleUI.promptDoubleWithDefault("New voucher value (RM)", reward.getVoucherValue());
             if (voucherValue == null && reward.getVoucherValue() != null) {
-                rewardUI.showMessage("Operation cancelled.");
+                moduleUI.showMessage("Operation cancelled.");
                 return;
             }
             discountPercent = null;
         } else if (voucherType == 2) {
-            discountPercent = rewardUI.promptPercentWithDefault("New discount percent (%)", reward.getDiscountPercent());
+            discountPercent = moduleUI.promptPercentWithDefault("New discount percent (%)", reward.getDiscountPercent());
             if (discountPercent == null && reward.getDiscountPercent() != null) {
-                rewardUI.showMessage("Operation cancelled.");
+                moduleUI.showMessage("Operation cancelled.");
                 return;
             }
             voucherValue = null;
         }
-        rewardUI.showMessage(updateReward(reward.getRewardId(), name, description, cost,
+        moduleUI.showMessage(updateReward(reward.getRewardId(), name, description, cost,
                 minTier, roomType, voucherValue, discountPercent));
     }
 
@@ -664,7 +649,7 @@ public class LoyaltyController {
     public void runPointsMenu() {
         String alert = generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
-            pointsUI.show(alert);
+            moduleUI.show(alert);
         }
         String tierFilter = null;
         int page = 0;
@@ -684,7 +669,7 @@ public class LoyaltyController {
             }
 
             LinkedListInterface<Member> pageList = pageOf(display, page);
-            int choice = pointsUI.printPointsListMenu(pageList, page, pageCount, hasFilter,
+            int choice = moduleUI.printPointsListMenu(pageList, page, pageCount, hasFilter,
                     this::findGuest, m -> getAvailableBalance(m.getMemberId(), LocalDateTime.now()));
 
             if (choice == 0) {
@@ -701,9 +686,9 @@ public class LoyaltyController {
             } else if (choice == action++) { // 4. Process Redemption Requests
                 processRedemptionRequestsFlow();
             } else if (choice == action++) { // 5. Generate Expiry Alerts
-                pointsUI.showMessage(generateExpiryAlerts(LocalDateTime.now()));
+                moduleUI.showMessage(generateExpiryAlerts(LocalDateTime.now()));
             } else if (choice == action++) { // 6. Filter by Tier
-                String tier = pointsUI.inputTierFilter();
+                String tier = moduleUI.inputTierFilter();
                 if (tier != null) {
                     tierFilter = tier;
                     page = 0;
@@ -751,23 +736,23 @@ public class LoyaltyController {
     // select-entity action loop for one member's points: balance -> action -> balance
     private void handleMemberPointsActions(Member member) {
         while (true) {
-            pointsUI.displayBalance(member, getAvailableBalance(member.getMemberId(), LocalDateTime.now()));
+            moduleUI.displayBalance(member, getAvailableBalance(member.getMemberId(), LocalDateTime.now()));
 
-            int action = pointsUI.getMemberPointsActionChoice();
+            int action = moduleUI.getMemberPointsActionChoice();
             if (action == 0) {
                 return;
             }
 
             switch (action) {
                 case 1: // Run Expiry Check
-                    pointsUI.showMessage(expirePoints(member.getMemberId(), LocalDateTime.now()));
+                    moduleUI.showMessage(expirePoints(member.getMemberId(), LocalDateTime.now()));
                     break;
                 case 2: // View Transaction History
-                    pointsUI.displayTransactions(getTransactions(member.getMemberId()));
-                    pointsUI.pause();
+                    moduleUI.displayTransactions(getTransactions(member.getMemberId()));
+                    moduleUI.pause();
                     break;
                 case 3: // View Tier Progression
-                    pointsUI.showMessage(getTierProgress(member.getMemberId()));
+                    moduleUI.showMessage(getTierProgress(member.getMemberId()));
                     break;
                 case 4: // View Notifications
                     viewMemberNotifications(member);
@@ -785,18 +770,18 @@ public class LoyaltyController {
 
     private void viewMemberNotifications(Member member) {
         if (member.getGuestId() == null) {
-            pointsUI.showMessage("Member has no guest account linked.");
+            moduleUI.showMessage("Member has no guest account linked.");
             return;
         }
         LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
-        pointsUI.displayNotifications(list);
-        if (pointsUI.confirmMarkAllRead()) {
+        moduleUI.displayNotifications(list);
+        if (moduleUI.confirmMarkAllRead()) {
             for (int i = 0; i < list.size(); i++) {
                 markNotificationRead(list.get(i).getNotificationId());
             }
-            pointsUI.show("All notifications marked as read.");
+            moduleUI.show("All notifications marked as read.");
         }
-        pointsUI.pause();
+        moduleUI.pause();
     }
 
     // ======================= REPORTS =======================
@@ -804,7 +789,7 @@ public class LoyaltyController {
     /** Management report submenu: 3 analytical reports with search + sort + filters. */
     private void runReports() {
         while (true) {
-            int choice = reportsUI.getReportMenuChoice();
+            int choice = moduleUI.getReportMenuChoice();
             if (choice == 0) {
                 return;
             }
@@ -821,22 +806,23 @@ public class LoyaltyController {
                 default:
                     break;
             }
-            reportsUI.pause();
+            moduleUI.pause();
         }
     }
 
     // ---- Report 1: Membership & Tier Performance ----
 
     private void generateMembershipReport() {
-        Tier tier = reportsUI.inputTierFilter() == 0 ? null : Tier.values()[reportsUI.inputTierFilter() - 1];
-        int minPoints = reportsUI.inputMinPoints();
-        int status = reportsUI.inputMemberStatus();
-        int promo = reportsUI.inputPromotionFilter();
+        int tierChoice = moduleUI.inputReportTierFilter();
+        Tier tier = tierChoice == 0 ? null : Tier.values()[tierChoice - 1];
+        int minPoints = moduleUI.inputMinPoints();
+        int status = moduleUI.inputMemberStatus();
+        int promo = moduleUI.inputPromotionFilter();
         LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("transaction");
-        String keyword = reportsUI.inputSearchKeyword();
-        int sortField = reportsUI.inputSortField(
+        String keyword = moduleUI.inputSearchKeyword();
+        int sortField = moduleUI.inputSortField(
                 new String[] { "Name", "Tier", "Balance", "Cumulative Earned", "Transactions" });
-        boolean asc = reportsUI.inputSortOrder();
+        boolean asc = moduleUI.inputSortOrder();
 
         LocalDateTime now = LocalDateTime.now();
         ArrayList<Member> rows = new ArrayList<>();
@@ -936,7 +922,7 @@ public class LoyaltyController {
                 + ", Min pts=" + minPoints + ", Status=" + statusLabel(status)
                 + ", Promotion=" + promoLabel(promo) + ", Sort=" + sortLabel(
                         new String[] { "Name", "Tier", "Balance", "Cum Earned", "Txns" }, sortField, asc);
-        reportsUI.showCriteria(criteria);
+        moduleUI.showCriteria(criteria);
         reportUI.printReport(new ReportResult(table, summary, charts, callouts),
                 "MEMBERSHIP & TIER PERFORMANCE REPORT");
     }
@@ -960,19 +946,19 @@ public class LoyaltyController {
         System.out.println("  1. PENDING");
         System.out.println("  2. APPROVED");
         System.out.println("  3. REJECTED");
-        int statusFilter = reportsUI.inputChoice("Enter status", 0, 3);
+        int statusFilter = moduleUI.inputChoice("Enter status", 0, 3);
         System.out.println("\nVoucher Type:");
         System.out.println("  1. All");
         System.out.println("  2. Fixed RM");
         System.out.println("  3. Percentage (%)");
         System.out.println("  4. Not a voucher");
-        int typeFilter = reportsUI.inputChoice("Enter type", 1, 4);
-        int minCost = reportsUI.inputMinPoints();
+        int typeFilter = moduleUI.inputChoice("Enter type", 1, 4);
+        int minCost = moduleUI.inputMinPoints();
         LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("redemption");
-        String keyword = reportsUI.inputSearchKeyword();
-        int sortField = reportsUI.inputSortField(
+        String keyword = moduleUI.inputSearchKeyword();
+        int sortField = moduleUI.inputSortField(
                 new String[] { "Member", "Reward", "Date", "Status", "Points Cost" });
-        boolean asc = reportsUI.inputSortOrder();
+        boolean asc = moduleUI.inputSortOrder();
 
         ArrayList<RedemptionRecord> rows = new ArrayList<>();
         for (int i = 0; i < memberList.size(); i++) {
@@ -1100,7 +1086,7 @@ public class LoyaltyController {
         String criteria = "Status=" + statusLabel2(statusFilter) + ", Type=" + typeLabel(typeFilter)
                 + ", Min cost=" + minCost + ", Sort=" + sortLabel(
                         new String[] { "Member", "Reward", "Date", "Status", "Pts Cost" }, sortField, asc);
-        reportsUI.showCriteria(criteria);
+        moduleUI.showCriteria(criteria);
         reportUI.printReport(new ReportResult(table, summary, charts, callouts),
                 "REDEMPTION & VOUCHER REPORT");
     }
@@ -1108,13 +1094,14 @@ public class LoyaltyController {
     // ---- Report 3: Point Expiry & Tier Progression ----
 
     private void generateExpiryReport() {
-        Tier tier = reportsUI.inputTierFilter() == 0 ? null : Tier.values()[reportsUI.inputTierFilter() - 1];
-        int minCumulative = reportsUI.inputMinPoints();
-        int window = reportsUI.inputExpiryWindow();
-        String keyword = reportsUI.inputSearchKeyword();
-        int sortField = reportsUI.inputSortField(
+        int tierChoice = moduleUI.inputReportTierFilter();
+        Tier tier = tierChoice == 0 ? null : Tier.values()[tierChoice - 1];
+        int minCumulative = moduleUI.inputMinPoints();
+        int window = moduleUI.inputExpiryWindow();
+        String keyword = moduleUI.inputSearchKeyword();
+        int sortField = moduleUI.inputSortField(
                 new String[] { "Name", "Tier", "Balance", "Cumulative Earned", "Nearest Expiry" });
-        boolean asc = reportsUI.inputSortOrder();
+        boolean asc = moduleUI.inputSortOrder();
 
         LocalDateTime now = LocalDateTime.now();
         ArrayList<Member> rows = new ArrayList<>();
@@ -1208,7 +1195,7 @@ public class LoyaltyController {
                 + ", Min cum=" + minCumulative + ", Expiry window=" + (window == 0 ? "None" : window + "d")
                 + ", Sort=" + sortLabel(
                         new String[] { "Name", "Tier", "Balance", "Cum Earned", "Nearest Expiry" }, sortField, asc);
-        reportsUI.showCriteria(criteria);
+        moduleUI.showCriteria(criteria);
         reportUI.printReport(new ReportResult(table, summary, charts, callouts),
                 "POINT EXPIRY & TIER PROGRESSION REPORT");
     }
@@ -1519,22 +1506,22 @@ public class LoyaltyController {
                 };
             }
 
-            int choice = notificationUI.printMemberListMenu(
+            int choice = moduleUI.printMemberListMenu(
                     memberRows, memberPage, pageCount, getUnreadNotificationCount());
             if (choice == 0) {
                 return;
             }
             int action = 1;
             if (choice == action++) { // 1. View Notifications - pick a member
-                int index = notificationUI.inputListIndex("member number", pageList.size());
+                int index = moduleUI.inputListIndex("member number", pageList.size());
                 if (index == 0) {
                     continue;
                 }
                 viewMemberNotificationsCentre(pageList.get(index - 1));
             } else if (choice == action++) { // 2. Mark All Read (all members)
                 int marked = markAllNotificationsRead();
-                notificationUI.showMessage(marked + " notification(s) marked as read.");
-                notificationUI.pause();
+                moduleUI.showMessage(marked + " notification(s) marked as read.");
+                moduleUI.pause();
                 memberPage = 0;
             } else {
                 boolean matched = false;
@@ -1559,8 +1546,8 @@ public class LoyaltyController {
     /** Level 2: one member's notifications, newest first, with per-member mark-all-read. */
     private void viewMemberNotificationsCentre(Member member) {
         if (member.getGuestId() == null) {
-            notificationUI.showMessage("Member has no guest account linked.");
-            notificationUI.pause();
+            moduleUI.showMessage("Member has no guest account linked.");
+            moduleUI.pause();
             return;
         }
         int page = 0;
@@ -1582,7 +1569,7 @@ public class LoyaltyController {
                 };
             }
             Guest g = findGuest(member.getGuestId());
-            int choice = notificationUI.printMemberNotificationsMenu(
+            int choice = moduleUI.printMemberNotificationsMenu(
                     member.getMemberId(), g == null ? null : g.getName(), rows, page, pageCount);
             if (choice == 0) {
                 return;
@@ -1590,8 +1577,8 @@ public class LoyaltyController {
             int action = 1;
             if (choice == action++) { // 1. Mark All Read (this member)
                 int marked = markMemberNotificationsRead(member.getMemberId());
-                notificationUI.showMessage(marked + " notification(s) marked as read.");
-                notificationUI.pause();
+                moduleUI.showMessage(marked + " notification(s) marked as read.");
+                moduleUI.pause();
                 page = 0;
             } else {
                 boolean matched = false;
@@ -1623,10 +1610,10 @@ public class LoyaltyController {
     // pick a member by its on-screen number from the current page (0 = cancel)
     private String pickMemberFromPage(LinkedListInterface<Member> pageList) {
         if (pageList.isEmpty()) {
-            pointsUI.showMessage("(No member records)");
+            moduleUI.showMessage("(No member records)");
             return null;
         }
-        int num = pointsUI.inputListIndex("member", pageList.size());
+        int num = moduleUI.inputListIndex("member", pageList.size());
         if (num == 0) {
             return null;
         }
@@ -1769,17 +1756,17 @@ public class LoyaltyController {
     // ======================= REWARD MANAGEMENT =======================
 
     private void addRewardFlow() {
-        Reward reward = rewardUI.inputNewReward(nextRewardId());
+        Reward reward = moduleUI.inputNewReward(nextRewardId());
         if (reward == null) {
-            rewardUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        rewardUI.printRewardCreationSummary(reward);
-        if (!rewardUI.confirm("Add this reward?")) {
-            rewardUI.showMessage("Reward creation cancelled.");
+        moduleUI.printRewardCreationSummary(reward);
+        if (!moduleUI.confirm("Add this reward?")) {
+            moduleUI.showMessage("Reward creation cancelled.");
             return;
         }
-        rewardUI.showMessage(addReward(reward));
+        moduleUI.showMessage(addReward(reward));
     }
 
     public LinkedListInterface<Reward> getRewards() {
@@ -1926,17 +1913,17 @@ public class LoyaltyController {
         if (memberId == null) {
             return;
         }
-        int amount = pointsUI.inputAmount();
+        int amount = moduleUI.inputAmount();
         if (amount == 0) {
-            pointsUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        String description = pointsUI.inputDescription();
+        String description = moduleUI.inputDescription();
         if (description == null) {
-            pointsUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
-        pointsUI.showMessage(earnPoints(memberId, amount, description, LocalDateTime.now()));
+        moduleUI.showMessage(earnPoints(memberId, amount, description, LocalDateTime.now()));
     }
 
     private void requestRedemptionFlow(LinkedListInterface<Member> pageList) {
@@ -1949,28 +1936,28 @@ public class LoyaltyController {
             return;
         }
         LinkedListInterface<Reward> eligible = getRewardsEligibleFor(member.getTier());
-        String rewardId = pointsUI.selectReward(eligible);
+        String rewardId = moduleUI.selectReward(eligible);
         if (rewardId == null) {
             return;
         }
-        pointsUI.showMessage(requestRedemption(memberId, rewardId, LocalDateTime.now()));
+        moduleUI.showMessage(requestRedemption(memberId, rewardId, LocalDateTime.now()));
     }
 
     private void processRedemptionRequestsFlow() {
         LinkedListInterface<RedemptionRecord> pending = getPendingRedemptions();
-        String redemptionId = pointsUI.selectPendingRequest(pending);
+        String redemptionId = moduleUI.selectPendingRequest(pending);
         if (redemptionId == null) {
             return;
         }
-        String answer = pointsUI.approveOrReject();
+        String answer = moduleUI.approveOrReject();
         if (answer == null) {
-            pointsUI.showMessage("Operation cancelled.");
+            moduleUI.showMessage("Operation cancelled.");
             return;
         }
         if ("a".equals(answer)) {
-            pointsUI.showMessage(approveRedemption(redemptionId, LocalDateTime.now()));
+            moduleUI.showMessage(approveRedemption(redemptionId, LocalDateTime.now()));
         } else {
-            pointsUI.showMessage(rejectRedemption(redemptionId, LocalDateTime.now()));
+            moduleUI.showMessage(rejectRedemption(redemptionId, LocalDateTime.now()));
         }
     }
 

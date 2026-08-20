@@ -4,8 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import java.util.function.Function;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.control.LoyaltyController;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Notification;
@@ -18,21 +18,21 @@ import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
 /**
- *
- * @author Brian
- *
- * Module driver for the Loyalty & Rewards subsystem.
+ * Module boundary for the Loyalty & Rewards subsystem.
  * Launched from TarumtResort via MainMenuUI case 5.
  *
- * Contains all four loyalty UI classes in one file:
- *   - LoyaltyRewardsUI     (module menu)
- *   - MemberManagementUI   (member CRUD + paginated list + profile)
- *   - PointsManagementUI   (points, transactions, notifications, redemptions)
- *   - RewardManagementUI   (reward catalogue CRUD)
+ * Flat structure (mirrors HousekeepingUI): one class, one shared Scanner,
+ * and a single set of banner/menu/input helpers reused by every screen.
+ * Member / Reward / Points / Notification / Report screens are all public
+ * instance methods on this class.
  */
 public class LoyaltyRewardsUI {
 
     private final Scanner scanner;
+
+    private static final int BANNER_WIDTH = 32;
+    private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public LoyaltyRewardsUI(Scanner scanner) {
         this.scanner = scanner;
@@ -42,21 +42,9 @@ public class LoyaltyRewardsUI {
         return scanner;
     }
 
-    public void run() {
-        new LoyaltyController(scanner).run();
-    }
-
-    /** "RM20.00" for fixed-RM vouchers, "20%" for percentage vouchers, "-" otherwise. */
-    static String rewardValueLabel(Reward r) {
-        if (r.getDiscountPercent() != null) {
-            return r.getDiscountPercent() + "%";
-        }
-        if (r.getVoucherValue() != null) {
-            return "RM" + String.format("%.2f", r.getVoucherValue());
-        }
-        return "-";
-    }
-
+    // ==================================================================
+    // MODULE MENU
+    // ==================================================================
     public int getMenuChoice() {
         return getMenuChoice(0);
     }
@@ -115,1581 +103,1157 @@ public class LoyaltyRewardsUI {
         }
     }
 
+    /** "RM20.00" for fixed-RM vouchers, "20%" for percentage vouchers, "-" otherwise. */
+    static String rewardValueLabel(Reward r) {
+        if (r.getDiscountPercent() != null) {
+            return r.getDiscountPercent() + "%";
+        }
+        if (r.getVoucherValue() != null) {
+            return "RM" + String.format("%.2f", r.getVoucherValue());
+        }
+        return "-";
+    }
+
     // ==================================================================
-    // MemberManagementUI
+    // SHARED BANNER / MENU HELPERS (defined once, mirrored from HousekeepingUI)
     // ==================================================================
-    public static class MemberManagementUI {
-        private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        private Scanner scanner = new Scanner(System.in);
+    private static void printBanner(String title) {
+        System.out.println("\n" + BANNER_LINE);
+        System.out.println(center(title, BANNER_WIDTH));
+        System.out.println(BANNER_LINE);
+    }
 
-        public MemberManagementUI() {
+    private static void printSeparator() {
+        System.out.println(BANNER_LINE);
+    }
+
+    private static void printSection(String text) {
+        if (text == null) {
+            text = "";
         }
-
-        public MemberManagementUI(Scanner scanner) {
-            this.scanner = scanner;
-        }
-
-        /**
-         * Member list page: paginated table + action bar (mirrors
-         * HousekeepingUI.printStaffListMenu). Returns the chosen action number.
-         */
-        public int printMemberListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
-                boolean hasFilter, boolean hasDeleted, java.util.function.Function<String, Guest> guestResolver) {
-            clearScreen();
-            printBanner("MEMBER MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
-            if (pageList.isEmpty()) {
-                System.out.println("  (No member records)");
-            } else {
-                String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
-                String[][] rows = new String[pageList.size()][5];
-                for (int i = 0; i < pageList.size(); i++) {
-                    Member m = pageList.get(i);
-                    Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
-                    rows[i] = new String[] {
-                        String.valueOf(i + 1), m.getMemberId(),
-                        g != null && g.getName() != null ? g.getName() : "-",
-                        m.getTier() == null ? "-" : m.getTier().name(),
-                        String.valueOf(m.getPoints())
-                    };
-                }
-                TablePrinter.displayTable(header, rows);
-            }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". View Details");
-            System.out.println("  " + action++ + ". Filter by Tier");
-            if (hasDeleted) {
-                System.out.println("  " + action++ + ". Restore Deleted Member");
-            }
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
-            }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            if (hasFilter) {
-                System.out.println("  " + action++ + ". Clear Filter");
-            }
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
-        }
-
-        /** Deleted members list: pick one to restore (0 = back). */
-        public int printDeletedMembersMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
-                java.util.function.Function<String, Guest> guestResolver) {
-            clearScreen();
-            printBanner("DELETED MEMBERS (Page " + (page + 1) + " of " + pageCount + ")");
-            if (pageList.isEmpty()) {
-                System.out.println("  (No deleted members)");
-            } else {
-                String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
-                String[][] rows = new String[pageList.size()][5];
-                for (int i = 0; i < pageList.size(); i++) {
-                    Member m = pageList.get(i);
-                    Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
-                    rows[i] = new String[] {
-                        String.valueOf(i + 1), m.getMemberId(),
-                        g != null && g.getName() != null ? g.getName() : "-",
-                        m.getTier() == null ? "-" : m.getTier().name(),
-                        String.valueOf(m.getPoints())
-                    };
-                }
-                TablePrinter.displayTable(header, rows);
-            }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". Restore Selected Member");
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
-            }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
-        }
-
-        public int getMemberActionChoice() {
-            printSection("Member Actions");
-            System.out.println("  1. Update Member Tier");
-            System.out.println("  2. Remove Member");
-            System.out.println("  3. Set / Edit Promotion");
-            System.out.println("  4. Clear Promotion");
-            System.out.println("  0. Back to List");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, 4);
-        }
-
-        /** @return promotion name, or null if the user cancelled. */
-        public String inputPromotionName() {
-            while (true) {
-                System.out.print("Enter promotion name (0 to cancel): ");
-                String name = scanner.nextLine().trim();
-                if (name.equals("0")) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return null;
-                }
-                if (!name.isEmpty()) {
-                    return name;
-                }
-                ConsoleUtil.printError("Promotion name cannot be empty.");
-            }
-        }
-
-        /** @return discount percent (1-100), or 0 if the user cancelled. */
-        public int inputPromotionPercent() {
-            while (true) {
-                System.out.print("Enter discount percent (1-100, 0 to cancel): ");
-                String line = scanner.nextLine().trim();
-                if (line.equals("0")) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return 0;
-                }
-                try {
-                    int v = Integer.parseInt(line);
-                    if (v >= 1 && v <= 100) {
-                        System.out.println();
-                        return v;
-                    }
-                } catch (NumberFormatException e) {
-                    // retry below
-                }
-                ConsoleUtil.printError("Please enter a number between 1 and 100 (or 0 to cancel).");
-            }
-        }
-
-        /** @return "" = no expiry, "yyyy-MM-dd" = a validated expiry date, null = cancelled. */
-        public String inputPromotionExpiryString() {
-            while (true) {
-                System.out.print("Enter expiry date (yyyy-mm-dd, blank = no expiry, 0 to cancel): ");
-                String line = scanner.nextLine().trim();
-                if (line.equals("0")) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return null;
-                }
-                if (line.isEmpty()) {
-                    return "";
-                }
-                try {
-                    LocalDate.parse(line);
-                    return line;
-                } catch (java.time.format.DateTimeParseException e) {
-                    ConsoleUtil.printError("Invalid date format! Use YYYY-MM-DD.");
-                }
-            }
-        }
-
-        public String inputTierFilter() {
-            System.out.println("\nSelect Tier:");
-            Tier[] tiers = Tier.values();
-            for (int i = 0; i < tiers.length; i++) {
-                System.out.println("  " + (i + 1) + ". " + tiers[i]);
-            }
-            return tiers[inputIntChoice("Enter tier", 1, tiers.length) - 1].name();
-        }
-
-        public int inputListIndex(String entityLabel, int max) {
-            return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
-        }
-
-        // ----- banner / menu helpers (mirror HousekeepingUI) -----
-        private static final int BANNER_WIDTH = 32;
-        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
-
-        private static void printBanner(String title) {
+        if (text.isEmpty()) {
             System.out.println("\n" + BANNER_LINE);
-            System.out.println(center(title, BANNER_WIDTH));
-            System.out.println(BANNER_LINE);
+            return;
         }
+        String core = " " + text + " ";
+        int available = BANNER_WIDTH - core.length();
+        int left = available / 2;
+        System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+    }
 
-        private static void printSeparator() {
-            System.out.println(BANNER_LINE);
+    private static String center(String text, int width) {
+        if (text == null) {
+            text = "";
         }
-
-        private static void printSection(String text) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.isEmpty()) {
-                System.out.println("\n" + BANNER_LINE);
-                return;
-            }
-            String core = " " + text + " ";
-            int available = BANNER_WIDTH - core.length();
-            int left = available / 2;
-            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
+        if (text.length() >= width) {
+            return text;
         }
+        int pad = width - text.length();
+        int left = pad / 2;
+        return " ".repeat(left) + text + " ".repeat(pad - left);
+    }
 
-        private static String center(String text, int width) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.length() >= width) {
-                return text;
-            }
-            int pad = width - text.length();
-            int left = pad / 2;
-            return " ".repeat(left) + text + " ".repeat(pad - left);
-        }
+    private void clearScreen() {
+        ConsoleUtil.clearScreen();
+    }
 
-        private void clearScreen() {
-            ConsoleUtil.clearScreen();
-        }
-
-        private int inputIntChoice(String prompt, int min, int max) {
-            while (true) {
-                System.out.print(prompt + " (" + min + "-" + max + "): ");
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                try {
-                    int value = Integer.parseInt(line);
-                    if (value >= min && value <= max) {
-                        System.out.println();
-                        return value;
-                    }
-                } catch (NumberFormatException e) {
-                    // continue retry until integer input
-                }
-                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
-            }
-        }
-
-        public void displayProfile(Member m, Guest g) {
-            System.out.println();
-            if (m == null) {
-                System.out.println("Member not found.");
-                return;
-            }
-            LocalDateTime promoNow = LocalDateTime.now();
-            String promotion = m.hasActivePromotion(promoNow)
-                    ? m.promotionLabel(promoNow)
-                    : (m.getPromotionName() != null ? m.getPromotionName() + " (expired)" : "-");
-            String[][] details = {
-                {"Member ID", m.getMemberId()},
-                {"Tier", m.getTier() == null ? "-" : m.getTier().name()},
-                {"Discount", (m.getTier() == null ? 0 : m.getTier().getDiscountPercent()) + "% off stays & dining"},
-                {"Points", String.valueOf(m.getPoints())},
-                {"Guest ID", m.getGuestId() == null ? "-" : m.getGuestId()},
-                {"Name", g == null ? "-" : g.getName()},
-                {"IC / Passport", g == null ? "-" : g.getIcOrPassport()},
-                {"Phone", g == null ? "-" : g.getContactNumber()},
-                {"Nationality", g == null ? "-" : g.getNationality()},
-                {"Address", g == null ? "-" : g.getAddress()},
-                {"Enrolled", m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)},
-                {"Promotion", promotion}
-            };
-            printSection("Details");
-            int keyWidth = 0;
-            for (String[] pair : details) {
-                if (pair[0] != null && pair[0].length() > keyWidth) {
-                    keyWidth = pair[0].length();
-                }
-            }
-            for (String[] pair : details) {
-                System.out.println(String.format("%-" + (keyWidth + 3) + "s: %s",
-                        pair[0] == null ? "" : pair[0],
-                        pair[1] == null ? "-" : pair[1]));
-            }
-            printSeparator();
-        }
-
-        public Tier selectTier() {
-            System.out.println(" 1. SILVER");
-            System.out.println(" 2. GOLD");
-            System.out.println(" 3. PLATINUM");
-            System.out.println(" 4. DIAMOND");
-            System.out.println(" 0. Cancel");
-            int index = readInt("Select a tier") - 1;
-            Tier[] tiers = Tier.values();
-            if (index < 0) {
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (index >= tiers.length) {
-                ConsoleUtil.printError("Invalid selection.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return tiers[index];
-        }
-
-        /** Asks a yes/no confirmation; returns true only on an explicit 'y'. */
-        public boolean confirm(String message) {
-            System.out.println("\n==========Confirmation==========");
-            System.out.println("  " + message);
-            System.out.println("  [Y] YES");
-            System.out.println("  [N] NO");
-            System.out.println("=================================");
-            System.out.print("Your choice (y/n): ");
+    private int inputIntChoice(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt + " (" + min + "-" + max + "): ");
             String line = scanner.nextLine().trim();
-            return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
-        }
-
-        /** Prints an error message in red and waits for the user to press Enter. */
-        public void showError(String message) {
-            ConsoleUtil.printError(message);
-            pause();
-        }
-
-        /** Prints a message and waits for the user to press Enter. */
-        public void showMessage(String message) {
-            System.out.println(message);
-            pause();
-        }
-
-        public void show(String message) {
-            System.out.println(message);
-        }
-
-        public void pause() {
-            ConsoleUtil.pressEnterToContinue(scanner);
-        }
-
-        private int readInt(String prompt) {
-            while (true) {
-                System.out.print(prompt + ": ");
-                if (!scanner.hasNextLine()) {
-                    System.out.println("No more input. Exiting.");
-                    System.exit(0);
+            if (line.isEmpty()) {
+                continue;
+            }
+            try {
+                int value = Integer.parseInt(line);
+                if (value >= min && value <= max) {
+                    System.out.println();
+                    return value;
                 }
-                String input = scanner.nextLine().trim();
-                try {
-                    return Integer.parseInt(input);
-                } catch (NumberFormatException e) {
-                    ConsoleUtil.printError("Please enter a valid number.");
-                }
+            } catch (NumberFormatException e) {
+                // continue retry until integer input
+            }
+            ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+        }
+    }
+
+    private int readInt(String prompt) {
+        while (true) {
+            System.out.print(prompt + ": ");
+            if (!scanner.hasNextLine()) {
+                System.out.println("No more input. Exiting.");
+                System.exit(0);
+            }
+            String input = scanner.nextLine().trim();
+            try {
+                return Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                ConsoleUtil.printError("Please enter a valid number.");
             }
         }
     }
 
+    private static String truncate(String text, int width) {
+        if (text == null || text.length() <= width) {
+            return text;
+        }
+        return text.substring(0, width - 3) + "...";
+    }
+
     // ==================================================================
-    // PointsManagementUI
+    // MEMBER MANAGEMENT
     // ==================================================================
-    public static class PointsManagementUI {
-
-        private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        private Scanner scanner = new Scanner(System.in);
-
-        public PointsManagementUI() {
-        }
-
-        public PointsManagementUI(Scanner scanner) {
-            this.scanner = scanner;
-        }
-
-        /**
-         * Member points list page: paginated table + action bar (mirrors
-         * HousekeepingUI.printStaffListMenu). Returns the chosen action number.
-         */
-        public int printPointsListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
-                boolean hasFilter, java.util.function.Function<String, Guest> guestResolver,
-                java.util.function.Function<Member, Integer> balanceResolver) {
-            clearScreen();
-            printBanner("POINTS & REDEMPTION MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
-            if (pageList.isEmpty()) {
-                System.out.println("  (No member records)");
-            } else {
-                String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
-                String[][] rows = new String[pageList.size()][5];
-                for (int i = 0; i < pageList.size(); i++) {
-                    Member m = pageList.get(i);
-                    Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
-                    Integer balance = balanceResolver == null ? null : balanceResolver.apply(m);
-                    rows[i] = new String[] {
-                        String.valueOf(i + 1), m.getMemberId(),
-                        g != null && g.getName() != null ? g.getName() : "-",
-                        m.getTier() == null ? "-" : m.getTier().name(),
-                        balance == null ? "-" : String.valueOf(balance)
-                    };
-                }
-                TablePrinter.displayTable(header, rows);
+    public int printMemberListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+            boolean hasFilter, boolean hasDeleted, Function<String, Guest> guestResolver) {
+        clearScreen();
+        printBanner("MEMBER MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        if (pageList.isEmpty()) {
+            System.out.println("  (No member records)");
+        } else {
+            String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
+            String[][] rows = new String[pageList.size()][5];
+            for (int i = 0; i < pageList.size(); i++) {
+                Member m = pageList.get(i);
+                Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), m.getMemberId(),
+                    g != null && g.getName() != null ? g.getName() : "-",
+                    m.getTier() == null ? "-" : m.getTier().name(),
+                    String.valueOf(m.getPoints())
+                };
             }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". View Details");
-            System.out.println("  " + action++ + ". Earn Points");
-            System.out.println("  " + action++ + ". Request Redemption");
-            System.out.println("  " + action++ + ". Process Redemption Requests");
-            System.out.println("  " + action++ + ". Generate Expiry Alerts");
-            System.out.println("  " + action++ + ". Filter by Tier");
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
+            TablePrinter.displayTable(header, rows);
+        }
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Filter by Tier");
+        if (hasDeleted) {
+            System.out.println("  " + action++ + ". Restore Deleted Member");
+        }
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int printDeletedMembersMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+            Function<String, Guest> guestResolver) {
+        clearScreen();
+        printBanner("DELETED MEMBERS (Page " + (page + 1) + " of " + pageCount + ")");
+        if (pageList.isEmpty()) {
+            System.out.println("  (No deleted members)");
+        } else {
+            String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
+            String[][] rows = new String[pageList.size()][5];
+            for (int i = 0; i < pageList.size(); i++) {
+                Member m = pageList.get(i);
+                Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), m.getMemberId(),
+                    g != null && g.getName() != null ? g.getName() : "-",
+                    m.getTier() == null ? "-" : m.getTier().name(),
+                    String.valueOf(m.getPoints())
+                };
             }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            if (hasFilter) {
-                System.out.println("  " + action++ + ". Clear Filter");
-            }
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
+            TablePrinter.displayTable(header, rows);
         }
-
-        public int getMemberPointsActionChoice() {
-            printSection("Member Points Actions");
-            System.out.println("  1. Run Expiry Check");
-            System.out.println("  2. View Transaction History");
-            System.out.println("  3. View Tier Progression");
-            System.out.println("  4. View Notifications");
-            System.out.println("  0. Back to List");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, 4);
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". Restore Selected Member");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
         }
-
-        public String inputTierFilter() {
-            System.out.println("\nSelect Tier:");
-            Tier[] tiers = Tier.values();
-            for (int i = 0; i < tiers.length; i++) {
-                System.out.println("  " + (i + 1) + ". " + tiers[i]);
-            }
-            return tiers[inputIntChoice("Enter tier", 1, tiers.length) - 1].name();
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
         }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
 
-        public int inputListIndex(String entityLabel, int max) {
-            return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
-        }
+    public int getMemberActionChoice() {
+        printSection("Member Actions");
+        System.out.println("  1. Update Member Tier");
+        System.out.println("  2. Remove Member");
+        System.out.println("  3. Set / Edit Promotion");
+        System.out.println("  4. Clear Promotion");
+        System.out.println("  0. Back to List");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, 4);
+    }
 
-        // ----- banner / menu helpers (mirror HousekeepingUI) -----
-        private static final int BANNER_WIDTH = 32;
-        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
-
-        private static void printBanner(String title) {
-            System.out.println("\n" + BANNER_LINE);
-            System.out.println(center(title, BANNER_WIDTH));
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSeparator() {
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSection(String text) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.isEmpty()) {
-                System.out.println("\n" + BANNER_LINE);
-                return;
-            }
-            String core = " " + text + " ";
-            int available = BANNER_WIDTH - core.length();
-            int left = available / 2;
-            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
-        }
-
-        private static String center(String text, int width) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.length() >= width) {
-                return text;
-            }
-            int pad = width - text.length();
-            int left = pad / 2;
-            return " ".repeat(left) + text + " ".repeat(pad - left);
-        }
-
-        private void clearScreen() {
-            ConsoleUtil.clearScreen();
-        }
-
-        private int inputIntChoice(String prompt, int min, int max) {
-            while (true) {
-                System.out.print(prompt + " (" + min + "-" + max + "): ");
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                try {
-                    int value = Integer.parseInt(line);
-                    if (value >= min && value <= max) {
-                        System.out.println();
-                        return value;
-                    }
-                } catch (NumberFormatException e) {
-                    // continue retry until integer input
-                }
-                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
-            }
-        }
-
-        /** Lists the rewards and returns the chosen reward id, or null. */
-        public String selectReward(LinkedListInterface<Reward> rewards) {
-            if (rewards.isEmpty()) {
-                System.out.println("No rewards available for this member's tier.");
+    public String inputPromotionName() {
+        while (true) {
+            System.out.print("Enter promotion name (0 to cancel): ");
+            String name = scanner.nextLine().trim();
+            if (name.equals("0")) {
+                System.out.println("Operation cancelled.");
                 ConsoleUtil.pressEnterToContinue(scanner);
                 return null;
             }
-            System.out.println();
-            String[][] rows = new String[rewards.size()][5];
-            for (int i = 0; i < rewards.size(); i++) {
-                Reward r = rewards.get(i);
-                rows[i] = new String[] {
-                        String.valueOf(i + 1),
-                        truncate(r.getName(), 28),
-                        r.getRoomType() == null ? "Any" : r.getRoomType().name(),
-                        rewardValueLabel(r),
-                        r.getPointCost() + " pts"
-                };
+            if (!name.isEmpty()) {
+                return name;
             }
-            TablePrinter.displayTable(new String[] { "#", "Reward", "Room Type", "Value", "Points" }, rows);
-            System.out.println(" 0. Cancel");
-            int index = readInt("Select a reward") - 1;
-            if (index < 0) {
-                System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (index >= rewards.size()) {
-                ConsoleUtil.printError("Invalid selection.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return rewards.get(index).getRewardId();
+            ConsoleUtil.printError("Promotion name cannot be empty.");
         }
+    }
 
-        public int inputAmount() {
-            int amount = readInt("Points to award (0 to cancel)");
-            if (amount == 0) {
+    public int inputPromotionPercent() {
+        while (true) {
+            System.out.print("Enter discount percent (1-100, 0 to cancel): ");
+            String line = scanner.nextLine().trim();
+            if (line.equals("0")) {
                 System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
+                ConsoleUtil.pressEnterToContinue(scanner);
                 return 0;
             }
-            while (amount < 0) {
-                ConsoleUtil.printError("Amount must be positive.");
-                amount = readInt("Points to award (0 to cancel)");
-                if (amount == 0) {
-                    System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                    return 0;
+            try {
+                int v = Integer.parseInt(line);
+                if (v >= 1 && v <= 100) {
+                    System.out.println();
+                    return v;
                 }
+            } catch (NumberFormatException e) {
+                // retry below
             }
-            return amount;
+            ConsoleUtil.printError("Please enter a number between 1 and 100 (or 0 to cancel).");
         }
+    }
 
-        public String inputDescription() {
-            System.out.print("Description (0 to cancel): ");
-            String desc = scanner.nextLine().trim();
-            if (desc.equals("0")) {
+    public String inputPromotionExpiryString() {
+        while (true) {
+            System.out.print("Enter expiry date (yyyy-mm-dd, blank = no expiry, 0 to cancel): ");
+            String line = scanner.nextLine().trim();
+            if (line.equals("0")) {
                 System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return desc;
-        }
-
-        public void displayBalance(Member member, int balance) {
-            System.out.printf("Member %s (Tier: %s) - Available balance: %d pts%n",
-                    member.getMemberId(), member.getTier(), balance);
-            if (member != null && member.hasActivePromotion(LocalDateTime.now())) {
-                System.out.println("  Promotion: " + member.promotionLabel(LocalDateTime.now()));
-            }
-        }
-
-        public void displayTransactions(LinkedListInterface<PointTransaction> txs) {
-            if (txs.isEmpty()) {
-                System.out.println("No transactions found.");
-                return;
-            }
-            System.out.println();
-            String[][] rows = new String[txs.size()][7];
-            for (int i = 0; i < txs.size(); i++) {
-                PointTransaction t = txs.get(i);
-                rows[i] = new String[] {
-                        t.getTransactionId(),
-                        t.getDate().format(DATE_FMT),
-                        truncate(t.getDescription(), 22),
-                        String.valueOf(t.getPointChange()),
-                        String.valueOf(t.getRemainingPoints()),
-                        t.getExpiryDate().format(DATE_FMT),
-                        statusOf(t)
-                };
-            }
-            TablePrinter.displayTable(
-                    new String[] { "Tx ID", "Earned", "Description", "Change", "Remaining", "Expires", "Status" },
-                    rows);
-        }
-
-        public void displayNotifications(LinkedListInterface<Notification> list) {
-            if (list.isEmpty()) {
-                System.out.println("No notifications for this member.");
-                return;
-            }
-            System.out.println();
-            for (int i = 0; i < list.size(); i++) {
-                Notification n = list.get(i);
-                System.out.printf(" %d. [%s] %s (%s)%n",
-                        i + 1, n.isRead() ? "READ" : "UNREAD",
-                        n.getMessage(), n.getDate().format(DATE_FMT));
-            }
-        }
-
-        /** @return true if the user wants to mark all notifications as read. */
-        public boolean confirmMarkAllRead() {
-            System.out.print("Mark all as read? (y/n): ");
-            return scanner.nextLine().trim().equalsIgnoreCase("y");
-        }
-
-        /** Lists pending requests and returns the chosen redemption id, or null. */
-        public String selectPendingRequest(LinkedListInterface<RedemptionRecord> pending) {
-            if (pending.isEmpty()) {
-                System.out.println("No pending redemption requests.");
                 ConsoleUtil.pressEnterToContinue(scanner);
                 return null;
             }
-            System.out.println();
-            for (int i = 0; i < pending.size(); i++) {
-                RedemptionRecord r = pending.get(i);
-                System.out.printf(" %d. %s - member %s, reward %s (%s)%n",
-                        i + 1, r.getRedemptionId(), r.getMemberId(), r.getRewardId(),
-                        r.getRedeemedDate().format(DATE_FMT));
+            if (line.isEmpty()) {
+                return "";
             }
-            System.out.println(" 0. Cancel");
-            int index = readInt("Select a request to process") - 1;
-            if (index < 0) {
-                System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
+            try {
+                LocalDate.parse(line);
+                return line;
+            } catch (java.time.format.DateTimeParseException e) {
+                ConsoleUtil.printError("Invalid date format! Use YYYY-MM-DD.");
             }
-            if (index >= pending.size()) {
-                ConsoleUtil.printError("Invalid selection.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return pending.get(index).getRedemptionId();
         }
+    }
 
-        /** Prints an error message in red and waits for the user to press Enter. */
-        public void showError(String message) {
-            ConsoleUtil.printError(message);
-            pause();
+    public String inputTierFilter() {
+        System.out.println("\nSelect Tier:");
+        Tier[] tiers = Tier.values();
+        for (int i = 0; i < tiers.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + tiers[i]);
         }
+        return tiers[inputIntChoice("Enter tier", 1, tiers.length) - 1].name();
+    }
 
-        /** @return "a" to approve, "r" to reject, or null for anything else. */
-        public String approveOrReject() {
-            System.out.print("Approve or reject? (a/r/c to cancel): ");
-            String answer = scanner.nextLine().trim();
-            if (answer.equalsIgnoreCase("a")) {
-                return "a";
+    public void displayProfile(Member m, Guest g) {
+        System.out.println();
+        if (m == null) {
+            System.out.println("Member not found.");
+            return;
+        }
+        LocalDateTime promoNow = LocalDateTime.now();
+        String promotion = m.hasActivePromotion(promoNow)
+                ? m.promotionLabel(promoNow)
+                : (m.getPromotionName() != null ? m.getPromotionName() + " (expired)" : "-");
+        String[][] details = {
+            {"Member ID", m.getMemberId()},
+            {"Tier", m.getTier() == null ? "-" : m.getTier().name()},
+            {"Discount", (m.getTier() == null ? 0 : m.getTier().getDiscountPercent()) + "% off stays & dining"},
+            {"Points", String.valueOf(m.getPoints())},
+            {"Guest ID", m.getGuestId() == null ? "-" : m.getGuestId()},
+            {"Name", g == null ? "-" : g.getName()},
+            {"IC / Passport", g == null ? "-" : g.getIcOrPassport()},
+            {"Phone", g == null ? "-" : g.getContactNumber()},
+            {"Nationality", g == null ? "-" : g.getNationality()},
+            {"Address", g == null ? "-" : g.getAddress()},
+            {"Enrolled", m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)},
+            {"Promotion", promotion}
+        };
+        printSection("Details");
+        int keyWidth = 0;
+        for (String[] pair : details) {
+            if (pair[0] != null && pair[0].length() > keyWidth) {
+                keyWidth = pair[0].length();
             }
-            if (answer.equalsIgnoreCase("r")) {
-                return "r";
-            }
+        }
+        for (String[] pair : details) {
+            System.out.println(String.format("%-" + (keyWidth + 3) + "s: %s",
+                    pair[0] == null ? "" : pair[0],
+                    pair[1] == null ? "-" : pair[1]));
+        }
+        printSeparator();
+    }
+
+    public Tier selectTier() {
+        System.out.println(" 1. SILVER");
+        System.out.println(" 2. GOLD");
+        System.out.println(" 3. PLATINUM");
+        System.out.println(" 4. DIAMOND");
+        System.out.println(" 0. Cancel");
+        int index = readInt("Select a tier") - 1;
+        Tier[] tiers = Tier.values();
+        if (index < 0) {
+            ConsoleUtil.pressEnterToContinue(scanner);
             return null;
         }
-
-        /** Prints a message and waits for the user to press Enter. */
-        public void showMessage(String message) {
-            System.out.println(message);
-            pause();
-        }
-
-        public void show(String message) {
-            System.out.println(message);
-        }
-
-        public void pause() {
+        if (index >= tiers.length) {
+            ConsoleUtil.printError("Invalid selection.");
             ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
         }
-
-        private String statusOf(PointTransaction t) {
-            if (t.getExpiryDate() != null && !LocalDateTime.now().isBefore(t.getExpiryDate())) {
-                return "EXPIRED";
-            }
-            if (t.getRemainingPoints() < t.getPointChange()) {
-                return "PARTIAL";
-            }
-            return "VALID";
-        }
-
-        private int readInt(String prompt) {
-            while (true) {
-                System.out.print(prompt + ": ");
-                if (!scanner.hasNextLine()) {
-                    System.out.println("No more input. Exiting.");
-                    System.exit(0);
-                }
-                String input = scanner.nextLine().trim();
-                try {
-                    return Integer.parseInt(input);
-                } catch (NumberFormatException e) {
-                    ConsoleUtil.printError("Please enter a valid number.");
-                }
-            }
-        }
-
-        private static String truncate(String text, int width) {
-            if (text == null || text.length() <= width) {
-                return text;
-            }
-            return text.substring(0, width - 3) + "...";
-        }
+        return tiers[index];
     }
 
     // ==================================================================
-    // RewardManagementUI
+    // POINTS & REDEMPTION MANAGEMENT
     // ==================================================================
-    /** Inbox for member notifications (tier upgrades, redemption results,
-     *  point expiry). Rendered as a table across all members. */
-    public static class NotificationCentreUI {
-
-        private static final int BANNER_WIDTH = 32;
-        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
-
-        private final Scanner scanner;
-
-        public NotificationCentreUI(Scanner scanner) {
-            this.scanner = scanner;
-        }
-
-        /** Member list for the notification centre.
-         *  @param rows  page rows: {No., Member ID, Name, Unread}
-         *  @return 1 = view notifications, 2 = mark all read (all members),
-         *          next/previous page numbers, 0 = back */
-        public int printMemberListMenu(String[][] rows, int page, int pageCount, int totalUnread) {
-            ConsoleUtil.clearScreen();
-            printBanner("NOTIFICATION CENTRE (Page " + (page + 1) + " of " + pageCount + ")");
-            if (totalUnread > 0) {
-                System.out.println("  " + totalUnread + " unread notification(s) across all members");
+    public int printPointsListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+            boolean hasFilter, Function<String, Guest> guestResolver,
+            Function<Member, Integer> balanceResolver) {
+        clearScreen();
+        printBanner("POINTS & REDEMPTION MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        if (pageList.isEmpty()) {
+            System.out.println("  (No member records)");
+        } else {
+            String[] header = new String[] { "No.", "Member ID", "Name", "Tier", "Points" };
+            String[][] rows = new String[pageList.size()][5];
+            for (int i = 0; i < pageList.size(); i++) {
+                Member m = pageList.get(i);
+                Guest g = guestResolver == null ? null : guestResolver.apply(m.getGuestId());
+                Integer balance = balanceResolver == null ? null : balanceResolver.apply(m);
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), m.getMemberId(),
+                    g != null && g.getName() != null ? g.getName() : "-",
+                    m.getTier() == null ? "-" : m.getTier().name(),
+                    balance == null ? "-" : String.valueOf(balance)
+                };
             }
-            if (rows.length == 0) {
-                System.out.println("  (No members)");
-            } else {
-                TablePrinter.displayTable(
-                        new String[] { "No.", "Member ID", "Name", "Unread" }, rows);
-            }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". View Notifications");
-            System.out.println("  " + action++ + ". Mark All Read (All Members)");
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
-            }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
+            TablePrinter.displayTable(header, rows);
         }
-
-        /** A single member's notifications.
-         *  @param memberId   member id for the banner
-         *  @param memberName member name for the banner
-         *  @param rows       page rows: {No., Type, Message, Date, Status}
-         *  @return 1 = mark all read, next/previous page numbers, 0 = back to members */
-        public int printMemberNotificationsMenu(String memberId, String memberName,
-                String[][] rows, int page, int pageCount) {
-            ConsoleUtil.clearScreen();
-            printBanner("NOTIFICATIONS - " + memberId
-                    + (memberName == null ? "" : " (" + memberName + ")")
-                    + (pageCount > 1 ? " (Page " + (page + 1) + " of " + pageCount + ")" : ""));
-            if (rows.length == 0) {
-                System.out.println("  (No notifications for this member)");
-            } else {
-                TablePrinter.displayTable(
-                        new String[] { "No.", "Type", "Message", "Date", "Status" }, rows);
-            }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". Mark All Read");
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
-            }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            System.out.println("  0. Back to Members");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Earn Points");
+        System.out.println("  " + action++ + ". Request Redemption");
+        System.out.println("  " + action++ + ". Process Redemption Requests");
+        System.out.println("  " + action++ + ". Generate Expiry Alerts");
+        System.out.println("  " + action++ + ". Filter by Tier");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
         }
-
-        public boolean confirmMarkAllRead() {
-            System.out.print("Mark all notifications as read? (y/n): ");
-            return scanner.nextLine().trim().equalsIgnoreCase("y");
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
         }
-
-        public void showMessage(String message) {
-            System.out.println("  " + message);
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
         }
-
-        public int inputListIndex(String entityLabel, int max) {
-            return inputIntChoice("Enter " + entityLabel + " (0 = cancel)", 0, max);
-        }
-
-        public void pause() {
-            ConsoleUtil.pressEnterToContinue(scanner);
-        }
-
-        private static void printBanner(String title) {
-            System.out.println("\n" + BANNER_LINE);
-            System.out.println(center(title, BANNER_WIDTH));
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSeparator() {
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSection(String text) {
-            String core = " " + text + " ";
-            int available = BANNER_WIDTH - core.length();
-            int left = available / 2;
-            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
-        }
-
-        private static String center(String text, int width) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.length() >= width) {
-                return text;
-            }
-            int pad = width - text.length();
-            int left = pad / 2;
-            return " ".repeat(left) + text + " ".repeat(pad - left);
-        }
-
-        private int inputIntChoice(String prompt, int min, int max) {
-            while (true) {
-                System.out.print(prompt + " (" + min + "-" + max + "): ");
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                try {
-                    int value = Integer.parseInt(line);
-                    if (value >= min && value <= max) {
-                        System.out.println();
-                        return value;
-                    }
-                } catch (NumberFormatException e) {
-                    // continue retry until integer input
-                }
-                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
-            }
-        }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    // ==================================================================
-    /** Report submenu + filter/sort/search configuration for the loyalty reports. */
-    public static class ReportsUI {
-
-        private static final int BANNER_WIDTH = 32;
-        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
-
-        private final Scanner scanner;
-
-        public ReportsUI(Scanner scanner) {
-            this.scanner = scanner;
-        }
-
-        public int getReportMenuChoice() {
-            ConsoleUtil.clearScreen();
-            printBanner("LOYALTY & REWARDS REPORTS");
-            System.out.println("  1. Membership & Tier Performance Report");
-            System.out.println("  2. Redemption & Voucher Report");
-            System.out.println("  3. Point Expiry & Tier Progression Report");
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, 3);
-        }
-
-        /** @return 0 = all tiers, otherwise 1..4 = SILVER..DIAMOND. */
-        public int inputTierFilter() {
-            System.out.println("\nFilter by Tier:");
-            System.out.println("  0. All tiers");
-            Tier[] tiers = Tier.values();
-            for (int i = 0; i < tiers.length; i++) {
-                System.out.println("  " + (i + 1) + ". " + tiers[i]);
-            }
-            return inputIntChoice("Enter tier", 0, tiers.length);
-        }
-
-        /** @return minimum points (0 = no limit). */
-        public int inputMinPoints() {
-            return readInt("Minimum points (0 = no limit)");
-        }
-
-        /** @return 1 = active, 2 = deleted, 3 = all. */
-        public int inputMemberStatus() {
-            System.out.println("\nMember Status:");
-            System.out.println("  1. Active only");
-            System.out.println("  2. Deleted only");
-            System.out.println("  3. All");
-            return inputIntChoice("Enter status", 1, 3);
-        }
-
-        /** @return 1 = all, 2 = active promotion, 3 = no active promotion. */
-        public int inputPromotionFilter() {
-            System.out.println("\nPromotion:");
-            System.out.println("  1. All");
-            System.out.println("  2. Has active promotion");
-            System.out.println("  3. No active promotion");
-            return inputIntChoice("Enter promotion", 1, 3);
-        }
-
-        /** @return expiry window in days (0 = none). */
-        public int inputExpiryWindow() {
-            System.out.println("\nPoint Expiry Window:");
-            System.out.println("  0. None");
-            System.out.println("  7. Within 7 days");
-            System.out.println("  30. Within 30 days");
-            System.out.println("  90. Within 90 days");
-            return inputIntChoice("Enter window", 0, 90);
-        }
-
-        /** @return search keyword (blank = none). */
-        public String inputSearchKeyword() {
-            System.out.print("\nSearch keyword (blank = none): ");
-            return scanner.nextLine().trim();
-        }
-
-        /** @return 1-based choice from the given field labels. */
-        public int inputSortField(String[] labels) {
-            System.out.println("\nSort by:");
-            for (int i = 0; i < labels.length; i++) {
-                System.out.println("  " + (i + 1) + ". " + labels[i]);
-            }
-            return inputIntChoice("Enter field", 1, labels.length);
-        }
-
-        /** @return true = ascending, false = descending. */
-        public boolean inputSortOrder() {
-            System.out.println("\nSort Order:");
-            System.out.println("  1. Ascending");
-            System.out.println("  2. Descending");
-            return inputIntChoice("Enter order", 1, 2) == 1;
-        }
-
-        public void showCriteria(String line) {
-            System.out.println("\n  " + line);
-        }
-
-        /** Public wrapper so controllers can reuse the shared-scanner input helper. */
-        public int inputChoice(String prompt, int min, int max) {
-            return inputIntChoice(prompt, min, max);
-        }
-
-        public void pause() {
-            ConsoleUtil.pressEnterToContinue(scanner);
-        }
-
-        private static void printBanner(String title) {
-            System.out.println("\n" + BANNER_LINE);
-            System.out.println(center(title, BANNER_WIDTH));
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSeparator() {
-            System.out.println(BANNER_LINE);
-        }
-
-        private static String center(String text, int width) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.length() >= width) {
-                return text;
-            }
-            int pad = width - text.length();
-            int left = pad / 2;
-            return " ".repeat(left) + text + " ".repeat(pad - left);
-        }
-
-        private int inputIntChoice(String prompt, int min, int max) {
-            while (true) {
-                System.out.print(prompt + " (" + min + "-" + max + "): ");
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                try {
-                    int value = Integer.parseInt(line);
-                    if (value >= min && value <= max) {
-                        System.out.println();
-                        return value;
-                    }
-                } catch (NumberFormatException e) {
-                    // continue retry
-                }
-                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
-            }
-        }
-
-        private int readInt(String prompt) {
-            while (true) {
-                System.out.print(prompt + ": ");
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                try {
-                    return Integer.parseInt(line);
-                } catch (NumberFormatException e) {
-                    ConsoleUtil.printError("Please enter a valid number.");
-                }
-            }
-        }
+    public int getMemberPointsActionChoice() {
+        printSection("Member Points Actions");
+        System.out.println("  1. Run Expiry Check");
+        System.out.println("  2. View Transaction History");
+        System.out.println("  3. View Tier Progression");
+        System.out.println("  4. View Notifications");
+        System.out.println("  0. Back to List");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, 4);
     }
 
-    // ==================================================================
-    public static class RewardManagementUI {
-
-        private Scanner scanner = new Scanner(System.in);
-
-        public RewardManagementUI() {
-        }
-
-        public RewardManagementUI(Scanner scanner) {
-            this.scanner = scanner;
-        }
-
-        public int printRewardListMenu(LinkedListInterface<Reward> pageList, int page, int pageCount,
-                boolean hasFilter, boolean hasDeleted, String sortLabel) {
-            clearScreen();
-            printBanner("REWARD MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
-            if (sortLabel != null && !sortLabel.isEmpty()) {
-                System.out.println("  Sort: " + sortLabel);
-            }
-            if (pageList.isEmpty()) {
-                System.out.println("  (No rewards in the catalogue)");
-            } else {
-                String[] header = new String[] { "No.", "Reward ID", "Name", "Min Tier", "Room Type", "Value", "Cost (pts)" };
-                String[][] rows = new String[pageList.size()][7];
-                for (int i = 0; i < pageList.size(); i++) {
-                    Reward r = pageList.get(i);
-                    rows[i] = new String[] {
-                        String.valueOf(i + 1), r.getRewardId(),
-                        truncate(r.getName(), 30),
-                        r.getMinTier() == null ? "SILVER" : r.getMinTier().name(),
-                        r.getRoomType() == null ? "Any" : r.getRoomType().name(),
-                        rewardValueLabel(r),
-                        String.valueOf(r.getPointCost())
-                    };
-                }
-                TablePrinter.displayTable(header, rows);
-            }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". View Details");
-            System.out.println("  " + action++ + ". Add New Reward");
-            System.out.println("  " + action++ + ". Filter by Min Tier");
-            System.out.println("  " + action++ + ". Sort by Points");
-            if (hasDeleted) {
-                System.out.println("  " + action++ + ". Restore Deleted Reward");
-            }
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
-            }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            if (hasFilter) {
-                System.out.println("  " + action++ + ". Clear Filter");
-            }
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
-        }
-
-        /** Deleted rewards list: pick one to restore (0 = back). */
-        public int printDeletedRewardsMenu(LinkedListInterface<Reward> pageList, int page, int pageCount) {
-            clearScreen();
-            printBanner("DELETED REWARDS (Page " + (page + 1) + " of " + pageCount + ")");
-            if (pageList.isEmpty()) {
-                System.out.println("  (No deleted rewards)");
-            } else {
-                String[] header = new String[] { "No.", "Reward ID", "Name", "Min Tier", "Room Type", "Value", "Cost (pts)" };
-                String[][] rows = new String[pageList.size()][7];
-                for (int i = 0; i < pageList.size(); i++) {
-                    Reward r = pageList.get(i);
-                    rows[i] = new String[] {
-                        String.valueOf(i + 1), r.getRewardId(),
-                        truncate(r.getName(), 30),
-                        r.getMinTier() == null ? "SILVER" : r.getMinTier().name(),
-                        r.getRoomType() == null ? "Any" : r.getRoomType().name(),
-                        rewardValueLabel(r),
-                        String.valueOf(r.getPointCost())
-                    };
-                }
-                TablePrinter.displayTable(header, rows);
-            }
-            printSection("Actions");
-            int action = 1;
-            System.out.println("  " + action++ + ". Restore Selected Reward");
-            if (page < pageCount - 1) {
-                System.out.println("  " + action++ + ". Next Page");
-            }
-            if (page > 0) {
-                System.out.println("  " + action++ + ". Previous Page");
-            }
-            System.out.println("  0. Back");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, action - 1);
-        }
-
-        public int getRewardActionChoice() {
-            printSection("Reward Actions");
-            System.out.println("  1. Update Reward");
-            System.out.println("  2. Remove Reward");
-            System.out.println("  0. Back to List");
-            printSeparator();
-            return inputIntChoice("Enter choice", 0, 2);
-        }
-
-        public void displayRewardDetails(Reward r) {
-            System.out.println();
-            if (r == null) {
-                System.out.println("Reward not found.");
-                return;
-            }
-            System.out.println("Reward ID    : " + r.getRewardId());
-            System.out.println("Name         : " + r.getName());
-            System.out.println("Description  : " + r.getDescription());
-            System.out.println("Point cost   : " + r.getPointCost() + " pts");
-            System.out.println("Min tier     : " + (r.getMinTier() == null ? "SILVER" : r.getMinTier().name()));
-            System.out.println("Room type    : " + (r.getRoomType() == null ? "Any" : r.getRoomType().name()));
-            System.out.println("Voucher value: " + rewardValueLabel(r));
-        }
-
-        public Tier inputMinTierFilter() {
-            System.out.println();
-            int choice = inputIntChoice(
-                    "Filter by min tier (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND, 0=cancel)", 0, 4);
-            if (choice == 0) {
-                System.out.println("Operation cancelled.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return Tier.values()[choice - 1];
-        }
-
-        public int inputListIndex(String entityLabel, int max) {
-            return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
-        }
-
-        // ----- banner / menu helpers (mirror HousekeepingUI) -----
-        private static final int BANNER_WIDTH = 32;
-        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
-
-        private static void printBanner(String title) {
-            System.out.println("\n" + BANNER_LINE);
-            System.out.println(center(title, BANNER_WIDTH));
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSeparator() {
-            System.out.println(BANNER_LINE);
-        }
-
-        private static void printSection(String text) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.isEmpty()) {
-                System.out.println("\n" + BANNER_LINE);
-                return;
-            }
-            String core = " " + text + " ";
-            int available = BANNER_WIDTH - core.length();
-            int left = available / 2;
-            System.out.println("\n" + "=".repeat(left) + core + "=".repeat(available - left));
-        }
-
-        private static String center(String text, int width) {
-            if (text == null) {
-                text = "";
-            }
-            if (text.length() >= width) {
-                return text;
-            }
-            int pad = width - text.length();
-            int left = pad / 2;
-            return " ".repeat(left) + text + " ".repeat(pad - left);
-        }
-
-        private void clearScreen() {
-            ConsoleUtil.clearScreen();
-        }
-
-        private int inputIntChoice(String prompt, int min, int max) {
-            while (true) {
-                System.out.print(prompt + " (" + min + "-" + max + "): ");
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                try {
-                    int value = Integer.parseInt(line);
-                    if (value >= min && value <= max) {
-                        System.out.println();
-                        return value;
-                    }
-                } catch (NumberFormatException e) {
-                    // continue retry until integer input
-                }
-                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
-            }
-        }
-
-        public Reward inputNewReward(String rewardId) {
-            System.out.println("New reward id: " + rewardId);
-            String name = inputRewardName();
-            if (name == null) {
-                return null;
-            }
-            String description = inputRewardDescription();
-            if (description == null) {
-                return null;
-            }
-            int cost = inputPointCost();
-            if (cost == 0) {
-                return null;
-            }
-            Tier minTier = inputMinTier();
-            RoomType roomType = inputRoomType();
-            int voucherType = inputVoucherType();
-            Double voucherValue = null;
-            Integer discountPercent = null;
-            if (voucherType == 1) {
-                int value = inputVoucherValue();
-                if (value <= 0) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return null;
-                }
-                voucherValue = (double) value;
-            } else if (voucherType == 2) {
-                discountPercent = inputDiscountPercent();
-            }
-
-            return new Reward(rewardId, name, description, cost, voucherValue, minTier, roomType, discountPercent);
-        }
-
-        public String inputRewardName() {
-            while (true) {
-                System.out.print("Enter Reward Name (0 to cancel): ");
-                String name = scanner.nextLine().trim();
-                if (name.equals("0")) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return null;
-                }
-                if (!name.isEmpty()) {
-                    return name;
-                }
-                ConsoleUtil.printError("Reward name cannot be empty.");
-            }
-        }
-
-        public String inputRewardDescription() {
-            System.out.print("Enter Description (0 to cancel): ");
-            String description = scanner.nextLine().trim();
-            if (description.equals("0")) {
-                System.out.println("Operation cancelled.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return description;
-        }
-
-        public int inputPointCost() {
-            while (true) {
-                int cost = readInt("Enter Point Cost (0 to cancel)");
-                if (cost == 0) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return 0;
-                }
-                if (cost > 0) {
-                    return cost;
-                }
-                ConsoleUtil.printError("Point cost must be positive.");
-            }
-        }
-
-        public Tier inputMinTier() {
-            System.out.println("Select Min Tier:");
-            Tier[] tiers = Tier.values();
-            for (int i = 0; i < tiers.length; i++) {
-                System.out.println("  " + (i + 1) + ". " + tiers[i]);
-            }
-            int choice = inputIntChoice("Enter min tier", 1, tiers.length);
-            return tiers[choice - 1];
-        }
-
-        public RoomType inputRoomType() {
-            System.out.println("Select Room Type:");
-            System.out.println("  0. Any / Generic");
-            RoomType[] types = RoomType.values();
-            for (int i = 0; i < types.length; i++) {
-                System.out.println("  " + (i + 1) + ". " + types[i]);
-            }
-            int choice = inputIntChoice("Enter room type", 0, types.length);
-            return choice == 0 ? null : types[choice - 1];
-        }
-
-        public int inputVoucherType() {
-            System.out.println("Select Voucher Type:");
-            System.out.println("  0. Not a voucher");
-            System.out.println("  1. Fixed RM");
-            System.out.println("  2. Percentage (%)");
-            return inputIntChoice("Enter voucher type", 0, 2);
-        }
-
-        public int inputVoucherValue() {
-            while (true) {
-                int value = readInt("Enter Voucher Value in RM (0 to cancel)");
-                if (value == 0) {
-                    System.out.println("Operation cancelled.");
-                    ConsoleUtil.pressEnterToContinue(scanner);
-                    return 0;
-                }
-                if (value > 0) {
-                    return value;
-                }
-                ConsoleUtil.printError("Voucher value must be positive.");
-            }
-        }
-
-        public int inputDiscountPercent() {
-            return inputIntChoice("Enter discount percent", 1, 100);
-        }
-
-        /** Shows a summary of the reward being created (mirrors HousekeepingUI.printTaskCreationSummary). */
-        public void printRewardCreationSummary(Reward reward) {
-            printSection("Reward Summary");
-            System.out.println("  Reward ID   : " + reward.getRewardId());
-            System.out.println("  Name        : " + reward.getName());
-            System.out.println("  Description : " + reward.getDescription());
-            System.out.println("  Point Cost  : " + reward.getPointCost() + " pts");
-            System.out.println("  Min Tier    : " + (reward.getMinTier() == null ? "SILVER" : reward.getMinTier().name()));
-            System.out.println("  Room Type   : " + (reward.getRoomType() == null ? "Any" : reward.getRoomType().name()));
-            if (reward.getDiscountPercent() != null) {
-                System.out.println("  Voucher     : " + reward.getDiscountPercent() + "% OFF");
-            } else if (reward.getVoucherValue() != null) {
-                System.out.println("  Voucher     : RM" + String.format("%.2f", reward.getVoucherValue()));
-            } else {
-                System.out.println("  Voucher     : -");
-            }
-            printSeparator();
-        }
-
-        /** Asks a yes/no confirmation; returns true only on an explicit 'y'. */
-        public boolean confirm(String message) {
-            System.out.println("\n==========Confirmation==========");
-            System.out.println("  " + message);
-            System.out.println("  [Y] YES");
-            System.out.println("  [N] NO");
-            System.out.println("=================================");
-            System.out.print("Your choice (y/n): ");
-            String line = scanner.nextLine().trim();
-            return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
-        }
-
-        public String promptWithDefault(String prompt, String current) {
-            System.out.print(prompt + " (" + current + ") (0 to cancel): ");
-            String input = scanner.nextLine().trim();
-            if (input.equals("0")) {
-                System.out.println("Operation cancelled.");
+    public String selectReward(LinkedListInterface<Reward> rewards) {
+        if (rewards.isEmpty()) {
+            System.out.println("No rewards available for this member's tier.");
             ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            return input.isEmpty() ? current : input;
+            return null;
         }
-
-        public Integer promptIntWithDefault(String prompt, int current) {
-            System.out.print(prompt + " (" + current + ") (0 to cancel): ");
-            String input = scanner.nextLine().trim();
-            if (input.equals("0")) {
-                System.out.println("Operation cancelled.");
+        System.out.println();
+        String[][] rows = new String[rewards.size()][5];
+        for (int i = 0; i < rewards.size(); i++) {
+            Reward r = rewards.get(i);
+            rows[i] = new String[] {
+                    String.valueOf(i + 1),
+                    truncate(r.getName(), 28),
+                    r.getRoomType() == null ? "Any" : r.getRoomType().name(),
+                    rewardValueLabel(r),
+                    r.getPointCost() + " pts"
+            };
+        }
+        TablePrinter.displayTable(new String[] { "#", "Reward", "Room Type", "Value", "Points" }, rows);
+        System.out.println(" 0. Cancel");
+        int index = readInt("Select a reward") - 1;
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
             ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (input.isEmpty()) {
-                return current;
-            }
-            try {
-                return Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                ConsoleUtil.printError("Invalid number, keeping current value.");
-                return current;
-            }
+            return null;
         }
-
-        /** Prompts for a tier (1-4), empty keeps the current tier, 0 cancels. */
-        public Tier promptTierWithDefault(String prompt, Tier current) {
-            System.out.print(prompt + " (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND)"
-                    + " (" + current + ") (0 to cancel): ");
-            String input = scanner.nextLine().trim();
-            if (input.equals("0")) {
-                System.out.println("Operation cancelled.");
+        if (index >= rewards.size()) {
+            ConsoleUtil.printError("Invalid selection.");
             ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (input.isEmpty()) {
-                return current;
-            }
-            try {
-                int idx = Integer.parseInt(input);
-                if (idx >= 1 && idx <= Tier.values().length) {
-                    return Tier.values()[idx - 1];
-                }
-            } catch (NumberFormatException e) {
-                // fall through
-            }
-            ConsoleUtil.printError("Invalid tier, keeping current value.");
-            return current;
+            return null;
         }
+        return rewards.get(index).getRewardId();
+    }
 
-        /** Prompts for a room type (1-7), 'none' clears it, empty keeps. No cancel - the
-         *  whole update is aborted at the earlier fields or at the voucher value prompt. */
-        public RoomType promptRoomTypeWithDefault(String prompt, RoomType current) {
-            System.out.print(prompt + " (1-7 = type, 'none' = generic, empty = keep"
-                    + " (" + (current == null ? "Any" : current.name()) + ")): ");
-            String input = scanner.nextLine().trim();
-            if (input.isEmpty()) {
-                return current;
-            }
-            if (input.equalsIgnoreCase("none")) {
-                return null;
-            }
-            try {
-                int idx = Integer.parseInt(input);
-                if (idx >= 1 && idx <= RoomType.values().length) {
-                    return RoomType.values()[idx - 1];
-                }
-            } catch (NumberFormatException e) {
-                // fall through
-            }
-            ConsoleUtil.printError("Invalid room type, keeping current value.");
-            return current;
-        }
-
-        /** Prompts for a voucher value (RM); empty keeps, 0 cancels. */
-        public Double promptDoubleWithDefault(String prompt, Double current) {
-            System.out.print(prompt + " (" + (current == null ? "none" : "RM" + current) + ") (0 to cancel): ");
-            String input = scanner.nextLine().trim();
-            if (input.equals("0")) {
-                System.out.println("Operation cancelled.");
+    public int inputAmount() {
+        int amount = readInt("Points to award (0 to cancel)");
+        if (amount == 0) {
+            System.out.println("Operation cancelled.");
             ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (input.isEmpty()) {
-                return current;
-            }
-            try {
-                double value = Double.parseDouble(input);
-                if (value > 0) {
-                    return value;
-                }
-            } catch (NumberFormatException e) {
-                // fall through
-            }
-            ConsoleUtil.printError("Invalid value, keeping current value.");
-            return current;
-        }
-
-        /**
-         * Prompts for the voucher type during an update.
-         * Returns 1 = Fixed RM, 2 = Percentage, 0 = keep current (no change),
-         * or null = cancelled.
-         */
-        public Integer promptVoucherTypeWithDefault(Reward reward) {
-            String currentType = reward.getDiscountPercent() != null
-                    ? reward.getDiscountPercent() + "% OFF"
-                    : (reward.getVoucherValue() != null ? "RM" + reward.getVoucherValue() : "not a voucher");
-            System.out.print("New voucher type (1=Fixed RM, 2=Percentage %, empty=keep"
-                    + " (" + currentType + "), 0=cancel): ");
-            String input = scanner.nextLine().trim();
-            if (input.equals("0")) {
-                System.out.println("Operation cancelled.");
-            ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (input.isEmpty()) {
-                return 0; // keep current
-            }
-            if (input.equals("1") || input.equals("2")) {
-                return Integer.parseInt(input);
-            }
-            ConsoleUtil.printError("Invalid voucher type, keeping current value.");
             return 0;
         }
-
-        /** Prompts for a discount percent (1-100); empty keeps, 0 cancels. */
-        public Integer promptPercentWithDefault(String prompt, Integer current) {
-            System.out.print(prompt + " (" + (current == null ? "none" : current + "%") + ") (0 to cancel): ");
-            String input = scanner.nextLine().trim();
-            if (input.equals("0")) {
+        while (amount < 0) {
+            ConsoleUtil.printError("Amount must be positive.");
+            amount = readInt("Points to award (0 to cancel)");
+            if (amount == 0) {
                 System.out.println("Operation cancelled.");
+                ConsoleUtil.pressEnterToContinue(scanner);
+                return 0;
+            }
+        }
+        return amount;
+    }
+
+    public String inputDescription() {
+        System.out.print("Description (0 to cancel): ");
+        String desc = scanner.nextLine().trim();
+        if (desc.equals("0")) {
+            System.out.println("Operation cancelled.");
             ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return desc;
+    }
+
+    public void displayBalance(Member member, int balance) {
+        System.out.printf("Member %s (Tier: %s) - Available balance: %d pts%n",
+                member.getMemberId(), member.getTier(), balance);
+        if (member != null && member.hasActivePromotion(LocalDateTime.now())) {
+            System.out.println("  Promotion: " + member.promotionLabel(LocalDateTime.now()));
+        }
+    }
+
+    public void displayTransactions(LinkedListInterface<PointTransaction> txs) {
+        if (txs.isEmpty()) {
+            System.out.println("No transactions found.");
+            return;
+        }
+        System.out.println();
+        String[][] rows = new String[txs.size()][7];
+        for (int i = 0; i < txs.size(); i++) {
+            PointTransaction t = txs.get(i);
+            rows[i] = new String[] {
+                    t.getTransactionId(),
+                    t.getDate().format(DATE_FMT),
+                    truncate(t.getDescription(), 22),
+                    String.valueOf(t.getPointChange()),
+                    String.valueOf(t.getRemainingPoints()),
+                    t.getExpiryDate().format(DATE_FMT),
+                    statusOf(t)
+            };
+        }
+        TablePrinter.displayTable(
+                new String[] { "Tx ID", "Earned", "Description", "Change", "Remaining", "Expires", "Status" },
+                rows);
+    }
+
+    public void displayNotifications(LinkedListInterface<Notification> list) {
+        if (list.isEmpty()) {
+            System.out.println("No notifications for this member.");
+            return;
+        }
+        System.out.println();
+        for (int i = 0; i < list.size(); i++) {
+            Notification n = list.get(i);
+            System.out.printf(" %d. [%s] %s (%s)%n",
+                    i + 1, n.isRead() ? "READ" : "UNREAD",
+                    n.getMessage(), n.getDate().format(DATE_FMT));
+        }
+    }
+
+    /** @return true if the user wants to mark all notifications as read. */
+    public boolean confirmMarkAllRead() {
+        System.out.print("Mark all as read? (y/n): ");
+        return scanner.nextLine().trim().equalsIgnoreCase("y");
+    }
+
+    public String selectPendingRequest(LinkedListInterface<RedemptionRecord> pending) {
+        if (pending.isEmpty()) {
+            System.out.println("No pending redemption requests.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        System.out.println();
+        for (int i = 0; i < pending.size(); i++) {
+            RedemptionRecord r = pending.get(i);
+            System.out.printf(" %d. %s - member %s, reward %s (%s)%n",
+                    i + 1, r.getRedemptionId(), r.getMemberId(), r.getRewardId(),
+                    r.getRedeemedDate().format(DATE_FMT));
+        }
+        System.out.println(" 0. Cancel");
+        int index = readInt("Select a request to process") - 1;
+        if (index < 0) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (index >= pending.size()) {
+            ConsoleUtil.printError("Invalid selection.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return pending.get(index).getRedemptionId();
+    }
+
+    /** @return "a" to approve, "r" to reject, or null for anything else. */
+    public String approveOrReject() {
+        System.out.print("Approve or reject? (a/r/c to cancel): ");
+        String answer = scanner.nextLine().trim();
+        if (answer.equalsIgnoreCase("a")) {
+            return "a";
+        }
+        if (answer.equalsIgnoreCase("r")) {
+            return "r";
+        }
+        return null;
+    }
+
+    private String statusOf(PointTransaction t) {
+        if (t.getExpiryDate() != null && !LocalDateTime.now().isBefore(t.getExpiryDate())) {
+            return "EXPIRED";
+        }
+        if (t.getRemainingPoints() < t.getPointChange()) {
+            return "PARTIAL";
+        }
+        return "VALID";
+    }
+
+    // ==================================================================
+    // REWARD MANAGEMENT
+    // ==================================================================
+    public int printRewardListMenu(LinkedListInterface<Reward> pageList, int page, int pageCount,
+            boolean hasFilter, boolean hasDeleted, String sortLabel) {
+        clearScreen();
+        printBanner("REWARD MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        if (sortLabel != null && !sortLabel.isEmpty()) {
+            System.out.println("  Sort: " + sortLabel);
+        }
+        if (pageList.isEmpty()) {
+            System.out.println("  (No rewards in the catalogue)");
+        } else {
+            String[] header = new String[] { "No.", "Reward ID", "Name", "Min Tier", "Room Type", "Value", "Cost (pts)" };
+            String[][] rows = new String[pageList.size()][7];
+            for (int i = 0; i < pageList.size(); i++) {
+                Reward r = pageList.get(i);
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), r.getRewardId(),
+                    truncate(r.getName(), 30),
+                    r.getMinTier() == null ? "SILVER" : r.getMinTier().name(),
+                    r.getRoomType() == null ? "Any" : r.getRoomType().name(),
+                    rewardValueLabel(r),
+                    String.valueOf(r.getPointCost())
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Add New Reward");
+        System.out.println("  " + action++ + ". Filter by Min Tier");
+        System.out.println("  " + action++ + ". Sort by Points");
+        if (hasDeleted) {
+            System.out.println("  " + action++ + ". Restore Deleted Reward");
+        }
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int printDeletedRewardsMenu(LinkedListInterface<Reward> pageList, int page, int pageCount) {
+        clearScreen();
+        printBanner("DELETED REWARDS (Page " + (page + 1) + " of " + pageCount + ")");
+        if (pageList.isEmpty()) {
+            System.out.println("  (No deleted rewards)");
+        } else {
+            String[] header = new String[] { "No.", "Reward ID", "Name", "Min Tier", "Room Type", "Value", "Cost (pts)" };
+            String[][] rows = new String[pageList.size()][7];
+            for (int i = 0; i < pageList.size(); i++) {
+                Reward r = pageList.get(i);
+                rows[i] = new String[] {
+                    String.valueOf(i + 1), r.getRewardId(),
+                    truncate(r.getName(), 30),
+                    r.getMinTier() == null ? "SILVER" : r.getMinTier().name(),
+                    r.getRoomType() == null ? "Any" : r.getRoomType().name(),
+                    rewardValueLabel(r),
+                    String.valueOf(r.getPointCost())
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". Restore Selected Reward");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    public int getRewardActionChoice() {
+        printSection("Reward Actions");
+        System.out.println("  1. Update Reward");
+        System.out.println("  2. Remove Reward");
+        System.out.println("  0. Back to List");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, 2);
+    }
+
+    public void displayRewardDetails(Reward r) {
+        System.out.println();
+        if (r == null) {
+            System.out.println("Reward not found.");
+            return;
+        }
+        System.out.println("Reward ID    : " + r.getRewardId());
+        System.out.println("Name         : " + r.getName());
+        System.out.println("Description  : " + r.getDescription());
+        System.out.println("Point cost   : " + r.getPointCost() + " pts");
+        System.out.println("Min tier     : " + (r.getMinTier() == null ? "SILVER" : r.getMinTier().name()));
+        System.out.println("Room type    : " + (r.getRoomType() == null ? "Any" : r.getRoomType().name()));
+        System.out.println("Voucher value: " + rewardValueLabel(r));
+    }
+
+    public Tier inputMinTierFilter() {
+        System.out.println();
+        int choice = inputIntChoice(
+                "Filter by min tier (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND, 0=cancel)", 0, 4);
+        if (choice == 0) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return Tier.values()[choice - 1];
+    }
+
+    public Reward inputNewReward(String rewardId) {
+        System.out.println("New reward id: " + rewardId);
+        String name = inputRewardName();
+        if (name == null) {
+            return null;
+        }
+        String description = inputRewardDescription();
+        if (description == null) {
+            return null;
+        }
+        int cost = inputPointCost();
+        if (cost == 0) {
+            return null;
+        }
+        Tier minTier = inputMinTier();
+        RoomType roomType = inputRoomType();
+        int voucherType = inputVoucherType();
+        Double voucherValue = null;
+        Integer discountPercent = null;
+        if (voucherType == 1) {
+            int value = inputVoucherValue();
+            if (value <= 0) {
+                System.out.println("Operation cancelled.");
+                ConsoleUtil.pressEnterToContinue(scanner);
                 return null;
             }
-            if (input.isEmpty()) {
-                return current;
+            voucherValue = (double) value;
+        } else if (voucherType == 2) {
+            discountPercent = inputDiscountPercent();
+        }
+
+        return new Reward(rewardId, name, description, cost, voucherValue, minTier, roomType, discountPercent);
+    }
+
+    public String inputRewardName() {
+        while (true) {
+            System.out.print("Enter Reward Name (0 to cancel): ");
+            String name = scanner.nextLine().trim();
+            if (name.equals("0")) {
+                System.out.println("Operation cancelled.");
+                ConsoleUtil.pressEnterToContinue(scanner);
+                return null;
             }
-            try {
-                int value = Integer.parseInt(input);
-                if (value >= 1 && value <= 100) {
-                    return value;
-                }
-            } catch (NumberFormatException e) {
-                // fall through
+            if (!name.isEmpty()) {
+                return name;
             }
-            ConsoleUtil.printError("Invalid percent (1-100), keeping current value.");
+            ConsoleUtil.printError("Reward name cannot be empty.");
+        }
+    }
+
+    public String inputRewardDescription() {
+        System.out.print("Enter Description (0 to cancel): ");
+        String description = scanner.nextLine().trim();
+        if (description.equals("0")) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return description;
+    }
+
+    public int inputPointCost() {
+        while (true) {
+            int cost = readInt("Enter Point Cost (0 to cancel)");
+            if (cost == 0) {
+                System.out.println("Operation cancelled.");
+                ConsoleUtil.pressEnterToContinue(scanner);
+                return 0;
+            }
+            if (cost > 0) {
+                return cost;
+            }
+            ConsoleUtil.printError("Point cost must be positive.");
+        }
+    }
+
+    public Tier inputMinTier() {
+        System.out.println("Select Min Tier:");
+        Tier[] tiers = Tier.values();
+        for (int i = 0; i < tiers.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + tiers[i]);
+        }
+        int choice = inputIntChoice("Enter min tier", 1, tiers.length);
+        return tiers[choice - 1];
+    }
+
+    public RoomType inputRoomType() {
+        System.out.println("Select Room Type:");
+        System.out.println("  0. Any / Generic");
+        RoomType[] types = RoomType.values();
+        for (int i = 0; i < types.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + types[i]);
+        }
+        int choice = inputIntChoice("Enter room type", 0, types.length);
+        return choice == 0 ? null : types[choice - 1];
+    }
+
+    public int inputVoucherType() {
+        System.out.println("Select Voucher Type:");
+        System.out.println("  0. Not a voucher");
+        System.out.println("  1. Fixed RM");
+        System.out.println("  2. Percentage (%)");
+        return inputIntChoice("Enter voucher type", 0, 2);
+    }
+
+    public int inputVoucherValue() {
+        while (true) {
+            int value = readInt("Enter Voucher Value in RM (0 to cancel)");
+            if (value == 0) {
+                System.out.println("Operation cancelled.");
+                ConsoleUtil.pressEnterToContinue(scanner);
+                return 0;
+            }
+            if (value > 0) {
+                return value;
+            }
+            ConsoleUtil.printError("Voucher value must be positive.");
+        }
+    }
+
+    public int inputDiscountPercent() {
+        return inputIntChoice("Enter discount percent", 1, 100);
+    }
+
+    /** Shows a summary of the reward being created (mirrors HousekeepingUI.printTaskCreationSummary). */
+    public void printRewardCreationSummary(Reward reward) {
+        printSection("Reward Summary");
+        System.out.println("  Reward ID   : " + reward.getRewardId());
+        System.out.println("  Name        : " + reward.getName());
+        System.out.println("  Description : " + reward.getDescription());
+        System.out.println("  Point Cost  : " + reward.getPointCost() + " pts");
+        System.out.println("  Min Tier    : " + (reward.getMinTier() == null ? "SILVER" : reward.getMinTier().name()));
+        System.out.println("  Room Type   : " + (reward.getRoomType() == null ? "Any" : reward.getRoomType().name()));
+        if (reward.getDiscountPercent() != null) {
+            System.out.println("  Voucher     : " + reward.getDiscountPercent() + "% OFF");
+        } else if (reward.getVoucherValue() != null) {
+            System.out.println("  Voucher     : RM" + String.format("%.2f", reward.getVoucherValue()));
+        } else {
+            System.out.println("  Voucher     : -");
+        }
+        printSeparator();
+    }
+
+    public String promptWithDefault(String prompt, String current) {
+        System.out.print(prompt + " (" + current + ") (0 to cancel): ");
+        String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        return input.isEmpty() ? current : input;
+    }
+
+    public Integer promptIntWithDefault(String prompt, int current) {
+        System.out.print(prompt + " (" + current + ") (0 to cancel): ");
+        String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (input.isEmpty()) {
             return current;
         }
-
-        /** Prints an error message in red and waits for the user to press Enter. */
-        public void showError(String message) {
-            ConsoleUtil.printError(message);
-            pause();
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            ConsoleUtil.printError("Invalid number, keeping current value.");
+            return current;
         }
+    }
 
-        public void showMessage(String message) {
-            System.out.println(message);
-            pause();
-        }
-
-        public void show(String message) {
-            System.out.println(message);
-        }
-
-        public void pause() {
+    /** Prompts for a tier (1-4), empty keeps the current tier, 0 cancels. */
+    public Tier promptTierWithDefault(String prompt, Tier current) {
+        System.out.print(prompt + " (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND)"
+                + " (" + current + ") (0 to cancel): ");
+        String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
             ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
         }
-
-        private int readInt(String prompt) {
-            while (true) {
-                System.out.print(prompt + ": ");
-                if (!scanner.hasNextLine()) {
-                    System.out.println("No more input. Exiting.");
-                    System.exit(0);
-                }
-                String input = scanner.nextLine().trim();
-                try {
-                    return Integer.parseInt(input);
-                } catch (NumberFormatException e) {
-                    ConsoleUtil.printError("Please enter a valid number.");
-                }
+        if (input.isEmpty()) {
+            return current;
+        }
+        try {
+            int idx = Integer.parseInt(input);
+            if (idx >= 1 && idx <= Tier.values().length) {
+                return Tier.values()[idx - 1];
             }
+        } catch (NumberFormatException e) {
+            // fall through
         }
+        ConsoleUtil.printError("Invalid tier, keeping current value.");
+        return current;
+    }
 
-        private static String truncate(String text, int width) {
-            if (text == null || text.length() <= width) {
-                return text;
-            }
-            return text.substring(0, width - 3) + "...";
+    /** Prompts for a room type (1-7), 'none' clears it, empty keeps. No cancel - the
+     *  whole update is aborted at the earlier fields or at the voucher value prompt. */
+    public RoomType promptRoomTypeWithDefault(String prompt, RoomType current) {
+        System.out.print(prompt + " (1-7 = type, 'none' = generic, empty = keep"
+                + " (" + (current == null ? "Any" : current.name()) + ")): ");
+        String input = scanner.nextLine().trim();
+        if (input.isEmpty()) {
+            return current;
         }
+        if (input.equalsIgnoreCase("none")) {
+            return null;
+        }
+        try {
+            int idx = Integer.parseInt(input);
+            if (idx >= 1 && idx <= RoomType.values().length) {
+                return RoomType.values()[idx - 1];
+            }
+        } catch (NumberFormatException e) {
+            // fall through
+        }
+        ConsoleUtil.printError("Invalid room type, keeping current value.");
+        return current;
+    }
+
+    /** Prompts for a voucher value (RM); empty keeps, 0 cancels. */
+    public Double promptDoubleWithDefault(String prompt, Double current) {
+        System.out.print(prompt + " (" + (current == null ? "none" : "RM" + current) + ") (0 to cancel): ");
+        String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (input.isEmpty()) {
+            return current;
+        }
+        try {
+            double value = Double.parseDouble(input);
+            if (value > 0) {
+                return value;
+            }
+        } catch (NumberFormatException e) {
+            // fall through
+        }
+        ConsoleUtil.printError("Invalid value, keeping current value.");
+        return current;
+    }
+
+    /**
+     * Prompts for the voucher type during an update.
+     * Returns 1 = Fixed RM, 2 = Percentage, 0 = keep current (no change),
+     * or null = cancelled.
+     */
+    public Integer promptVoucherTypeWithDefault(Reward reward) {
+        String currentType = reward.getDiscountPercent() != null
+                ? reward.getDiscountPercent() + "% OFF"
+                : (reward.getVoucherValue() != null ? "RM" + reward.getVoucherValue() : "not a voucher");
+        System.out.print("New voucher type (1=Fixed RM, 2=Percentage %, empty=keep"
+                + " (" + currentType + "), 0=cancel): ");
+        String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (input.isEmpty()) {
+            return 0; // keep current
+        }
+        if (input.equals("1") || input.equals("2")) {
+            return Integer.parseInt(input);
+        }
+        ConsoleUtil.printError("Invalid voucher type, keeping current value.");
+        return 0;
+    }
+
+    /** Prompts for a discount percent (1-100); empty keeps, 0 cancels. */
+    public Integer promptPercentWithDefault(String prompt, Integer current) {
+        System.out.print(prompt + " (" + (current == null ? "none" : current + "%") + ") (0 to cancel): ");
+        String input = scanner.nextLine().trim();
+        if (input.equals("0")) {
+            System.out.println("Operation cancelled.");
+            ConsoleUtil.pressEnterToContinue(scanner);
+            return null;
+        }
+        if (input.isEmpty()) {
+            return current;
+        }
+        try {
+            int value = Integer.parseInt(input);
+            if (value >= 1 && value <= 100) {
+                return value;
+            }
+        } catch (NumberFormatException e) {
+            // fall through
+        }
+        ConsoleUtil.printError("Invalid percent (1-100), keeping current value.");
+        return current;
+    }
+
+    // ==================================================================
+    // NOTIFICATION CENTRE
+    // ==================================================================
+    /** Member list for the notification centre.
+     *  @param rows  page rows: {No., Member ID, Name, Unread}
+     *  @return 1 = view notifications, 2 = mark all read (all members),
+     *          next/previous page numbers, 0 = back */
+    public int printMemberListMenu(String[][] rows, int page, int pageCount, int totalUnread) {
+        ConsoleUtil.clearScreen();
+        printBanner("NOTIFICATION CENTRE (Page " + (page + 1) + " of " + pageCount + ")");
+        if (totalUnread > 0) {
+            System.out.println("  " + totalUnread + " unread notification(s) across all members");
+        }
+        if (rows.length == 0) {
+            System.out.println("  (No members)");
+        } else {
+            TablePrinter.displayTable(
+                    new String[] { "No.", "Member ID", "Name", "Unread" }, rows);
+        }
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Notifications");
+        System.out.println("  " + action++ + ". Mark All Read (All Members)");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    /** A single member's notifications.
+     *  @param memberId   member id for the banner
+     *  @param memberName member name for the banner
+     *  @param rows       page rows: {No., Type, Message, Date, Status}
+     *  @return 1 = mark all read, next/previous page numbers, 0 = back to members */
+    public int printMemberNotificationsMenu(String memberId, String memberName,
+            String[][] rows, int page, int pageCount) {
+        ConsoleUtil.clearScreen();
+        printBanner("NOTIFICATIONS - " + memberId
+                + (memberName == null ? "" : " (" + memberName + ")")
+                + (pageCount > 1 ? " (Page " + (page + 1) + " of " + pageCount + ")" : ""));
+        if (rows.length == 0) {
+            System.out.println("  (No notifications for this member)");
+        } else {
+            TablePrinter.displayTable(
+                    new String[] { "No.", "Type", "Message", "Date", "Status" }, rows);
+        }
+        printSection("Actions");
+        int action = 1;
+        System.out.println("  " + action++ + ". Mark All Read");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        System.out.println("  0. Back to Members");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, action - 1);
+    }
+
+    // ==================================================================
+    // REPORTS
+    // ==================================================================
+    public int getReportMenuChoice() {
+        ConsoleUtil.clearScreen();
+        printBanner("LOYALTY & REWARDS REPORTS");
+        System.out.println("  1. Membership & Tier Performance Report");
+        System.out.println("  2. Redemption & Voucher Report");
+        System.out.println("  3. Point Expiry & Tier Progression Report");
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, 3);
+    }
+
+    /** @return 0 = all tiers, otherwise 1..4 = SILVER..DIAMOND. */
+    public int inputReportTierFilter() {
+        System.out.println("\nFilter by Tier:");
+        System.out.println("  0. All tiers");
+        Tier[] tiers = Tier.values();
+        for (int i = 0; i < tiers.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + tiers[i]);
+        }
+        return inputIntChoice("Enter tier", 0, tiers.length);
+    }
+
+    /** @return minimum points (0 = no limit). */
+    public int inputMinPoints() {
+        return readInt("Minimum points (0 = no limit)");
+    }
+
+    /** @return 1 = active, 2 = deleted, 3 = all. */
+    public int inputMemberStatus() {
+        System.out.println("\nMember Status:");
+        System.out.println("  1. Active only");
+        System.out.println("  2. Deleted only");
+        System.out.println("  3. All");
+        return inputIntChoice("Enter status", 1, 3);
+    }
+
+    /** @return 1 = all, 2 = active promotion, 3 = no active promotion. */
+    public int inputPromotionFilter() {
+        System.out.println("\nPromotion:");
+        System.out.println("  1. All");
+        System.out.println("  2. Has active promotion");
+        System.out.println("  3. No active promotion");
+        return inputIntChoice("Enter promotion", 1, 3);
+    }
+
+    /** @return expiry window in days (0 = none). */
+    public int inputExpiryWindow() {
+        System.out.println("\nPoint Expiry Window:");
+        System.out.println("  0. None");
+        System.out.println("  7. Within 7 days");
+        System.out.println("  30. Within 30 days");
+        System.out.println("  90. Within 90 days");
+        return inputIntChoice("Enter window", 0, 90);
+    }
+
+    /** @return search keyword (blank = none). */
+    public String inputSearchKeyword() {
+        System.out.print("\nSearch keyword (blank = none): ");
+        return scanner.nextLine().trim();
+    }
+
+    /** @return 1-based choice from the given field labels. */
+    public int inputSortField(String[] labels) {
+        System.out.println("\nSort by:");
+        for (int i = 0; i < labels.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + labels[i]);
+        }
+        return inputIntChoice("Enter field", 1, labels.length);
+    }
+
+    /** @return true = ascending, false = descending. */
+    public boolean inputSortOrder() {
+        System.out.println("\nSort Order:");
+        System.out.println("  1. Ascending");
+        System.out.println("  2. Descending");
+        return inputIntChoice("Enter order", 1, 2) == 1;
+    }
+
+    public void showCriteria(String line) {
+        System.out.println("\n  " + line);
+    }
+
+    /** Public wrapper so controllers can reuse the shared-scanner input helper. */
+    public int inputChoice(String prompt, int min, int max) {
+        return inputIntChoice(prompt, min, max);
+    }
+
+    // ==================================================================
+    // SHARED INPUT / OUTPUT (used across member / reward / points / notification screens)
+    // ==================================================================
+    public int inputListIndex(String entityLabel, int max) {
+        return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
+    }
+
+    /** Asks a yes/no confirmation; returns true only on an explicit 'y'. */
+    public boolean confirm(String message) {
+        System.out.println("\n==========Confirmation==========");
+        System.out.println("  " + message);
+        System.out.println("  [Y] YES");
+        System.out.println("  [N] NO");
+        System.out.println("=================================");
+        System.out.print("Your choice (y/n): ");
+        String line = scanner.nextLine().trim();
+        return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
+    }
+
+    /** Prints an error message in red and waits for the user to press Enter. */
+    public void showError(String message) {
+        ConsoleUtil.printError(message);
+        pause();
+    }
+
+    /** Prints a message and waits for the user to press Enter. */
+    public void showMessage(String message) {
+        System.out.println(message);
+        pause();
+    }
+
+    public void show(String message) {
+        System.out.println(message);
+    }
+
+    public void pause() {
+        ConsoleUtil.pressEnterToContinue(scanner);
     }
 }

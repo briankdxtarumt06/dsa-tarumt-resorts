@@ -113,10 +113,21 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
 
     @Override
     public int compareTo(RedemptionRecord other) {
-        int byDate = this.redeemedDate.compareTo(other.redeemedDate);
-        if (byDate != 0) {
-            return byDate;
+        if (this.redeemedDate == null && other.redeemedDate == null) {
+            // both null
+        } else if (this.redeemedDate == null) {
+            return -1;
+        } else if (other.redeemedDate == null) {
+            return 1;
+        } else {
+            int byDate = this.redeemedDate.compareTo(other.redeemedDate);
+            if (byDate != 0) {
+                return byDate;
+            }
         }
+        if (this.redemptionId == null && other.redemptionId == null) return 0;
+        if (this.redemptionId == null) return -1;
+        if (other.redemptionId == null) return 1;
         return this.redemptionId.compareTo(other.redemptionId);
     }
 

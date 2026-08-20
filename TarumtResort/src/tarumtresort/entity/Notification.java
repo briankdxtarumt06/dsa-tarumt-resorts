@@ -63,10 +63,21 @@ public class Notification implements Comparable<Notification> {
 
     @Override
     public int compareTo(Notification other) {
-        int byDate = this.date.compareTo(other.date);
-        if (byDate != 0) {
-            return byDate;
+        if (this.date == null && other.date == null) {
+            // both null
+        } else if (this.date == null) {
+            return -1;
+        } else if (other.date == null) {
+            return 1;
+        } else {
+            int byDate = this.date.compareTo(other.date);
+            if (byDate != 0) {
+                return byDate;
+            }
         }
+        if (this.notificationId == null && other.notificationId == null) return 0;
+        if (this.notificationId == null) return -1;
+        if (other.notificationId == null) return 1;
         return this.notificationId.compareTo(other.notificationId);
     }
 
