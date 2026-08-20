@@ -275,10 +275,6 @@ public class ReservationUI {
         return SharedServices.askNonEmptyInput(scanner, prompt + " (YYYY-MM-DD)");
     }
 
-    public String inputIcOrPassport(){
-        return askNonEmptyInput("Enter guest's IC or Passport");
-    }
-
     public String inputConfirmationNumber(){
         return SharedServices.askNonEmptyInput(scanner, "Enter confirmation number (0 = cancel)");
     }
@@ -478,10 +474,6 @@ public class ReservationUI {
 
     public void printError(String message) {
         ConsoleUtil.printError("  " + message);
-    }
-
-    public void printCannotCancel(){
-        ConsoleUtil.printError(" Your reservation cannot be canceled.");
     }
 
     // ===== ROOM =====
