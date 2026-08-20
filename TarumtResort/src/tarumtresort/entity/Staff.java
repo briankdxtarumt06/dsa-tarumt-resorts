@@ -21,8 +21,8 @@ public class Staff implements Comparable<Staff> {
     public Staff(String staffId, String staffName, Department department, StaffRole staffRole, AvailabilityStatus availabilityStatus) {
         this.staffId = staffId;
         this.staffName = staffName;
-        this.department = department; // Housekeeping
-        this.staffRole = staffRole; // Supervisor, Cleaner
+        this.department = department; // Housekeeping, Front Office, Maintenance
+        this.staffRole = staffRole; // Supervisor, Cleaner, Receptionist
         this.availabilityStatus = availabilityStatus;
     }
 

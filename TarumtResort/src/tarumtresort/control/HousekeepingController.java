@@ -31,8 +31,16 @@ public class HousekeepingController {
 
     private static final int PAGE_SIZE = 10;
 
+    // Controller declaration
+
     // UI declaration
     private HousekeepingUI ui;
+
+    // ADT declaration
+    private final LinkedListInterface<Task> taskList = new LinkedList<>();
+    private final LinkedListInterface<Staff> staffList = new LinkedList<>();
+    private final LinkedListInterface<TaskAssignment> taskAssignmentList = new LinkedList<>();
+    private final LinkedListInterface<TaskAssignmentChange> taskAssignmentChangeList = new LinkedList<>();
 
     // DAO declaration
     private final TaskDAO taskDAO = new TaskDAO();
@@ -41,15 +49,6 @@ public class HousekeepingController {
     private final TaskAssignmentChangeDAO taskAssignmentChangeDAO = new TaskAssignmentChangeDAO();
     private final RoomDAO roomDAO = new RoomDAO();
 
-    // list declaration
-    private final LinkedListInterface<Task> taskList = new LinkedList<>();
-    private final LinkedListInterface<Staff> staffList = new LinkedList<>();
-    private final LinkedListInterface<TaskAssignment> taskAssignmentList = new LinkedList<>();
-    private final LinkedListInterface<TaskAssignmentChange> taskAssignmentChangeList = new LinkedList<>();
-
-    /**
-     * Loads all persisted entities into memory.
-     */
     public HousekeepingController() {
         LinkedList<Task> tasks = taskDAO.retrieveTaskList();
         for (int i = 0; i < tasks.size(); i++) {
@@ -69,11 +68,6 @@ public class HousekeepingController {
         }
     }
 
-    /**
-     * Builds the controller around the caller's shared scanner.
-     *
-     * @param ui the HousekeepingUI bound to the shared scanner
-     */
     public HousekeepingController(HousekeepingUI ui) {
         this();
         this.ui = ui;
@@ -780,13 +774,6 @@ public class HousekeepingController {
         ui.pressEnterToContinue();
     }
 
-    /**
-     * Queue = the staff member's active (non-terminal) assignments ordered by
-     * dateTimeAssigned, i.e. the order they were assigned.
-     *
-     * @param staff staff member to inspect
-     * @return queue list (may be empty)
-     */
     private LinkedListInterface<TaskAssignment> getStaffTaskQueue(Staff staff) {
         LinkedListInterface<TaskAssignment> queue = new LinkedList<>();
         if (staff == null || staff.getStaffId() == null) {
@@ -804,12 +791,6 @@ public class HousekeepingController {
         return queue;
     }
 
-    /**
-     * Shows the first task in the staff member's queue and asks for
-     * confirmation before starting it.
-     *
-     * @param staff staff member to start a task for
-     */
     private void startFirstTaskMenu(Staff staff) {
         LinkedListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
         if (queue.isEmpty()) {
@@ -837,15 +818,6 @@ public class HousekeepingController {
         }
     }
 
-    /**
-     * Starts the first task in the staff member's queue: the earliest
-     * assigned active assignment is moved to IN_PROGRESS. Only the
-     * assignment status changes; the task-level status remains under the
-     * supervisor's control.
-     *
-     * @param staff staff member to start a task for
-     * @return outcome code
-     */
     public String startFirstTask(Staff staff) {
         if (staff == null || staff.getStaffId() == null) {
             return "NO_STAFF";
@@ -977,15 +949,6 @@ public class HousekeepingController {
 
     // =============== creation ===============
 
-    /**
-     *
-     * @param taskName       display name of the task
-     * @param taskType       task category (CHECKOUT_CLEAN / MAINTENANCE / ...)
-     * @param taskPriority   urgency level
-     * @param startDateTime  scheduled start
-     * @param roomId         optional room the task is for (may be null)
-     * @return new task ID, or null on failure
-     */
     public String createTask(String taskName, TaskType taskType, TaskPriority taskPriority,
             LocalDateTime startDateTime, String roomId) {
         if (taskName == null || taskType == null || taskPriority == null || startDateTime == null) {
@@ -1003,13 +966,6 @@ public class HousekeepingController {
         return taskId;
     }
 
-    /**
-     * 
-     * @param staffName  full name of the staff member
-     * @param department department the staff member belongs to
-     * @param staffRole  role within the department (e.g. Cleaner)
-     * @return new staff ID, or null on failure
-     */
     public String createStaff(String staffName, Department department, StaffRole staffRole) {
         if (staffName == null || department == null || staffRole == null) {
             return null;
@@ -1052,11 +1008,6 @@ public class HousekeepingController {
 
     // =============== status transitions ===============
 
-    /**
-     *
-     * @param current the task's current status
-     * @return legal next statuses
-     */
     public TaskStatus[] getAllowedTransitions(TaskStatus current) {
         if (current == null) {
             return new TaskStatus[] { TaskStatus.PENDING, TaskStatus.CANCELLED };
@@ -1069,13 +1020,6 @@ public class HousekeepingController {
         };
     }
 
-    /**
-     *
-     * @param task     task to update
-     * @param newStatus target status
-     * @param reason   cancellation reason (only meaningful for CANCELLED)
-     * @return outcome code
-     */
     public String updateTaskStatus(Task task, TaskStatus newStatus, String reason) {
         if (task == null || newStatus == null) {
             return "TRANSITION_DENIED";
@@ -1136,11 +1080,6 @@ public class HousekeepingController {
         return "UPDATED";
     }
 
-    /**
-     *
-     * @param current the assignment's current status
-     * @return legal next statuses
-     */
     public TaskStatus[] getAllowedAssignmentTransitions(TaskStatus current) {
         if (current == null) {
             return new TaskStatus[] { TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED,
@@ -1154,13 +1093,6 @@ public class HousekeepingController {
         };
     }
 
-    /**
-     *
-     * @param assignment assignment to update
-     * @param newStatus  target status
-     * @param reason     cancellation reason (only meaningful for CANCELLED)
-     * @return outcome code
-     */
     public String updateAssignmentStatus(TaskAssignment assignment, TaskStatus newStatus, String reason) {
         if (assignment == null || newStatus == null) {
             return "TRANSITION_DENIED";
@@ -1224,11 +1156,6 @@ public class HousekeepingController {
         return true;
     }
 
-    /**
-     *
-     * @param task task to roll back
-     * @return outcome code
-     */
     public String rollbackTaskStatus(Task task) {
         if (task == null) {
             return "NO_PREVIOUS";
@@ -1259,11 +1186,6 @@ public class HousekeepingController {
 
     // =============== assignment / rotation ===============
 
-    /**
-     *
-     * @param taskType task category determining the required role
-     * @return earliest-available eligible staff, or null
-     */
     public Staff findEarliestAvailableStaff(TaskType taskType) {
         LinkedListInterface<Staff> eligible = getEligibleStaffByRole(taskType);
         Staff best = null;
@@ -1288,11 +1210,6 @@ public class HousekeepingController {
         return best;
     }
 
-    /**
-     *
-     * @param taskType task category determining the required role
-     * @return eligible staff list (may be empty)
-     */
     public LinkedListInterface<Staff> getEligibleStaffByRole(TaskType taskType) {
         LinkedListInterface<Staff> eligible = new LinkedList<>();
         StaffRole requiredRole = switch (taskType) {
@@ -1315,12 +1232,6 @@ public class HousekeepingController {
         return eligible;
     }
 
-    /**
-     *
-     * @param task  task to assign
-     * @param staff staff member to assign
-     * @return assignment ID or failure code
-     */
     public String createAssignment(Task task, Staff staff) {
         if (task == null) {
             return "NO_TASK";
@@ -1352,11 +1263,6 @@ public class HousekeepingController {
         return assignmentId;
     }
 
-    /**
-     *
-     * @param assignment assignment to close
-     * @param endStatus  terminal status (COMPLETED or CANCELLED)
-     */
     public void endAssignment(TaskAssignment assignment, TaskStatus endStatus) {
         if (assignment == null) {
             return;
@@ -1371,10 +1277,6 @@ public class HousekeepingController {
         appendAssignmentChange(assignment, endStatus.name(), LocalDateTime.now());
     }
 
-    /**
-     *
-     * @param staff staff member to recompute
-     */
     public void recomputeStaffAvailability(Staff staff) {
         if (staff == null) {
             return;
@@ -1434,11 +1336,6 @@ public class HousekeepingController {
 
     // =============== public API for other modules ===============
 
-    /**
-     *
-     * @param roomId room requiring service
-     * @return new task ID, or null on failure
-     */
     public String createRoomServiceTask(String roomId) {
         if (roomId == null || roomId.isBlank()) {
             return null;
@@ -1455,11 +1352,6 @@ public class HousekeepingController {
         return taskId;
     }
 
-    /**
-     *
-     * @param roomId room left by a guest
-     * @return the cleaning task ID, or null on failure
-     */
     public String createCheckoutTask(String roomId) {
         if (roomId == null || roomId.isBlank()) {
             return null;
@@ -1483,11 +1375,6 @@ public class HousekeepingController {
         return taskId;
     }
 
-    /**
-     *
-     * @param taskId task ID to look up
-     * @return the task, or null when not found
-     */
     public Task getTaskById(String taskId) {
         if (taskId == null) {
             return null;
@@ -1501,11 +1388,6 @@ public class HousekeepingController {
         return null;
     }
 
-    /**
-     *
-     * @param staffId staff ID to look up
-     * @return the staff member, or null when not found
-     */
     public Staff getStaffById(String staffId) {
         if (staffId == null) {
             return null;
