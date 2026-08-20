@@ -220,7 +220,7 @@ public class PriorityReservationUI {
                     String.valueOf(i + 1),
                     s.getStaffId(),
                     s.getStaffName(),
-                    s.getStaffRole(),
+                    s.getStaffRole().name(),
                     s.getAvailabilityStatus() == null ? "-" : s.getAvailabilityStatus().name()
             };
         }
