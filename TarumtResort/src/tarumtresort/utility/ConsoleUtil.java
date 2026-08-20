@@ -2,6 +2,7 @@ package tarumtresort.utility;
 
 import java.util.Scanner;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class ConsoleUtil {
 
     private static final String ANSI_RESET = "\u001B[0m";

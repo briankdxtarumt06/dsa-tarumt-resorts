@@ -2,18 +2,11 @@ package tarumtresort.entity;
 
 // imports
 import java.time.LocalDateTime;
+import tarumtresort.adt.LinkedList;
+import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.TaskStatus;
 
-/**
- *
- * @author Brian
- *
- * Assignment of a staff member to a task. Status shares the TaskStatus enum:
- * PENDING / IN_PROGRESS are active, COMPLETED and CANCELLED are terminal.
- * dateTimeEnded is set when the assignment becomes COMPLETED or CANCELLED and
- * drives the earliest-available staff rotation. isDeleted hides the record
- * from all normal views without destroying history.
- */
+// Author: Brian Kam Ding Xian
 public class TaskAssignment implements Comparable<TaskAssignment> {
     private String taskAssignmentId;
     private TaskStatus status;
@@ -22,6 +15,7 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
     private boolean isDeleted;
     private String assignedStaffId;
     private String assignedTaskId;
+    private LinkedListInterface<TaskAssignmentChange> changes;
 
     public TaskAssignment() { }
 
@@ -92,6 +86,30 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
     /** True when the assignment is still active (not completed / cancelled). */
     public boolean isActive() {
         return status != TaskStatus.COMPLETED && status != TaskStatus.CANCELLED;
+    }
+
+    public LinkedListInterface<TaskAssignmentChange> getChanges() {
+        if (changes == null) {
+            changes = new LinkedList<>();
+        }
+        return changes;
+    }
+
+    public void setChanges(LinkedListInterface<TaskAssignmentChange> changes) {
+        this.changes = changes;
+    }
+
+    public void addChange(TaskAssignmentChange change) {
+        if (change == null || change.getChangeId() == null) {
+            return;
+        }
+        if (changes == null) {
+            changes = new LinkedList<>();
+        }
+        if (changes.contains(change)) {
+            return; // duplicate change id
+        }
+        changes.addBack(change);
     }
 
 @Override

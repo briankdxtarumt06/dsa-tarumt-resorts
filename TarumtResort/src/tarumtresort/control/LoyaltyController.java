@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.MemberManagementUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.PointsManagementUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.RewardManagementUI;
@@ -39,6 +40,9 @@ public class LoyaltyController {
     private RewardManagementUI rewardUI;
     private PointsManagementUI pointsUI;
 
+    // UI declaration
+    private LoyaltyRewardsUI ui;
+
     public LoyaltyController() {
         this(new Scanner(System.in));
     }
@@ -51,6 +55,27 @@ public class LoyaltyController {
         rewardUI = new RewardManagementUI(scanner);
         pointsUI = new PointsManagementUI(scanner);
         reconcileTiersOnLoad();
+    }
+
+    public LoyaltyController(LoyaltyRewardsUI ui) {
+        this(ui.getScanner());
+        this.ui = ui;
+    }
+    
+    public void runLoyaltyRewards() {
+        while (true) {
+            int choice = ui.getMenuChoice();
+            if (choice == 0) {
+                ui.printExitMessage();
+                return;
+            }
+            switch (choice) {
+                case 1 -> runMemberMenu();
+                case 2 -> runRewardMenu();
+                case 3 -> runPointsMenu();
+                default -> ui.printInvalidChoice();
+            }
+        }
     }
 
     // ======================= MENU ENTRY POINTS =======================

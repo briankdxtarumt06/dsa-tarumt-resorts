@@ -8,10 +8,7 @@ import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class Task implements Comparable<Task> {
     private String taskId;
     private String taskName;
@@ -19,6 +16,7 @@ public class Task implements Comparable<Task> {
     private TaskStatus taskStatus;
     private TaskPriority taskPriority;
     private LocalDateTime startDateTime;
+    private LocalDateTime endDateTime;
     private String roomId;
     private boolean isDeleted;
     private LinkedListInterface<TaskAssignment> taskAssignments;
@@ -30,13 +28,14 @@ public class Task implements Comparable<Task> {
     public Task() {
     }
 
-    public Task(String taskId, String taskName, TaskType taskType, TaskStatus taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime, String roomId) {
+    public Task(String taskId, String taskName, TaskType taskType, TaskStatus taskStatus, TaskPriority taskPriority, LocalDateTime startDateTime, LocalDateTime endDateTime, String roomId) {
         this.taskId = taskId;
         this.taskName = taskName;
         this.taskType = taskType;
         this.taskStatus = taskStatus;
         this.taskPriority = taskPriority;
         this.startDateTime = startDateTime;
+        this.endDateTime = endDateTime;
         this.roomId = roomId;
     }
 
@@ -94,6 +93,14 @@ public class Task implements Comparable<Task> {
 
     public void setStartDateTime(LocalDateTime startDateTime) {
         this.startDateTime = startDateTime;
+    }
+
+    public LocalDateTime getEndDateTime() {
+        return endDateTime;
+    }
+
+    public void setEndDateTime(LocalDateTime endDateTime) {
+        this.endDateTime = endDateTime;
     }
 
     public String getRoomId() {
@@ -161,7 +168,8 @@ public class Task implements Comparable<Task> {
                ",\ntaskType=" + taskType + 
                ",\ntaskStatus=" + taskStatus + 
                ",\ntaskPriority=" + taskPriority +
-               ",\nstartDateTime=" + startDateTime;
+               ",\nstartDateTime=" + startDateTime +
+               ",\nendDateTime=" + endDateTime;
     }
 
     @Override
