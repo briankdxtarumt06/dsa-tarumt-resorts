@@ -6,7 +6,7 @@ package tarumtresort.utility;
 
 import java.util.Scanner;
 
-// Author: Brian Kam Ding Xian
+// Author: Brian Kam Ding Xian, Chai Chee Tong
 public class SharedServices {
        
     public static String askNonEmptyInput(Scanner scanner, String prompt) {

@@ -15,6 +15,7 @@ import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
+// Author: Brian Kam Ding Xian
 public class StaffProductivityReport {
 
     private final LinkedListInterface<Staff> staffList;

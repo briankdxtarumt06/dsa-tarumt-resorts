@@ -15,6 +15,7 @@ import tarumtresort.entity.enums.TaskType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
+// Author: Brian Kam Ding Xian
 public class RoomCleaningPerformanceReport {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");

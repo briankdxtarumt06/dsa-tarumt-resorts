@@ -33,6 +33,7 @@ import tarumtresort.entity.enums.StaffRole;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
 
+// Author: Brian Kam Ding Xian, Imam Mahdi Ali Ang Attuko
 public class JsonFileHandler {
     // object to json, json to object builder
     private static final Gson GSON = new GsonBuilder()
