@@ -26,11 +26,7 @@ import tarumtresort.report.HousekeepingReport.HousekeepingReportController;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.DateTimeUtil;
 
-/**
- * 
- * @author Brian
- * 
- */
+// Author: Brian Kam Ding Xian
 public class HousekeepingController {
 
     private static final int PAGE_SIZE = 10;

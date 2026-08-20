@@ -6,19 +6,7 @@ import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.TaskStatus;
 
-/**
- *
- * @author Brian
- *
- * Assignment of a staff member to a task. Status shares the TaskStatus enum:
- * PENDING / IN_PROGRESS are active, COMPLETED and CANCELLED are terminal.
- * dateTimeEnded is set when the assignment becomes COMPLETED or CANCELLED and
- * drives the earliest-available staff rotation. isDeleted hides the record
- * from all normal views without destroying history.
- *
- * changes holds this assignment's own TaskAssignmentChange audit trail
- * (persisted as change ids, resolved back on load - no duplicate data).
- */
+// Author: Brian Kam Ding Xian
 public class TaskAssignment implements Comparable<TaskAssignment> {
     private String taskAssignmentId;
     private TaskStatus status;

@@ -8,10 +8,7 @@ import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class Task implements Comparable<Task> {
     private String taskId;
     private String taskName;

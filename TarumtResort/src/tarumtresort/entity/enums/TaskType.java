@@ -1,10 +1,6 @@
 package tarumtresort.entity.enums;
 
-/**
- *
- * @author Brian
- * 
- */
+// Author: Brian Kam Ding Xian
 public enum TaskType {
     CHECKOUT_CLEAN("Checkout Clean"),
     ROOM_SERVICE("Room Service"),

@@ -3,18 +3,7 @@ package tarumtresort.entity;
 // imports
 import java.time.LocalDateTime;
 
-/**
- *
- * @author Brian
- *
- * Append-only history record for task / assignment changes.
- * Every task status change and every worker assignment status change is
- * recorded here (status + staff involved + date & time), separate from the
- * TaskAssignment records which only hold the current assignment state.
- *
- * Staff and task are linked by id only (no duplicate data); the calling
- * module resolves the ids to full entities when it needs the details.
- */
+// Author: Brian Kam Ding Xian
 public class TaskAssignmentChange implements Comparable<TaskAssignmentChange> {
     private String changeId;
     private String taskAssignmentId;

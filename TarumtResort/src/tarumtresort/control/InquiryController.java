@@ -16,7 +16,6 @@ import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Payment;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
-import tarumtresort.entity.Task;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
@@ -337,6 +336,7 @@ public class InquiryController {
                 return buildRoomAvailabilityInfo(reservation);
 
             case ROOMSERVICE:
+                // Author: Brian Kam Ding Xian
                 String taskId = housekeepingController.createRoomServiceTask(reservation.getRoomId());
                 if (taskId != null) {
                     resolveInquiry(inquiry);

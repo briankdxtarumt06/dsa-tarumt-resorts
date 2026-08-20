@@ -181,9 +181,9 @@ public class RoomCleaningPerformanceReport {
             Task task = row.task;
             table[i + 1] = new String[] {
                     task.getRoomId() == null ? "-" : task.getRoomId(),
-                    row.room == null || row.room.getRoomType() == null ? "-" : row.room.getRoomType().name(),
-                    task.getTaskStatus() == null ? "-" : task.getTaskStatus().name(),
-                    task.getTaskPriority() == null ? "-" : task.getTaskPriority().name(),
+                    row.room == null || row.room.getRoomType() == null ? "-" : row.room.getRoomType().toString(),
+                    task.getTaskStatus() == null ? "-" : task.getTaskStatus().toString(),
+                    task.getTaskPriority() == null ? "-" : task.getTaskPriority().toString(),
                     formatTime(task.getStartDateTime()),
                     formatTime(task.getEndDateTime()),
                     row.durationMinutes == null ? "In progress" : String.valueOf(row.durationMinutes)
@@ -218,7 +218,7 @@ public class RoomCleaningPerformanceReport {
         for (RoomType type : RoomType.values()) {
             long[] acc = sums[type.ordinal()];
             double avg = acc[1] == 0 ? 0 : (double) acc[0] / acc[1];
-            chart.addBar(type.name(), avg,
+            chart.addBar(type.toString(), avg,
                     "(" + acc[1] + " task" + (acc[1] == 1 ? "" : "s") + ")");
         }
         return chart;
@@ -235,7 +235,7 @@ public class RoomCleaningPerformanceReport {
             counts[task.getTaskType().ordinal()]++;
         }
         for (TaskType type : VOLUME_TYPES) {
-            chart.addBar(type.name(), counts[type.ordinal()],
+            chart.addBar(type.toString(), counts[type.ordinal()],
                     "(" + counts[type.ordinal()] + " task" + (counts[type.ordinal()] == 1 ? "" : "s") + ")");
         }
         return chart;
@@ -317,16 +317,16 @@ public class RoomCleaningPerformanceReport {
         return new String[] {
                 Ansi.bold("Fastest Room Type: ")
                         + (fastestType == null ? "-"
-                                : fastestType.name() + " (" + Math.round(fastestAvg) + " min)"),
+                                : fastestType.toString() + " (" + Math.round(fastestAvg) + " min)"),
                 Ansi.bold("Slowest Room Type: ")
                         + (slowestType == null ? "-"
-                                : slowestType.name() + " (" + Math.round(slowestAvg) + " min)"),
+                                : slowestType.toString() + " (" + Math.round(slowestAvg) + " min)"),
                 Ansi.bold("Most Overdue Room Type: ")
                         + (mostOverdueType == null ? "-"
-                                : mostOverdueType.name() + " (" + Math.round(highestOverdueRate * 100)
+                                : mostOverdueType.toString() + " (" + Math.round(highestOverdueRate * 100)
                                         + "% overdue)"),
                 Ansi.bold("Most Common Task Type: ")
-                        + (mostCommonType == null ? "-" : mostCommonType.name() + " (" + mostCommonCount
+                        + (mostCommonType == null ? "-" : mostCommonType.toString() + " (" + mostCommonCount
                                 + " task" + (mostCommonCount == 1 ? "" : "s") + ")"),
                 Ansi.bold("Overall Avg Clean Time: ") + Math.round(overallAvg) + " min"
         };

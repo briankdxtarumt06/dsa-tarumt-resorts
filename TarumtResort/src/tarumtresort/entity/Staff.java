@@ -6,10 +6,7 @@ import tarumtresort.entity.enums.AvailabilityStatus;
 import tarumtresort.entity.enums.Department;
 import tarumtresort.entity.enums.StaffRole;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class Staff implements Comparable<Staff> {
     private String staffId;
     private String staffName;

@@ -8,10 +8,7 @@ import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class TaskAssignmentDAO {
 
     private static final Path FILE = Path.of("data/taskassignment.json");

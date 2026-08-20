@@ -2,10 +2,7 @@ package tarumtresort.boundary;
 
 import java.util.Scanner;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class MainMenuUI {
 
     private Scanner scanner = new Scanner(System.in);

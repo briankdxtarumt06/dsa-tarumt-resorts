@@ -3,14 +3,7 @@ package tarumtresort.utility;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- *
- * @author Brian
- *
- * Formats LocalDateTime into human-readable text for UI output.
- * Persistence keeps the full ISO-8601 format (see JsonFileHandler);
- * this class is only for display.
- */
+// Author: Brian Kam Ding Xian
 public class DateTimeUtil {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd MMM yyyy, h:mm a");

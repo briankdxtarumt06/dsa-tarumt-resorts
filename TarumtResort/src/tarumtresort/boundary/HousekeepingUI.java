@@ -20,11 +20,7 @@ import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.DateTimeUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- *
- * @author Brian Kam Ding Xian
- *
- */
+// Author: Brian Kam Ding Xian
 public class HousekeepingUI {
 
     private Scanner scanner = new Scanner(System.in);

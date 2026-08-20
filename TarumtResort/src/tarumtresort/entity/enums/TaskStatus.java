@@ -1,9 +1,6 @@
 package tarumtresort.entity.enums;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public enum TaskStatus {
     PENDING("Pending"),
     IN_PROGRESS("In Progress"),

@@ -3,11 +3,7 @@ package tarumtresort.entity;
 import java.time.LocalDateTime;
 import tarumtresort.entity.enums.TaskStatus;
 
-/**
- *
- * @author Brian
- *
- */
+// Author: Brian Kam Ding Xian
 public class TaskStatusChange implements Comparable<TaskStatusChange> {
     private TaskStatus taskStatus;
     private String reason;

@@ -1,9 +1,6 @@
 package tarumtresort.entity.enums;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public enum TaskPriority {
     HIGH(1, "High"),
     MEDIUM(2, "Medium"),

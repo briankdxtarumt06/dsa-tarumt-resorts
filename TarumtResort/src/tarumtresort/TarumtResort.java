@@ -11,10 +11,7 @@ import tarumtresort.control.PriorityReservationController;
 import tarumtresort.control.ReservationControl;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class TarumtResort {
 
     private static final Scanner scanner = new Scanner(System.in);
