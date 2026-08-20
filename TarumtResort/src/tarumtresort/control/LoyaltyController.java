@@ -76,6 +76,14 @@ public class LoyaltyController {
         reconcileTiersOnLoad();
     }
 
+    public LoyaltyController(LoyaltyRewardsUI ui) {
+        this(ui.getScanner());
+    }
+
+    public void runLoyaltyRewards() {
+        run();
+    }
+
     // entry point for the loyalty module (mirrors HousekeepingController.runHousekeeping)
     public void run() {
         try {

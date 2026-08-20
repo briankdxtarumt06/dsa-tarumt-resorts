@@ -1007,6 +1007,7 @@ public class ReservationControl {
             r.setStatus(ReservationStatus.CHECKED_OUT);
             r.getTimestamps().setActualCheckOutTime(now);
             updateRoomStatus(r.getRoomId(), RoomStatus.CLEANING);
+            // Author: Brian Kam Ding Xian
             housekeepingController.createCheckoutTask(r.getRoomId());
         }
 

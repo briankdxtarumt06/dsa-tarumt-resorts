@@ -1,11 +1,6 @@
 package tarumtresort.utility;
 
-/**
- *
- * @author Brian
- *
- * Small ANSI escape code helper for colored console output.
- */
+// Author: Brian Kam Ding Xian
 public final class Ansi {
 
     public static final boolean ENABLED = true;

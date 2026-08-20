@@ -1,15 +1,22 @@
 package tarumtresort.entity.enums;
 
-/**
- *
- * @author Brian
- *
- */
+// Author: Brian Kam Ding Xian
 public enum AvailabilityStatus {
-    AVAILABLE,
-    BUSY,
-    ON_LEAVE,
-    RESIGNED;
+    AVAILABLE("Available"),
+    BUSY("Busy"),
+    ON_LEAVE("On Leave"),
+    RESIGNED("Resigned");
+
+    private final String label;
+
+    AvailabilityStatus(String label) {
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
 
     public static AvailabilityStatus fromString(String status) {
         if (status == null) {

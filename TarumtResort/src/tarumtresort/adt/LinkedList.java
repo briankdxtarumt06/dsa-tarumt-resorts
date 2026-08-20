@@ -1,17 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtresort.adt;
 
 import java.util.Iterator;
 import tarumtresort.entity.Node;
 
-/**
- *
- * @author Brian
- * @param <T>
- */
+// Author: Brian Kam Ding Xian, Chai Chee Tong, Fong Wen Ling, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
 public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<T> {
 
     private Node<T> head;

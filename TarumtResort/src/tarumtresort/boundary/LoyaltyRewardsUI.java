@@ -38,6 +38,10 @@ public class LoyaltyRewardsUI {
         this.scanner = scanner;
     }
 
+    public Scanner getScanner() {
+        return scanner;
+    }
+
     public void run() {
         new LoyaltyController(scanner).run();
     }
@@ -51,6 +55,10 @@ public class LoyaltyRewardsUI {
             return "RM" + String.format("%.2f", r.getVoucherValue());
         }
         return "-";
+    }
+
+    public int getMenuChoice() {
+        return getMenuChoice(0);
     }
 
     public int getMenuChoice(int unreadCount) {

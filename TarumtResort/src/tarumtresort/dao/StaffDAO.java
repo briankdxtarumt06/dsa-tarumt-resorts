@@ -8,10 +8,7 @@ import tarumtresort.entity.Staff;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class StaffDAO {
 
     private static final Path FILE = Path.of("data/staff.json");

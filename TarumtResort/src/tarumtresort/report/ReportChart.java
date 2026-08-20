@@ -3,14 +3,7 @@ package tarumtresort.report;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 
-/**
- *
- * @author Brian
- *
- * ASCII bar chart holder: a title plus one or more labelled bars.
- * Each bar carries a numeric value (and an optional detail string that is
- * shown next to the value, e.g. "3 tasks" or "16.1%").
- */
+// Author: Brian Kam Ding Xian
 public class ReportChart implements Comparable<ReportChart> {
 
     private final String title;

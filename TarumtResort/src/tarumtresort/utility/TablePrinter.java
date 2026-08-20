@@ -1,5 +1,6 @@
 package tarumtresort.utility;
 
+// Author: Brian Kam Ding Xian, Imam Mahdi Ali Ang Attuko
 public class TablePrinter {
 
     public static final int DOC_WIDTH = 132;
