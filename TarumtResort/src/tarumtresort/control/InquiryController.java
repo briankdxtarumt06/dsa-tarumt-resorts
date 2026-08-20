@@ -7,6 +7,7 @@ import java.util.List;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.InquiryUI;
+import tarumtresort.boundary.ReservationUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.InquiryDAO;
 import tarumtresort.dao.PaymentDAO;
@@ -38,24 +39,6 @@ public class InquiryController {
     // list declared
     private LinkedListInterface<Inquiry> pendingInquiryList = new LinkedList<>();
     private LinkedListInterface<Inquiry> resolvedInquiryList = new LinkedList<>();
-    private LinkedListInterface<Inquiry> getAllInquiries(InquiryStatus filterStatus) {
-        LinkedListInterface<Inquiry> combined = new LinkedList<>();
-
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            Inquiry inq = pendingInquiryList.get(i);
-            if (filterStatus == null || inq.getStatus() == filterStatus) {
-                combined.addBack(inq);
-            }
-        }
-        for (int i = 0; i < resolvedInquiryList.size(); i++) {
-            Inquiry inq = resolvedInquiryList.get(i);
-            if (filterStatus == null || inq.getStatus() == filterStatus) {
-                combined.addBack(inq);
-            }
-        }
-
-        return combined;
-    }
 
     // dao
     private static final InquiryDAO inquiryDAO = new InquiryDAO();
@@ -65,6 +48,7 @@ public class InquiryController {
 
     // ui
     private InquiryUI ui = new InquiryUI();
+    private ReservationUI reservationUI = new ReservationUI();
 
     private int inquiryCounter;
 
@@ -166,6 +150,13 @@ public class InquiryController {
 
         Object extra = retrieveAdditionalInfo(inquiry);
         ui.printAdditionalInfo(inquiry, extra);
+
+        if (extra instanceof Guest) {
+            Guest guest = (Guest) extra;
+            if (ui.inputConfirmation("View Reservation?")) {
+                reservationUI.printGuestReservationHistory(guest.getReservations());
+            }
+        }
 
         if (inquiry.getStatus() == InquiryStatus.RESOLVED) {
             ui.printMessage("Inquiry automatically resolved (request forwarded to Housekeeping).");
@@ -317,6 +308,25 @@ public class InquiryController {
             }
         }
         return null;
+    }
+
+    private LinkedListInterface<Inquiry> getAllInquiries(InquiryStatus filterStatus) {
+        LinkedListInterface<Inquiry> combined = new LinkedList<>();
+
+        for (int i = 0; i < pendingInquiryList.size(); i++) {
+            Inquiry inq = pendingInquiryList.get(i);
+            if (filterStatus == null || inq.getStatus() == filterStatus) {
+                combined.addBack(inq);
+            }
+        }
+        for (int i = 0; i < resolvedInquiryList.size(); i++) {
+            Inquiry inq = resolvedInquiryList.get(i);
+            if (filterStatus == null || inq.getStatus() == filterStatus) {
+                combined.addBack(inq);
+            }
+        }
+
+        return combined;
     }
 
     // PROCESSING HELPERS
