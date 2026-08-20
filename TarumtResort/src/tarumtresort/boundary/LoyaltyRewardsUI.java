@@ -1101,7 +1101,7 @@ public class LoyaltyRewardsUI {
      *  @param memberId   member id for the banner
      *  @param memberName member name for the banner
      *  @param rows       page rows: {No., Type, Message, Date, Status}
-     *  @return 1 = mark all read, next/previous page numbers, 0 = back to members */
+     *  @return 1 = mark all read, 2 = delete notification, next/previous page numbers, 0 = back to members */
     public int printMemberNotificationsMenu(String memberId, String memberName,
             String[][] rows, int page, int pageCount) {
         ConsoleUtil.clearScreen();
@@ -1117,6 +1117,7 @@ public class LoyaltyRewardsUI {
         printSection("Actions");
         int action = 1;
         System.out.println("  " + action++ + ". Mark All Read");
+        System.out.println("  " + action++ + ". Delete Notification");
         if (page < pageCount - 1) {
             System.out.println("  " + action++ + ". Next Page");
         }
@@ -1148,7 +1149,17 @@ public class LoyaltyRewardsUI {
     // SHARED INPUT / OUTPUT (used across member / reward / points / notification screens)
     // ==================================================================
     public int inputListIndex(String entityLabel, int max) {
-        return inputIntChoice("Enter " + entityLabel + " number to view (0 = cancel)", 0, max);
+        return inputListChoice(entityLabel, "view", max);
+    }
+
+    /** Like {@link #inputListIndex(String,int)} but lets the caller specify the action verb
+     *  (e.g. "delete") so the prompt reads naturally. */
+    public int inputListIndex(String entityLabel, String actionVerb, int max) {
+        return inputListChoice(entityLabel, actionVerb, max);
+    }
+
+    private int inputListChoice(String entityLabel, String actionVerb, int max) {
+        return inputIntChoice("Enter " + entityLabel + " number to " + actionVerb + " (0 = cancel)", 0, max);
     }
 
     /** Asks a yes/no confirmation; returns true only on an explicit 'y'. */

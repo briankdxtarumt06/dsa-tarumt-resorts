@@ -21,13 +21,14 @@ public class PointExpiryReport {
         this.guestList = guestList == null ? new LinkedList<>() : guestList;
     }
 
-    public Result generate(LocalDateTime from, LocalDateTime to) {
+    public Result generate(LocalDateTime from, LocalDateTime to, Tier tierFilter, boolean expiringOnly) {
         LocalDateTime now = LocalDateTime.now();
         LinkedListInterface<Member> filtered = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             if (m.isDeleted()) continue;
-            // date-range filter: keep member if they have any transaction in range, or if no range, keep all
+            // multiple criteria: date range AND tier filter AND (optionally) expiring-only
+            if (tierFilter != null && (m.getTier() == null || m.getTier() != tierFilter)) continue;
             if (from != null || to != null) {
                 boolean hasTx = false;
                 var txs = m.getPointTransactionList();
@@ -49,7 +50,25 @@ public class PointExpiryReport {
             if (windowForChart <= 0) windowForChart = 30;
         }
 
-        return new Result(toTable(sorted, windowForChart, now), buildCharts(sorted, windowForChart, now), buildSummary(sorted, windowForChart, now), buildCallouts(sorted, windowForChart, now));
+        // expiring-only: keep members that actually have points expiring within the window
+        if (expiringOnly) {
+            LinkedListInterface<Member> expiring = new LinkedList<>();
+            for (int i = 0; i < sorted.size(); i++) {
+                if (expiringWithin(sorted.get(i), windowForChart, now) > 0) expiring.addBack(sorted.get(i));
+            }
+            sorted = expiring;
+        }
+
+        return new Result(toTable(sorted, windowForChart, now), buildCharts(sorted, windowForChart, now), buildSummary(sorted, windowForChart, now), buildCallouts(sorted, windowForChart, now),
+                criteriaText(from, to, tierFilter, expiringOnly));
+    }
+
+    private String criteriaText(LocalDateTime from, LocalDateTime to, Tier tierFilter, boolean expiringOnly) {
+        String range = (from == null && to == null) ? "All Time"
+                : (from == null ? ".." : from.toLocalDate().toString())
+                + " .. " + (to == null ? ".." : to.toLocalDate().toString());
+        return "Range: " + range + " | Tier: " + (tierFilter == null ? "ALL" : tierFilter.name())
+                + (expiringOnly ? " | Expiring only" : "");
     }
 
     private Guest findGuest(String guestId) {
@@ -176,15 +195,24 @@ public class PointExpiryReport {
         private final LinkedListInterface<ReportChart> charts;
         private final String[] summary;
         private final LinkedListInterface<String> callouts;
+        private final String criteria;
+
         Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts) {
+            this(table, charts, summary, callouts, null);
+        }
+
+        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts, String criteria) {
             this.table = table;
             this.charts = charts == null ? new LinkedList<>() : charts;
             this.summary = summary;
             this.callouts = callouts == null ? new LinkedList<>() : callouts;
+            this.criteria = criteria;
         }
+
         public String[][] getTable() { return table; }
         public LinkedListInterface<ReportChart> getCharts() { return charts; }
         public String[] getSummary() { return summary; }
         public LinkedListInterface<String> getCallouts() { return callouts; }
+        public String getCriteria() { return criteria; }
     }
 }

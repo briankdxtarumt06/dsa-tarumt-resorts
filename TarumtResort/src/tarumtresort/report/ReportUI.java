@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
+import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.ReportGraph;
 import tarumtresort.utility.TablePrinter;
@@ -102,6 +103,52 @@ public class ReportUI {
             ConsoleUtil.printError("Invalid format! Please use yyyy-MM-dd HH:mm (blank = no limit).");
             return inputOptionalDateTime(prompt);
         }
+    }
+
+    // -------------------- SECONDARY FILTERS --------------------
+
+    /** Asks for a tier filter; returns null when "All tiers" is chosen. */
+    public Tier inputTierFilter() {
+        System.out.println("\n========================================");
+        System.out.println("  TIER FILTER");
+        System.out.println("========================================");
+        Tier[] tiers = Tier.values();
+        for (int i = 0; i < tiers.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + tiers[i].name());
+        }
+        System.out.println("  " + (tiers.length + 1) + ". All tiers");
+        System.out.println("========================================");
+        int choice = getIntInput("Enter tier", 1, tiers.length + 1);
+        if (choice == tiers.length + 1) {
+            return null;
+        }
+        return tiers[choice - 1];
+    }
+
+    /** Asks for a redemption-status filter; returns null when "All statuses" is chosen. */
+    public String inputStatusFilter() {
+        System.out.println("\n========================================");
+        System.out.println("  REDEMPTION STATUS FILTER");
+        System.out.println("========================================");
+        System.out.println("  1. PENDING");
+        System.out.println("  2. APPROVED");
+        System.out.println("  3. REJECTED");
+        System.out.println("  4. All statuses");
+        System.out.println("========================================");
+        int choice = getIntInput("Enter status", 1, 4);
+        switch (choice) {
+            case 1: return "PENDING";
+            case 2: return "APPROVED";
+            case 3: return "REJECTED";
+            default: return null;
+        }
+    }
+
+    /** Asks a yes/no question for boolean report options. */
+    public boolean inputYesNo(String prompt) {
+        System.out.print(prompt + " (y/n): ");
+        String line = scanner.nextLine().trim();
+        return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
     }
 
     // -------------------- RANGE PRESETS --------------------
@@ -212,6 +259,12 @@ public class ReportUI {
         System.out.println("Generated at: " + LocalDateTime.now().format(TIMESTAMP_FMT));
         TablePrinter.printFullWidthLine('*');
         System.out.println();
+
+        // applied filter criteria (multi-criteria demonstration)
+        if (result.getCriteria() != null && !result.getCriteria().isEmpty()) {
+            TablePrinter.printCentered("Criteria: " + result.getCriteria());
+            TablePrinter.printFullWidthLine('-');
+        }
 
         // confidential
         System.out.println(confidential);

@@ -8,6 +8,7 @@ public class Notification implements Comparable<Notification> {
     private String message;
     private LocalDateTime date;
     private boolean isRead;
+    private boolean isDeleted;
 
     public Notification() {
     }
@@ -19,6 +20,7 @@ public class Notification implements Comparable<Notification> {
         this.message = message;
         this.date = date;
         this.isRead = isRead;
+        this.isDeleted = false;
     }
 
     public String getNotificationId() {
@@ -59,6 +61,14 @@ public class Notification implements Comparable<Notification> {
 
     public void setRead(boolean isRead) {
         this.isRead = isRead;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     @Override

@@ -818,7 +818,8 @@ public class LoyaltyController {
         for (int i = 0; i < guestList.size(); i++) {
             LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
             for (int j = 0; j < list.size(); j++) {
-                if (!list.get(j).isRead()) {
+                Notification n = list.get(j);
+                if (!n.isRead() && !n.isDeleted()) {
                     count++;
                 }
             }
@@ -983,6 +984,26 @@ public class LoyaltyController {
                 moduleUI.showMessage(marked + " notification(s) marked as read.");
                 moduleUI.pause();
                 page = 0;
+            } else if (choice == action++) { // 2. Delete Notification
+                if (list.isEmpty()) {
+                    moduleUI.showMessage("(No notifications to delete)");
+                    moduleUI.pause();
+                } else {
+                    int num = moduleUI.inputListIndex("notification", "delete", list.size());
+                    if (num != 0) {
+                        Notification target = list.get(num - 1);
+                        if (moduleUI.confirm("Delete notification "
+                                + target.getNotificationId() + "? (y/n): ")) {
+                            moduleUI.showMessage(deleteNotification(target.getNotificationId()));
+                            int newPageCount = Math.max(1,
+                                    (getNotifications(member.getGuestId()).size() + PAGE_SIZE - 1) / PAGE_SIZE);
+                            if (page >= newPageCount) {
+                                page = newPageCount - 1;
+                            }
+                        }
+                        moduleUI.pause();
+                    }
+                }
             } else {
                 boolean matched = false;
                 if (page < pageCount - 1) { // Next Page
@@ -1836,7 +1857,8 @@ public class LoyaltyController {
         }
         LinkedListInterface<Notification> list = guest.getNotificationList();
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getMessage().equals(message)) {
+            Notification n = list.get(i);
+            if (!n.isDeleted() && message != null && message.equals(n.getMessage())) {
                 return true;
             }
         }
@@ -1851,7 +1873,10 @@ public class LoyaltyController {
         LinkedListInterface<Notification> result = new LinkedList<>();
         LinkedListInterface<Notification> list = guest.getNotificationList();
         for (int i = 0; i < list.size(); i++) {
-            result.addBack(list.get(i));
+            Notification n = list.get(i);
+            if (!n.isDeleted()) {
+                result.addBack(n);
+            }
         }
         return result;
     }
@@ -1865,6 +1890,28 @@ public class LoyaltyController {
                     n.setRead(true);
                     guestDAO.saveToFile(guestList);
                     return "Notification " + notificationId + " marked as read.";
+                }
+            }
+        }
+        return "Notification not found: " + notificationId;
+    }
+
+    /** Soft-deletes a notification by id (hidden from all lists/counts, data retained). */
+    public String deleteNotification(String notificationId) {
+        if (notificationId == null) {
+            return "Notification id cannot be null.";
+        }
+        for (int i = 0; i < guestList.size(); i++) {
+            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
+            for (int j = 0; j < list.size(); j++) {
+                Notification n = list.get(j);
+                if (notificationId.equals(n.getNotificationId())) {
+                    if (n.isDeleted()) {
+                        return "Notification " + notificationId + " is already deleted.";
+                    }
+                    n.setDeleted(true);
+                    guestDAO.saveToFile(guestList);
+                    return "Notification " + notificationId + " deleted.";
                 }
             }
         }

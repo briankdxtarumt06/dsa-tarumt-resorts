@@ -10,17 +10,25 @@ public class ReportResult {
     private final String[] summary;
     private final LinkedListInterface<ReportChart> charts;
     private final LinkedListInterface<String> callouts;
+    private final String criteria;
 
     public ReportResult(String[][] table, String[] summary) {
-        this(table, summary, (LinkedListInterface<ReportChart>) null, null);
+        this(table, summary, (LinkedListInterface<ReportChart>) null, null, null);
     }
 
     public ReportResult(String[][] table, String[] summary,
             LinkedListInterface<ReportChart> charts, LinkedListInterface<String> callouts) {
+        this(table, summary, charts, callouts, null);
+    }
+
+    public ReportResult(String[][] table, String[] summary,
+            LinkedListInterface<ReportChart> charts, LinkedListInterface<String> callouts,
+            String criteria) {
         this.table = table;
         this.summary = summary == null ? new String[0] : summary;
         this.charts = charts == null ? new LinkedList<>() : charts;
         this.callouts = callouts == null ? new LinkedList<>() : callouts;
+        this.criteria = criteria;
     }
 
     public String[][] getTable() {
@@ -37,6 +45,10 @@ public class ReportResult {
 
     public LinkedListInterface<String> getCallouts() {
         return callouts;
+    }
+
+    public String getCriteria() {
+        return criteria;
     }
 
     public boolean isEmpty() {

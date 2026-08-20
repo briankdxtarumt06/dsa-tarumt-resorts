@@ -8,9 +8,7 @@ import tarumtresort.entity.Member;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.report.ReportChart;
-import tarumtresort.utility.Ansi;
 
-// Housekeeping-style: date-range-only filter, no status/voucher-type/minCost/keyword/sort
 public class RedemptionVoucherReport {
 
     private final LinkedListInterface<Member> memberList;
@@ -24,14 +22,16 @@ public class RedemptionVoucherReport {
         this.guestList = guestList == null ? new LinkedList<>() : guestList;
     }
 
-    public Result generate(LocalDateTime from, LocalDateTime to) {
+    public Result generate(LocalDateTime from, LocalDateTime to, String statusFilter) {
         LinkedListInterface<RedemptionRecord> filtered = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             var recs = m.getRedemptionRecordList();
             for (int j = 0; j < recs.size(); j++) {
                 RedemptionRecord r = recs.get(j);
+                // multiple criteria: date range AND redemption status
                 if (!inRange(r.getRedeemedDate(), from, to)) continue;
+                if (statusFilter != null && !statusFilter.equals(r.getStatus())) continue;
                 filtered.addBack(r);
             }
         }
@@ -39,7 +39,15 @@ public class RedemptionVoucherReport {
         LinkedListInterface<RedemptionRecord> sorted = new LinkedList<>();
         for (int i = 0; i < filtered.size(); i++) sorted.addSorted(filtered.get(i));
 
-        return new Result(toTable(sorted), buildCharts(sorted), buildSummary(sorted), buildCallouts(sorted));
+        return new Result(toTable(sorted), buildCharts(sorted), buildSummary(sorted), buildCallouts(sorted),
+                criteriaText(from, to, statusFilter));
+    }
+
+    private String criteriaText(LocalDateTime from, LocalDateTime to, String statusFilter) {
+        String range = (from == null && to == null) ? "All Time"
+                : (from == null ? ".." : from.toLocalDate().toString())
+                + " .. " + (to == null ? ".." : to.toLocalDate().toString());
+        return "Range: " + range + " | Status: " + (statusFilter == null ? "ALL" : statusFilter);
     }
 
     private boolean inRange(LocalDateTime value, LocalDateTime from, LocalDateTime to) {
@@ -181,15 +189,24 @@ public class RedemptionVoucherReport {
         private final LinkedListInterface<ReportChart> charts;
         private final String[] summary;
         private final LinkedListInterface<String> callouts;
+        private final String criteria;
+
         Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts) {
+            this(table, charts, summary, callouts, null);
+        }
+
+        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts, String criteria) {
             this.table = table;
             this.charts = charts == null ? new LinkedList<>() : charts;
             this.summary = summary;
             this.callouts = callouts == null ? new LinkedList<>() : callouts;
+            this.criteria = criteria;
         }
+
         public String[][] getTable() { return table; }
         public LinkedListInterface<ReportChart> getCharts() { return charts; }
         public String[] getSummary() { return summary; }
         public LinkedListInterface<String> getCallouts() { return callouts; }
+        public String getCriteria() { return criteria; }
     }
 }
