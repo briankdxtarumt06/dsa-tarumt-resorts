@@ -8,7 +8,6 @@ import java.util.Scanner;
 
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.boundary.PaymentUI;
 import tarumtresort.boundary.ReservationUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.NationalityDAO;
@@ -69,7 +68,7 @@ public class ReservationControl {
     private static final RoomDAO roomDAO = new RoomDAO();
 
     // Controller
-    private PaymentControl paymentControl = new PaymentControl(reservationUI.getScanner());
+    private PaymentControl paymentControl = new PaymentControl();
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
     private LoyaltyController loyaltyController = new LoyaltyController();
     private HousekeepingController housekeepingController = new HousekeepingController();
@@ -2181,11 +2180,7 @@ public class ReservationControl {
         // DAO
         private final PaymentDAO paymentDAO = new PaymentDAO();
 
-        // UI
-        private PaymentUI paymentUI;
-
-        public PaymentControl(Scanner scanner) {
-            paymentUI = new PaymentUI(scanner);
+        public PaymentControl() {
             paymentDAO.loadFromFile(paymentList);
         }
 
@@ -2241,7 +2236,7 @@ public class ReservationControl {
                         break;
                     }
 
-                    String redemptionId = paymentUI.selectVoucher(applicable);
+                    String redemptionId = reservationControl.getReservationUI().selectVoucher(applicable);
                     if (redemptionId == null) {
                         break; // staff chose 0 - no more vouchers
                     }
@@ -2305,7 +2300,7 @@ public class ReservationControl {
             double tax = (netRoomCharge + serviceCharge) * 0.06;
             double total = netRoomCharge + serviceCharge + tax;
 
-            paymentUI.printBill(totalRoomCharge, discountPercent, discount,
+            reservationControl.getReservationUI().printBill(totalRoomCharge, discountPercent, discount,
                     promoLabel, promoDiscount,
                     voucherLabels, voucherValues, serviceCharge, tax, 0.0, total);
 
@@ -2443,8 +2438,8 @@ public class ReservationControl {
             return null;
         }
 
-        public void displayPaymentRecords() {
-            paymentUI.printPaymentRecords(paymentList);
+        public void displayPaymentRecords(ReservationUI ui) {
+            ui.printPaymentRecords(paymentList);
         }
 
         public LinkedListInterface<Payment> getPaymentList() {

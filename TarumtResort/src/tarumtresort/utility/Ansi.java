@@ -20,7 +20,6 @@ public final class Ansi {
     private Ansi() {
     }
 
-    // wraps text in a color code + reset; returns plain text when disabled
     public static String color(String code, String text) {
         if (!ENABLED || code == null || text == null) {
             return text;

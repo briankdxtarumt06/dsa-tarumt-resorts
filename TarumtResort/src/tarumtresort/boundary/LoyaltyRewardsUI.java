@@ -55,7 +55,7 @@ public class LoyaltyRewardsUI {
 
     public int getMenuChoice(int unreadCount) {
         printMenu(unreadCount);
-        return getIntInput("Enter choice (0-4): ", 0, 4);
+        return getIntInput("Enter choice (0-5): ", 0, 5);
     }
 
     private void printMenu(int unreadCount) {
@@ -72,6 +72,7 @@ public class LoyaltyRewardsUI {
         } else {
             System.out.println("  4. Notifications");
         }
+        System.out.println("  5. Reports");
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
     }
@@ -966,6 +967,168 @@ public class LoyaltyRewardsUI {
                     // continue retry until integer input
                 }
                 ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+            }
+        }
+    }
+
+    // ==================================================================
+    /** Report submenu + filter/sort/search configuration for the loyalty reports. */
+    public static class ReportsUI {
+
+        private static final int BANNER_WIDTH = 32;
+        private static final String BANNER_LINE = "=".repeat(BANNER_WIDTH);
+
+        private final Scanner scanner;
+
+        public ReportsUI(Scanner scanner) {
+            this.scanner = scanner;
+        }
+
+        public int getReportMenuChoice() {
+            ConsoleUtil.clearScreen();
+            printBanner("LOYALTY & REWARDS REPORTS");
+            System.out.println("  1. Membership & Tier Performance Report");
+            System.out.println("  2. Redemption & Voucher Report");
+            System.out.println("  3. Point Expiry & Tier Progression Report");
+            System.out.println("  0. Back");
+            printSeparator();
+            return inputIntChoice("Enter choice", 0, 3);
+        }
+
+        /** @return 0 = all tiers, otherwise 1..4 = SILVER..DIAMOND. */
+        public int inputTierFilter() {
+            System.out.println("\nFilter by Tier:");
+            System.out.println("  0. All tiers");
+            Tier[] tiers = Tier.values();
+            for (int i = 0; i < tiers.length; i++) {
+                System.out.println("  " + (i + 1) + ". " + tiers[i]);
+            }
+            return inputIntChoice("Enter tier", 0, tiers.length);
+        }
+
+        /** @return minimum points (0 = no limit). */
+        public int inputMinPoints() {
+            return readInt("Minimum points (0 = no limit)");
+        }
+
+        /** @return 1 = active, 2 = deleted, 3 = all. */
+        public int inputMemberStatus() {
+            System.out.println("\nMember Status:");
+            System.out.println("  1. Active only");
+            System.out.println("  2. Deleted only");
+            System.out.println("  3. All");
+            return inputIntChoice("Enter status", 1, 3);
+        }
+
+        /** @return 1 = all, 2 = active promotion, 3 = no active promotion. */
+        public int inputPromotionFilter() {
+            System.out.println("\nPromotion:");
+            System.out.println("  1. All");
+            System.out.println("  2. Has active promotion");
+            System.out.println("  3. No active promotion");
+            return inputIntChoice("Enter promotion", 1, 3);
+        }
+
+        /** @return expiry window in days (0 = none). */
+        public int inputExpiryWindow() {
+            System.out.println("\nPoint Expiry Window:");
+            System.out.println("  0. None");
+            System.out.println("  7. Within 7 days");
+            System.out.println("  30. Within 30 days");
+            System.out.println("  90. Within 90 days");
+            return inputIntChoice("Enter window", 0, 90);
+        }
+
+        /** @return search keyword (blank = none). */
+        public String inputSearchKeyword() {
+            System.out.print("\nSearch keyword (blank = none): ");
+            return scanner.nextLine().trim();
+        }
+
+        /** @return 1-based choice from the given field labels. */
+        public int inputSortField(String[] labels) {
+            System.out.println("\nSort by:");
+            for (int i = 0; i < labels.length; i++) {
+                System.out.println("  " + (i + 1) + ". " + labels[i]);
+            }
+            return inputIntChoice("Enter field", 1, labels.length);
+        }
+
+        /** @return true = ascending, false = descending. */
+        public boolean inputSortOrder() {
+            System.out.println("\nSort Order:");
+            System.out.println("  1. Ascending");
+            System.out.println("  2. Descending");
+            return inputIntChoice("Enter order", 1, 2) == 1;
+        }
+
+        public void showCriteria(String line) {
+            System.out.println("\n  " + line);
+        }
+
+        /** Public wrapper so controllers can reuse the shared-scanner input helper. */
+        public int inputChoice(String prompt, int min, int max) {
+            return inputIntChoice(prompt, min, max);
+        }
+
+        public void pause() {
+            ConsoleUtil.pressEnterToContinue(scanner);
+        }
+
+        private static void printBanner(String title) {
+            System.out.println("\n" + BANNER_LINE);
+            System.out.println(center(title, BANNER_WIDTH));
+            System.out.println(BANNER_LINE);
+        }
+
+        private static void printSeparator() {
+            System.out.println(BANNER_LINE);
+        }
+
+        private static String center(String text, int width) {
+            if (text == null) {
+                text = "";
+            }
+            if (text.length() >= width) {
+                return text;
+            }
+            int pad = width - text.length();
+            int left = pad / 2;
+            return " ".repeat(left) + text + " ".repeat(pad - left);
+        }
+
+        private int inputIntChoice(String prompt, int min, int max) {
+            while (true) {
+                System.out.print(prompt + " (" + min + "-" + max + "): ");
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                try {
+                    int value = Integer.parseInt(line);
+                    if (value >= min && value <= max) {
+                        System.out.println();
+                        return value;
+                    }
+                } catch (NumberFormatException e) {
+                    // continue retry
+                }
+                ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
+            }
+        }
+
+        private int readInt(String prompt) {
+            while (true) {
+                System.out.print(prompt + ": ");
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                try {
+                    return Integer.parseInt(line);
+                } catch (NumberFormatException e) {
+                    ConsoleUtil.printError("Please enter a valid number.");
+                }
             }
         }
     }

@@ -11,6 +11,7 @@ import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.MemberManagementUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.NotificationCentreUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.PointsManagementUI;
+import tarumtresort.boundary.LoyaltyRewardsUI.ReportsUI;
 import tarumtresort.boundary.LoyaltyRewardsUI.RewardManagementUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
@@ -23,6 +24,9 @@ import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.Tier;
+import tarumtresort.report.ReportChart;
+import tarumtresort.report.ReportResult;
+import tarumtresort.report.ReportUI;
 import tarumtresort.utility.ConsoleUtil;
 
 /**
@@ -45,6 +49,8 @@ public class LoyaltyController {
     private RewardManagementUI rewardUI;
     private PointsManagementUI pointsUI;
     private NotificationCentreUI notificationUI;
+    private ReportsUI reportsUI;
+    private ReportUI reportUI;
     private LoyaltyRewardsUI moduleUI;
 
     private static final int PAGE_SIZE = 20;
@@ -64,6 +70,8 @@ public class LoyaltyController {
         rewardUI = new RewardManagementUI(scanner);
         pointsUI = new PointsManagementUI(scanner);
         notificationUI = new NotificationCentreUI(scanner);
+        reportsUI = new ReportsUI(scanner);
+        reportUI = new ReportUI(scanner, "LOYALTY & REWARDS MODULE SUBSYSTEM");
         moduleUI = new LoyaltyRewardsUI(scanner);
         reconcileTiersOnLoad();
     }
@@ -89,6 +97,9 @@ public class LoyaltyController {
                         break;
                     case 4:
                         runNotificationCentre();
+                        break;
+                    case 5:
+                        runReports();
                         break;
                     case 0:
                         System.out.println("\n  Returning to main menu...");
@@ -778,6 +789,629 @@ public class LoyaltyController {
             pointsUI.show("All notifications marked as read.");
         }
         pointsUI.pause();
+    }
+
+    // ======================= REPORTS =======================
+
+    /** Management report submenu: 3 analytical reports with search + sort + filters. */
+    private void runReports() {
+        while (true) {
+            int choice = reportsUI.getReportMenuChoice();
+            if (choice == 0) {
+                return;
+            }
+            switch (choice) {
+                case 1:
+                    generateMembershipReport();
+                    break;
+                case 2:
+                    generateRedemptionReport();
+                    break;
+                case 3:
+                    generateExpiryReport();
+                    break;
+                default:
+                    break;
+            }
+            reportsUI.pause();
+        }
+    }
+
+    // ---- Report 1: Membership & Tier Performance ----
+
+    private void generateMembershipReport() {
+        Tier tier = reportsUI.inputTierFilter() == 0 ? null : Tier.values()[reportsUI.inputTierFilter() - 1];
+        int minPoints = reportsUI.inputMinPoints();
+        int status = reportsUI.inputMemberStatus();
+        int promo = reportsUI.inputPromotionFilter();
+        LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("transaction");
+        String keyword = reportsUI.inputSearchKeyword();
+        int sortField = reportsUI.inputSortField(
+                new String[] { "Name", "Tier", "Balance", "Cumulative Earned", "Transactions" });
+        boolean asc = reportsUI.inputSortOrder();
+
+        LocalDateTime now = LocalDateTime.now();
+        ArrayList<Member> rows = new ArrayList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (!statusMatches(m, status)) {
+                continue;
+            }
+            if (tier != null && m.getTier() != tier) {
+                continue;
+            }
+            if (m.getPoints() < minPoints) {
+                continue;
+            }
+            if (promo == 2 && !m.hasActivePromotion(now)) {
+                continue;
+            }
+            if (promo == 3 && m.hasActivePromotion(now)) {
+                continue;
+            }
+            if (keyword != null && !keyword.isEmpty()
+                    && !(m.getMemberId().toLowerCase().contains(keyword.toLowerCase())
+                            || guestName(m).toLowerCase().contains(keyword.toLowerCase()))) {
+                continue;
+            }
+            if (range != null && range[0] != null && !hasTxInRange(m, range)) {
+                continue;
+            }
+            rows.add(m);
+        }
+        insertionSortMembers(rows, sortField, asc);
+
+        String[] header = { "No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Txns", "Redemptions", "Promotion", "Status" };
+        String[][] table = new String[rows.size() + 1][10];
+        table[0] = header;
+        int[] perTier = new int[Tier.values().length];
+        double balanceSum = 0;
+        long cumSum = 0;
+        int withPromo = 0;
+        for (int i = 0; i < rows.size(); i++) {
+            Member m = rows.get(i);
+            int cumulative = getCumulativeEarned(m.getMemberId());
+            perTier[m.getTier() == null ? 0 : m.getTier().ordinal()]++;
+            balanceSum += m.getPoints();
+            cumSum += cumulative;
+            if (m.hasActivePromotion(now)) {
+                withPromo++;
+            }
+            table[i + 1] = new String[] {
+                String.valueOf(i + 1), m.getMemberId(), guestName(m),
+                m.getTier() == null ? "-" : m.getTier().name(),
+                String.valueOf(m.getPoints()),
+                String.valueOf(cumulative),
+                String.valueOf(m.getPointTransactionList().size()),
+                String.valueOf(m.getRedemptionRecordList().size()),
+                promoText(m, now),
+                m.isDeleted() ? "DELETED" : "ACTIVE"
+            };
+        }
+        if (rows.isEmpty()) {
+            ConsoleUtil.printError("No records match the given filters.");
+            return;
+        }
+
+        String[] summary = {
+            "TOTAL MEMBERS: " + rows.size(),
+            "AVG BALANCE: " + Math.round(balanceSum / rows.size()) + " pts",
+            "TOTAL PTS IN CIRCULATION: " + Math.round(balanceSum),
+            "MEMBERS WITH ACTIVE PROMOTION: " + withPromo
+        };
+
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        ReportChart byTier = new ReportChart("Members per Tier");
+        ReportChart avgByTier = new ReportChart("Avg Balance per Tier");
+        for (Tier t : Tier.values()) {
+            byTier.addBar(t.name(), perTier[t.ordinal()], perTier[t.ordinal()] + " member(s)");
+            int count = perTier[t.ordinal()];
+            avgByTier.addBar(t.name(), count == 0 ? 0 : Math.round(balanceSumOfTier(t) / count),
+                    count == 0 ? "0" : String.valueOf(count));
+        }
+        charts.addBack(byTier);
+        charts.addBack(avgByTier);
+
+        LinkedListInterface<String> callouts = new LinkedList<>();
+        if (!rows.isEmpty()) {
+            Member top = rows.get(0);
+            for (int i = 1; i < rows.size(); i++) {
+                if (getCumulativeEarned(rows.get(i).getMemberId()) > getCumulativeEarned(top.getMemberId())) {
+                    top = rows.get(i);
+                }
+            }
+            callouts.addBack("Top member by cumulative earnings: " + top.getMemberId()
+                    + " " + guestName(top) + " (" + getCumulativeEarned(top.getMemberId()) + " pts)");
+        }
+
+        String criteria = "Tier=" + (tier == null ? "All" : tier)
+                + ", Min pts=" + minPoints + ", Status=" + statusLabel(status)
+                + ", Promotion=" + promoLabel(promo) + ", Sort=" + sortLabel(
+                        new String[] { "Name", "Tier", "Balance", "Cum Earned", "Txns" }, sortField, asc);
+        reportsUI.showCriteria(criteria);
+        reportUI.printReport(new ReportResult(table, summary, charts, callouts),
+                "MEMBERSHIP & TIER PERFORMANCE REPORT");
+    }
+
+    private double balanceSumOfTier(Tier t) {
+        double sum = 0;
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (m.getTier() == t && !m.isDeleted()) {
+                sum += m.getPoints();
+            }
+        }
+        return sum;
+    }
+
+    // ---- Report 2: Redemption & Voucher ----
+
+    private void generateRedemptionReport() {
+        System.out.println("\nRedemption Status:");
+        System.out.println("  0. All");
+        System.out.println("  1. PENDING");
+        System.out.println("  2. APPROVED");
+        System.out.println("  3. REJECTED");
+        int statusFilter = reportsUI.inputChoice("Enter status", 0, 3);
+        System.out.println("\nVoucher Type:");
+        System.out.println("  1. All");
+        System.out.println("  2. Fixed RM");
+        System.out.println("  3. Percentage (%)");
+        System.out.println("  4. Not a voucher");
+        int typeFilter = reportsUI.inputChoice("Enter type", 1, 4);
+        int minCost = reportsUI.inputMinPoints();
+        LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("redemption");
+        String keyword = reportsUI.inputSearchKeyword();
+        int sortField = reportsUI.inputSortField(
+                new String[] { "Member", "Reward", "Date", "Status", "Points Cost" });
+        boolean asc = reportsUI.inputSortOrder();
+
+        ArrayList<RedemptionRecord> rows = new ArrayList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            LinkedListInterface<RedemptionRecord> recs = m.getRedemptionRecordList();
+            for (int j = 0; j < recs.size(); j++) {
+                RedemptionRecord r = recs.get(j);
+                if (statusFilter == 1 && !"PENDING".equals(r.getStatus())) {
+                    continue;
+                }
+                if (statusFilter == 2 && !"APPROVED".equals(r.getStatus())) {
+                    continue;
+                }
+                if (statusFilter == 3 && !"REJECTED".equals(r.getStatus())) {
+                    continue;
+                }
+                Reward reward = findReward(r.getRewardId());
+                boolean isPercent = r.getDiscountPercent() != null;
+                boolean isRM = r.getVoucherValue() != null;
+                int type = isPercent ? 3 : (isRM ? 2 : 1);
+                if (typeFilter == 2 && type != 2) {
+                    continue;
+                }
+                if (typeFilter == 3 && type != 3) {
+                    continue;
+                }
+                if (typeFilter == 4 && type != 1) {
+                    continue;
+                }
+                int cost = reward == null ? 0 : reward.getPointCost();
+                if (cost < minCost) {
+                    continue;
+                }
+                if (keyword != null && !keyword.isEmpty()
+                        && !(m.getMemberId().toLowerCase().contains(keyword.toLowerCase())
+                                || guestName(m).toLowerCase().contains(keyword.toLowerCase())
+                                || (reward != null && reward.getName().toLowerCase().contains(keyword.toLowerCase())))) {
+                    continue;
+                }
+                if (range != null && range[0] != null && r.getRedeemedDate() != null
+                        && (r.getRedeemedDate().isBefore(range[0]) || r.getRedeemedDate().isAfter(range[1]))) {
+                    continue;
+                }
+                rows.add(r);
+            }
+        }
+        insertionSortRedemptions(rows, sortField, asc, memberList);
+
+        String[] header = { "No.", "Redemption ID", "Member", "Reward", "Type", "Status", "Pts Cost", "Voucher", "Used", "Date" };
+        String[][] table = new String[rows.size() + 1][10];
+        table[0] = header;
+        int pending = 0, approved = 0, rejected = 0;
+        long totalCost = 0;
+        int vouchersIssued = 0, vouchersUsed = 0;
+        for (int i = 0; i < rows.size(); i++) {
+            RedemptionRecord r = rows.get(i);
+            Member m = findMember(r.getMemberId());
+            Reward reward = findReward(r.getRewardId());
+            boolean isPercent = r.getDiscountPercent() != null;
+            boolean isRM = r.getVoucherValue() != null;
+            String typeText = isPercent ? r.getDiscountPercent() + "%" : (isRM ? "RM" : "Other");
+            int cost = reward == null ? 0 : reward.getPointCost();
+            if ("PENDING".equals(r.getStatus())) {
+                pending++;
+            } else if ("APPROVED".equals(r.getStatus())) {
+                approved++;
+            } else {
+                rejected++;
+            }
+            totalCost += cost;
+            boolean voucher = isPercent || isRM || r.getVoucherCode() != null;
+            if (voucher && "APPROVED".equals(r.getStatus())) {
+                vouchersIssued++;
+            }
+            if (voucher && r.isUsed()) {
+                vouchersUsed++;
+            }
+            table[i + 1] = new String[] {
+                String.valueOf(i + 1), r.getRedemptionId(),
+                m == null ? r.getMemberId() : r.getMemberId() + " " + guestName(m),
+                reward == null ? r.getRewardId() : reward.getName(),
+                typeText, r.getStatus(), String.valueOf(cost),
+                r.getVoucherCode() == null ? "-" : r.getVoucherCode(),
+                r.isUsed() ? "USED" : "-",
+                r.getRedeemedDate() == null ? "-" : r.getRedeemedDate().toLocalDate().toString()
+            };
+        }
+        if (rows.isEmpty()) {
+            ConsoleUtil.printError("No records match the given filters.");
+            return;
+        }
+
+        double approvalRate = (pending + approved) == 0 ? 0 : approved * 100.0 / (pending + approved);
+        String[] summary = {
+            "TOTAL REDEMPTIONS: " + rows.size(),
+            "PENDING: " + pending + " | APPROVED: " + approved + " | REJECTED: " + rejected,
+            "TOTAL POINTS SPENT: " + totalCost,
+            "VOUCHERS ISSUED: " + vouchersIssued + " | VOUCHERS USED: " + vouchersUsed,
+            "APPROVAL RATE: " + Math.round(approvalRate) + "%"
+        };
+
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        ReportChart byStatus = new ReportChart("Redemptions by Status");
+        byStatus.addBar("PENDING", pending, pending + " req(s)");
+        byStatus.addBar("APPROVED", approved, approved + " req(s)");
+        byStatus.addBar("REJECTED", rejected, rejected + " req(s)");
+        charts.addBack(byStatus);
+
+        ReportChart byReward = new ReportChart("Redemptions per Reward");
+        for (int i = 0; i < rewardList.size(); i++) {
+            Reward reward = rewardList.get(i);
+            int count = redemptionCountFor(reward.getRewardId());
+            if (count > 0) {
+                byReward.addBar(truncateName(reward.getName(), 8), count, count + " time(s)");
+            }
+        }
+        charts.addBack(byReward);
+
+        LinkedListInterface<String> callouts = new LinkedList<>();
+        String most = mostRedeemedReward();
+        if (most != null) {
+            callouts.addBack("Most redeemed reward: " + most);
+        }
+
+        String criteria = "Status=" + statusLabel2(statusFilter) + ", Type=" + typeLabel(typeFilter)
+                + ", Min cost=" + minCost + ", Sort=" + sortLabel(
+                        new String[] { "Member", "Reward", "Date", "Status", "Pts Cost" }, sortField, asc);
+        reportsUI.showCriteria(criteria);
+        reportUI.printReport(new ReportResult(table, summary, charts, callouts),
+                "REDEMPTION & VOUCHER REPORT");
+    }
+
+    // ---- Report 3: Point Expiry & Tier Progression ----
+
+    private void generateExpiryReport() {
+        Tier tier = reportsUI.inputTierFilter() == 0 ? null : Tier.values()[reportsUI.inputTierFilter() - 1];
+        int minCumulative = reportsUI.inputMinPoints();
+        int window = reportsUI.inputExpiryWindow();
+        String keyword = reportsUI.inputSearchKeyword();
+        int sortField = reportsUI.inputSortField(
+                new String[] { "Name", "Tier", "Balance", "Cumulative Earned", "Nearest Expiry" });
+        boolean asc = reportsUI.inputSortOrder();
+
+        LocalDateTime now = LocalDateTime.now();
+        ArrayList<Member> rows = new ArrayList<>();
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (m.isDeleted()) {
+                continue;
+            }
+            if (tier != null && m.getTier() != tier) {
+                continue;
+            }
+            if (getCumulativeEarned(m.getMemberId()) < minCumulative) {
+                continue;
+            }
+            if (keyword != null && !keyword.isEmpty()
+                    && !(m.getMemberId().toLowerCase().contains(keyword.toLowerCase())
+                            || guestName(m).toLowerCase().contains(keyword.toLowerCase()))) {
+                continue;
+            }
+            rows.add(m);
+        }
+        insertionSortMembers(rows, sortField, asc);
+
+        String[] header = { "No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Next Tier", "Pts to Next", "Expiring <= " + window + "d" };
+        String[][] table = new String[rows.size() + 1][9];
+        table[0] = header;
+        long cumSum = 0;
+        long expiringSum = 0;
+        int nearExpiry = 0;
+        for (int i = 0; i < rows.size(); i++) {
+            Member m = rows.get(i);
+            int cumulative = getCumulativeEarned(m.getMemberId());
+            cumSum += cumulative;
+            int expiring = window > 0 ? expiringWithin(m, window, now) : 0;
+            expiringSum += expiring;
+            if (expiring > 0) {
+                nearExpiry++;
+            }
+            Tier current = m.getTier() == null ? Tier.SILVER : m.getTier();
+            String nextTier = "-";
+            String ptsToNext = "-";
+            if (current.ordinal() < Tier.values().length - 1) {
+                Tier next = Tier.values()[current.ordinal() + 1];
+                nextTier = next.name();
+                ptsToNext = String.valueOf(TIER_THRESHOLDS[current.ordinal() + 1] - cumulative);
+            }
+            table[i + 1] = new String[] {
+                String.valueOf(i + 1), m.getMemberId(), guestName(m),
+                m.getTier() == null ? "-" : m.getTier().name(),
+                String.valueOf(m.getPoints()),
+                String.valueOf(cumulative),
+                nextTier, ptsToNext,
+                String.valueOf(expiring)
+            };
+        }
+        if (rows.isEmpty()) {
+            ConsoleUtil.printError("No records match the given filters.");
+            return;
+        }
+
+        String[] summary = {
+            "TOTAL MEMBERS: " + rows.size(),
+            "AVG CUMULATIVE EARNED: " + Math.round(cumSum / rows.size()) + " pts",
+            "MEMBERS WITH POINTS EXPIRING <= " + window + "d: " + nearExpiry,
+            "TOTAL EXPIRING POINTS: " + expiringSum
+        };
+
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        ReportChart byTier = new ReportChart("Members per Tier");
+        ReportChart expTier = new ReportChart("Expiring Pts per Tier");
+        for (Tier t : Tier.values()) {
+            byTier.addBar(t.name(), memberCountOfTier(t), memberCountOfTier(t) + " member(s)");
+            expTier.addBar(t.name(), expiringOfTier(t, window, now), "pts");
+        }
+        charts.addBack(byTier);
+        charts.addBack(expTier);
+
+        LinkedListInterface<String> callouts = new LinkedList<>();
+        if (window > 0) {
+            for (int i = 0; i < rows.size(); i++) {
+                Member m = rows.get(i);
+                int expiring = expiringWithin(m, window, now);
+                if (expiring > 0) {
+                    callouts.addBack(m.getMemberId() + " " + guestName(m)
+                            + " has " + expiring + " pts expiring within " + window + " day(s).");
+                }
+            }
+        }
+
+        String criteria = "Tier=" + (tier == null ? "All" : tier)
+                + ", Min cum=" + minCumulative + ", Expiry window=" + (window == 0 ? "None" : window + "d")
+                + ", Sort=" + sortLabel(
+                        new String[] { "Name", "Tier", "Balance", "Cum Earned", "Nearest Expiry" }, sortField, asc);
+        reportsUI.showCriteria(criteria);
+        reportUI.printReport(new ReportResult(table, summary, charts, callouts),
+                "POINT EXPIRY & TIER PROGRESSION REPORT");
+    }
+
+    // ---- report helpers ----
+
+    private boolean statusMatches(Member m, int status) {
+        if (status == 1) {
+            return !m.isDeleted();
+        }
+        if (status == 2) {
+            return m.isDeleted();
+        }
+        return true;
+    }
+
+    private boolean hasTxInRange(Member m, LocalDateTime[] range) {
+        LinkedListInterface<PointTransaction> txs = m.getPointTransactionList();
+        for (int i = 0; i < txs.size(); i++) {
+            LocalDateTime d = txs.get(i).getDate();
+            if (d != null && !d.isBefore(range[0]) && !d.isAfter(range[1])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int expiringWithin(Member m, int windowDays, LocalDateTime now) {
+        int sum = 0;
+        LinkedListInterface<PointTransaction> txs = m.getPointTransactionList();
+        for (int i = 0; i < txs.size(); i++) {
+            PointTransaction t = txs.get(i);
+            if (t.getRemainingPoints() > 0 && t.getExpiryDate() != null
+                    && !t.isExpired(now)
+                    && t.getExpiryDate().isBefore(now.plusDays(windowDays))) {
+                sum += t.getRemainingPoints();
+            }
+        }
+        return sum;
+    }
+
+    private int memberCountOfTier(Tier t) {
+        int count = 0;
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (!m.isDeleted() && m.getTier() == t) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int expiringOfTier(Tier t, int window, LocalDateTime now) {
+        int sum = 0;
+        for (int i = 0; i < memberList.size(); i++) {
+            Member m = memberList.get(i);
+            if (!m.isDeleted() && m.getTier() == t) {
+                sum += expiringWithin(m, window, now);
+            }
+        }
+        return sum;
+    }
+
+    private int redemptionCountFor(String rewardId) {
+        int count = 0;
+        for (int i = 0; i < memberList.size(); i++) {
+            LinkedListInterface<RedemptionRecord> recs = memberList.get(i).getRedemptionRecordList();
+            for (int j = 0; j < recs.size(); j++) {
+                if (rewardId.equals(recs.get(j).getRewardId())) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private String mostRedeemedReward() {
+        String best = null;
+        int bestCount = 0;
+        for (int i = 0; i < rewardList.size(); i++) {
+            Reward r = rewardList.get(i);
+            int count = redemptionCountFor(r.getRewardId());
+            if (count > bestCount) {
+                bestCount = count;
+                best = r.getName();
+            }
+        }
+        return bestCount == 0 ? null : best;
+    }
+
+    private String guestName(Member m) {
+        Guest g = m == null || m.getGuestId() == null ? null : findGuest(m.getGuestId());
+        return g == null || g.getName() == null ? "-" : g.getName();
+    }
+
+    private String promoText(Member m, LocalDateTime now) {
+        if (m.hasActivePromotion(now)) {
+            return m.promotionLabel(now);
+        }
+        if (m.getPromotionName() != null) {
+            return m.getPromotionName() + " (expired)";
+        }
+        return "-";
+    }
+
+    private String statusLabel(int status) {
+        return status == 1 ? "Active" : (status == 2 ? "Deleted" : "All");
+    }
+
+    private String promoLabel(int promo) {
+        return promo == 1 ? "All" : (promo == 2 ? "Active" : "No active");
+    }
+
+    private String statusLabel2(int status) {
+        return status == 0 ? "All" : (status == 1 ? "PENDING" : (status == 2 ? "APPROVED" : "REJECTED"));
+    }
+
+    private String typeLabel(int type) {
+        return type == 1 ? "All" : (type == 2 ? "RM" : (type == 3 ? "%" : "Not voucher"));
+    }
+
+    private String sortLabel(String[] labels, int sortField, boolean asc) {
+        String field = sortField >= 1 && sortField <= labels.length ? labels[sortField - 1] : "?";
+        return field + (asc ? " (asc)" : " (desc)");
+    }
+
+    private String truncateName(String text, int width) {
+        if (text == null || text.length() <= width) {
+            return text == null ? "-" : text;
+        }
+        return text.substring(0, width - 3) + "...";
+    }
+
+    /** Insertion sort on members by the chosen field (asc/desc). */
+    private void insertionSortMembers(ArrayList<Member> rows, int sortField, boolean asc) {
+        for (int i = 1; i < rows.size(); i++) {
+            Member key = rows.get(i);
+            int j = i - 1;
+            while (j >= 0 && compareMembers(rows.get(j), key, sortField, asc) > 0) {
+                rows.set(j + 1, rows.get(j));
+                j--;
+            }
+            rows.set(j + 1, key);
+        }
+    }
+
+    private int compareMembers(Member a, Member b, int sortField, boolean asc) {
+        int cmp;
+        switch (sortField) {
+            case 1: // Tier
+                cmp = Integer.compare(a.getTier() == null ? 0 : a.getTier().ordinal(),
+                        b.getTier() == null ? 0 : b.getTier().ordinal());
+                break;
+            case 2: // Balance
+                cmp = Integer.compare(a.getPoints(), b.getPoints());
+                break;
+            case 3: // Cumulative earned
+                cmp = Integer.compare(getCumulativeEarned(a.getMemberId()), getCumulativeEarned(b.getMemberId()));
+                break;
+            case 4: // Transactions
+                cmp = Integer.compare(a.getPointTransactionList().size(), b.getPointTransactionList().size());
+                break;
+            default: // Name
+                cmp = guestName(a).compareToIgnoreCase(guestName(b));
+                break;
+        }
+        return asc ? cmp : -cmp;
+    }
+
+    /** Insertion sort on redemption records by the chosen field (asc/desc). */
+    private void insertionSortRedemptions(ArrayList<RedemptionRecord> rows, int sortField, boolean asc,
+            LinkedListInterface<Member> members) {
+        for (int i = 1; i < rows.size(); i++) {
+            RedemptionRecord key = rows.get(i);
+            int j = i - 1;
+            while (j >= 0 && compareRedemptions(rows.get(j), key, sortField, asc, members) > 0) {
+                rows.set(j + 1, rows.get(j));
+                j--;
+            }
+            rows.set(j + 1, key);
+        }
+    }
+
+    private int compareRedemptions(RedemptionRecord a, RedemptionRecord b, int sortField, boolean asc,
+            LinkedListInterface<Member> members) {
+        int cmp;
+        switch (sortField) {
+            case 1: // Reward name
+                Reward ra = findReward(a.getRewardId());
+                Reward rb = findReward(b.getRewardId());
+                cmp = (ra == null ? a.getRewardId() : ra.getName())
+                        .compareToIgnoreCase(rb == null ? b.getRewardId() : rb.getName());
+                break;
+            case 2: // Date
+                LocalDateTime da = a.getRedeemedDate();
+                LocalDateTime db = b.getRedeemedDate();
+                cmp = da == null ? (db == null ? 0 : -1) : (db == null ? 1 : da.compareTo(db));
+                break;
+            case 3: // Status
+                cmp = String.valueOf(a.getStatus()).compareTo(String.valueOf(b.getStatus()));
+                break;
+            case 4: // Points cost
+                Reward ca = findReward(a.getRewardId());
+                Reward cb = findReward(b.getRewardId());
+                cmp = Integer.compare(ca == null ? 0 : ca.getPointCost(), cb == null ? 0 : cb.getPointCost());
+                break;
+            default: // Member id
+                cmp = String.valueOf(a.getMemberId()).compareTo(String.valueOf(b.getMemberId()));
+                break;
+        }
+        return asc ? cmp : -cmp;
     }
 
     /** Unread notification count across ALL members (module menu badge). */

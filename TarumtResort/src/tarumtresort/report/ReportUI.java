@@ -23,9 +23,20 @@ public class ReportUI {
 
     private static final String UNIVERSITY =
             "TUNKU ABDUL RAHMAN UNIVERSITY OF MANAGEMENT AND TECHNOLOGY";
-    private static final String SUBSYSTEM = "HOUSEKEEPING MODULE SUBSYSTEM";
-    private static final String CONFIDENTIAL =
-            UNIVERSITY + " HIGHLY CONFIDENTIAL DOCUMENT";
+    private static final String DEFAULT_SUBSYSTEM = "HOUSEKEEPING MODULE SUBSYSTEM";
+    private final String subsystem;
+    private final String confidential;
+
+    public ReportUI(Scanner scanner) {
+        this(scanner, DEFAULT_SUBSYSTEM);
+    }
+
+    /** Builds a report UI with the given subsystem banner (e.g. loyalty reports). */
+    public ReportUI(Scanner scanner, String subsystem) {
+        this.scanner = scanner;
+        this.subsystem = subsystem == null ? DEFAULT_SUBSYSTEM : subsystem;
+        this.confidential = UNIVERSITY + " HIGHLY CONFIDENTIAL DOCUMENT";
+    }
 
     private static final String[] MONTHS = {
         "January", "February", "March", "April", "May", "June",
@@ -36,10 +47,6 @@ public class ReportUI {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final Scanner scanner;
-
-    public ReportUI(Scanner scanner) {
-        this.scanner = scanner;
-    }
 
     // -------------------- REPORT SUB-MENU --------------------
 
@@ -196,7 +203,7 @@ public class ReportUI {
 
         // title block
         TablePrinter.printCentered(UNIVERSITY);
-        TablePrinter.printCentered(SUBSYSTEM);
+        TablePrinter.printCentered(subsystem);
         System.out.println();
         TablePrinter.printCentered("SUMMARY OF " + reportTitle);
         TablePrinter.printFullWidthLine('-');
@@ -207,7 +214,7 @@ public class ReportUI {
         System.out.println();
 
         // confidential
-        System.out.println(CONFIDENTIAL);
+        System.out.println(confidential);
         TablePrinter.printFullWidthLine('-');
 
         // data table
