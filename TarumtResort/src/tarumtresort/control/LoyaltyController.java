@@ -2,7 +2,6 @@ package tarumtresort.control;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
@@ -825,7 +824,7 @@ public class LoyaltyController {
         boolean asc = moduleUI.inputSortOrder();
 
         LocalDateTime now = LocalDateTime.now();
-        ArrayList<Member> rows = new ArrayList<>();
+        LinkedListInterface<Member> rows = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             if (!statusMatches(m, status)) {
@@ -851,7 +850,7 @@ public class LoyaltyController {
             if (range != null && range[0] != null && !hasTxInRange(m, range)) {
                 continue;
             }
-            rows.add(m);
+            rows.addBack(m);
         }
         insertionSortMembers(rows, sortField, asc);
 
@@ -960,7 +959,7 @@ public class LoyaltyController {
                 new String[] { "Member", "Reward", "Date", "Status", "Points Cost" });
         boolean asc = moduleUI.inputSortOrder();
 
-        ArrayList<RedemptionRecord> rows = new ArrayList<>();
+        LinkedListInterface<RedemptionRecord> rows = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             LinkedListInterface<RedemptionRecord> recs = m.getRedemptionRecordList();
@@ -1002,7 +1001,7 @@ public class LoyaltyController {
                         && (r.getRedeemedDate().isBefore(range[0]) || r.getRedeemedDate().isAfter(range[1]))) {
                     continue;
                 }
-                rows.add(r);
+                rows.addBack(r);
             }
         }
         insertionSortRedemptions(rows, sortField, asc, memberList);
@@ -1104,7 +1103,7 @@ public class LoyaltyController {
         boolean asc = moduleUI.inputSortOrder();
 
         LocalDateTime now = LocalDateTime.now();
-        ArrayList<Member> rows = new ArrayList<>();
+        LinkedListInterface<Member> rows = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             if (m.isDeleted()) {
@@ -1121,7 +1120,7 @@ public class LoyaltyController {
                             || guestName(m).toLowerCase().contains(keyword.toLowerCase()))) {
                 continue;
             }
-            rows.add(m);
+            rows.addBack(m);
         }
         insertionSortMembers(rows, sortField, asc);
 
@@ -1330,7 +1329,7 @@ public class LoyaltyController {
     }
 
     /** Insertion sort on members by the chosen field (asc/desc). */
-    private void insertionSortMembers(ArrayList<Member> rows, int sortField, boolean asc) {
+    private void insertionSortMembers(LinkedListInterface<Member> rows, int sortField, boolean asc) {
         for (int i = 1; i < rows.size(); i++) {
             Member key = rows.get(i);
             int j = i - 1;
@@ -1366,7 +1365,7 @@ public class LoyaltyController {
     }
 
     /** Insertion sort on redemption records by the chosen field (asc/desc). */
-    private void insertionSortRedemptions(ArrayList<RedemptionRecord> rows, int sortField, boolean asc,
+    private void insertionSortRedemptions(LinkedListInterface<RedemptionRecord> rows, int sortField, boolean asc,
             LinkedListInterface<Member> members) {
         for (int i = 1; i < rows.size(); i++) {
             RedemptionRecord key = rows.get(i);

@@ -2,8 +2,6 @@ package tarumtresort.control;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.InquiryUI;
@@ -412,8 +410,9 @@ public class InquiryController {
      */
     public ReportResult generatePendingInquiryReport(InquiryType filterType) {
 
-        List<String[]> rows = new ArrayList<>();
-        rows.add(new String[]{"Inquiry ID", "Confirm No.", "Guest Name", "Type", "Priority", "Waiting"});
+        String[][] tempRows = new String[pendingInquiryList.size() + 1][];
+        int r = 0;
+        tempRows[r++] = new String[]{"Inquiry ID", "Confirm No.", "Guest Name", "Type", "Priority", "Waiting"};
 
         int[] countPerPriority = new int[tarumtresort.entity.enums.InquiryPriority.values().length];
 
@@ -426,27 +425,28 @@ public class InquiryController {
             Guest guest = searchGuestById(inq.getGuestId());
             String guestName = guest == null ? "-" : guest.getName();
 
-            rows.add(new String[]{
+            tempRows[r++] = new String[]{
                     inq.getInquiryId(),
                     inq.getConfirmationNumber(),
                     guestName,
                     inq.getInquiryType().toString(),
                     inq.getInquiryType().getPriority().toString(),
                     formatDuration(calculateWaitingTime(inq))
-            });
+            };
 
             countPerPriority[inq.getInquiryType().getPriority().ordinal()]++;
         }
 
-        String[][] table = rows.toArray(new String[0][]);
-        String[] summary = {"Total pending inquiries shown: " + (rows.size() - 1)};
+        String[][] table = new String[r][];
+        System.arraycopy(tempRows, 0, table, 0, r);
+        String[] summary = {"Total pending inquiries shown: " + (r - 1)};
 
         ReportChart chart = new ReportChart("Pending Inquiries by Priority");
         for (tarumtresort.entity.enums.InquiryPriority p : tarumtresort.entity.enums.InquiryPriority.values()) {
             chart.addBar(p.name(), countPerPriority[p.ordinal()], countPerPriority[p.ordinal()] + " inquiries");
         }
-        List<ReportChart> charts = new ArrayList<>();
-        charts.add(chart);
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        charts.addBack(chart);
 
         return new ReportResult(table, summary, charts, null);
     }
@@ -500,31 +500,33 @@ public class InquiryController {
             int temp = order[i]; order[i] = order[maxIdx]; order[maxIdx] = temp;
         }
 
-        List<String[]> rows = new ArrayList<>();
-        rows.add(new String[]{"Room Type", "Total", "GuestID", "RoomAvail", "Billing", "RoomServ"});
+        String[][] tempRows = new String[types.length + 1][];
+        int r2 = 0;
+        tempRows[r2++] = new String[]{"Room Type", "Total", "GuestID", "RoomAvail", "Billing", "RoomServ"};
 
         ReportChart chart = new ReportChart("Total Inquiries by Room Type");
         int grandTotal = 0;
 
         for (int idx : order) {
             if (totalCount[idx] == 0) continue;
-            rows.add(new String[]{
+            tempRows[r2++] = new String[]{
                     types[idx].toString(),
                     String.valueOf(totalCount[idx]),
                     String.valueOf(guestIdCount[idx]),
                     String.valueOf(roomAvailCount[idx]),
                     String.valueOf(billingCount[idx]),
                     String.valueOf(roomServiceCount[idx])
-            });
+            };
             chart.addBar(types[idx].toString(), totalCount[idx], totalCount[idx] + " inquiries");
             grandTotal += totalCount[idx];
         }
 
-        String[][] table = rows.toArray(new String[0][]);
+        String[][] table = new String[r2][];
+        System.arraycopy(tempRows, 0, table, 0, r2);
         String[] summary = {"Total resolved inquiries counted: " + grandTotal};
 
-        List<ReportChart> charts = new ArrayList<>();
-        charts.add(chart);
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        charts.addBack(chart);
 
         return new ReportResult(table, summary, charts, null);
     }

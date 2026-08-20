@@ -2,8 +2,6 @@ package tarumtresort.boundary;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 import tarumtresort.adt.LinkedListInterface;
@@ -718,39 +716,42 @@ public class ReservationUI {
             double serviceCharge, double tax, double lateFee, double total) {
         String[] header = {"Description", "Amount (RM)"};
 
-        List<String[]> rows = new ArrayList<>();
-        rows.add(new String[]{"Room Charge", String.format("%.2f", roomCharge)});
+        String[][] tempRows = new String[20][];
+        int r = 0;
+        tempRows[r++] = new String[]{"Room Charge", String.format("%.2f", roomCharge)};
 
         if (voucherLabels != null) {
             for (int i = 0; i < voucherLabels.length; i++) {
-                rows.add(new String[]{voucherLabels[i], "-" + String.format("%.2f", voucherValues[i])});
+                tempRows[r++] = new String[]{voucherLabels[i], "-" + String.format("%.2f", voucherValues[i])};
             }
         }
 
         if (discount > 0) {
-            rows.add(new String[]{"Member Discount (" + discountPercent + "%)",
-                "-" + String.format("%.2f", discount)});
+            tempRows[r++] = new String[]{"Member Discount (" + discountPercent + "%)",
+                "-" + String.format("%.2f", discount)};
         }
 
         if (promoDiscount > 0 && promoLabel != null) {
-            rows.add(new String[]{"Promotion: " + promoLabel,
-                "-" + String.format("%.2f", promoDiscount)});
+            tempRows[r++] = new String[]{"Promotion: " + promoLabel,
+                "-" + String.format("%.2f", promoDiscount)};
         }
 
-        rows.add(new String[]{"Service Charge (10%)", String.format("%.2f", serviceCharge)});
-        rows.add(new String[]{"Tax (6%)", String.format("%.2f", tax)});
+        tempRows[r++] = new String[]{"Service Charge (10%)", String.format("%.2f", serviceCharge)};
+        tempRows[r++] = new String[]{"Tax (6%)", String.format("%.2f", tax)};
 
         if (lateFee > 0) {
-            rows.add(new String[]{"Late Checkout Fee", String.format("%.2f", lateFee)});
+            tempRows[r++] = new String[]{"Late Checkout Fee", String.format("%.2f", lateFee)};
         }
 
         // highlight the total row
-        rows.add(new String[]{
+        tempRows[r++] = new String[]{
             Ansi.bold("TOTAL"),
             Ansi.bold("RM " + String.format("%.2f", total))
-        });
+        };
 
-        TablePrinter.displayTable(header, rows.toArray(new String[0][]));
+        String[][] rowsArray = new String[r][];
+        System.arraycopy(tempRows, 0, rowsArray, 0, r);
+        TablePrinter.displayTable(header, rowsArray);
     }
 
     /**

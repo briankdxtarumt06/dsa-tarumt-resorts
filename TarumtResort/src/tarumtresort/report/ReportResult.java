@@ -1,6 +1,5 @@
 package tarumtresort.report;
 
-import java.util.List;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 
@@ -22,22 +21,6 @@ public class ReportResult {
         this.summary = summary == null ? new String[0] : summary;
         this.charts = charts == null ? new LinkedList<>() : charts;
         this.callouts = callouts == null ? new LinkedList<>() : callouts;
-    }
-
-    // adapter: the inquiry module still supplies charts as java.util.List
-    public ReportResult(String[][] table, String[] summary,
-            List<ReportChart> charts, List<String> callouts) {
-        this(table, summary, toAdtList(charts), toAdtList(callouts));
-    }
-
-    private static <T extends Comparable<T>> LinkedListInterface<T> toAdtList(List<T> source) {
-        LinkedListInterface<T> result = new LinkedList<>();
-        if (source != null) {
-            for (T element : source) {
-                result.addBack(element);
-            }
-        }
-        return result;
     }
 
     public String[][] getTable() {
