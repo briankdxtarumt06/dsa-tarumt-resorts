@@ -1383,7 +1383,10 @@ public class ReservationControl {
     }
 
     public String capitalizeName(String name) {
-        String[] guestName = name.trim().split(" ");
+        if (name == null) return null;
+        String trimmed = name.trim();
+        if (trimmed.isEmpty()) return trimmed;
+        String[] guestName = trimmed.split(" ");
         String result = "";
 
         for (int i = 0; i < guestName.length; i++) {
