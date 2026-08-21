@@ -2,9 +2,11 @@
 
 /TarumtResort/build/
 
+/TarumtResort/dist/
+
 /TarumtResort/data/
 
-/TarumtResort/test/
+/TarumtResort/src/tarumtresort/test/
 
 /data/
 
