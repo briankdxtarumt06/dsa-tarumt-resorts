@@ -339,7 +339,7 @@ public class HousekeepingReportUI {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < barCount; i++) {
             if (heights[i] >= y) {
-                sb.append(repeat(' ', pad)).append(IS_NETBEANS ? "##" : " ██ ").append(repeat(' ', gap));
+                sb.append(repeat(' ', pad)).append(IS_NETBEANS ? "##" : Ansi.green(" ██ ")).append(repeat(' ', gap));
             } else {
                 sb.append(repeat(' ', pitch));
             }
