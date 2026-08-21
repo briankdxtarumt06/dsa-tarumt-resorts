@@ -1,12 +1,8 @@
 package tarumtresort.entity;
+import java.time.LocalDateTime;
 import tarumtresort.entity.enums.*;
 
-import java.time.LocalDateTime;
-
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class Inquiry implements Comparable<Inquiry> {
     private String inquiryId;
     private String confirmationNumber;

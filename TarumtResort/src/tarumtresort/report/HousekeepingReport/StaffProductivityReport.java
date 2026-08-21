@@ -2,12 +2,9 @@ package tarumtresort.report.HousekeepingReport;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Comparator;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Staff;
-import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.entity.enums.StaffRole;
@@ -18,22 +15,22 @@ import tarumtresort.utility.Ansi;
 // Author: Brian Kam Ding Xian
 public class StaffProductivityReport {
 
-    private final LinkedListInterface<Staff> staffList;
-    private final LinkedListInterface<Task> taskList;
-    private final LinkedListInterface<TaskAssignment> assignmentList;
-    private final LinkedListInterface<TaskAssignmentChange> changeList;
+    private final ListInterface<Staff> staffList;
+    private final ListInterface<TaskAssignment> assignmentList;
+    private final ListInterface<TaskAssignmentChange> changeList;
 
-    public StaffProductivityReport(LinkedListInterface<Staff> staffList,
-            LinkedListInterface<Task> taskList, LinkedListInterface<TaskAssignment> assignmentList,
-            LinkedListInterface<TaskAssignmentChange> changeList) {
-        this.staffList = staffList == null ? new LinkedList<>() : staffList;
-        this.taskList = taskList == null ? new LinkedList<>() : taskList;
-        this.assignmentList = assignmentList == null ? new LinkedList<>() : assignmentList;
-        this.changeList = changeList == null ? new LinkedList<>() : changeList;
+    public StaffProductivityReport(
+        ListInterface<Staff> staffList,
+        ListInterface<TaskAssignment> assignmentList,
+        ListInterface<TaskAssignmentChange> changeList
+    ) {
+        this.staffList = staffList == null ? new DoublyLinkedList<>() : staffList;
+        this.assignmentList = assignmentList == null ? new DoublyLinkedList<>() : assignmentList;
+        this.changeList = changeList == null ? new DoublyLinkedList<>() : changeList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to) {
-        LinkedListInterface<StaffRow> rows = new LinkedList<>();
+        ListInterface<StaffRow> rows = new DoublyLinkedList<>();
 
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
@@ -129,7 +126,7 @@ public class StaffProductivityReport {
                 || status.equalsIgnoreCase("Inspected");
     }
 
-    private String[][] toTable(LinkedListInterface<StaffRow> rows) {
+    private String[][] toTable(ListInterface<StaffRow> rows) {
         String[][] table = new String[rows.size() + 1][7];
         table[0] = new String[] { "Staff ID", "Name", "Role", "Department",
                 "Tasks Completed", "Avg (min)", "Per Hr" };
@@ -149,18 +146,21 @@ public class StaffProductivityReport {
         return table;
     }
 
-    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<StaffRow> rows) {
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+    private ListInterface<ReportChart> buildCharts(ListInterface<StaffRow> rows) {
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         charts.addBack(buildCompletedChart(rows));
         charts.addBack(buildAverageChart(rows));
         return charts;
     }
 
-    private ReportChart buildCompletedChart(LinkedListInterface<StaffRow> rows) {
+    private ReportChart buildCompletedChart(ListInterface<StaffRow> rows) {
         ReportChart chart = new ReportChart("Completed Tasks per Staff");
-        StaffRow[] sorted = toSorted(rows, Comparator.comparingInt((StaffRow r) -> r.completed).reversed()
-                .thenComparingDouble(StaffRow::average));
-        for (StaffRow row : sorted) {
+        ListInterface<StaffRow> sorted = new DoublyLinkedList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            sorted.addSorted(rows.get(i));
+        }
+        for (int i = 0; i < sorted.size(); i++) {
+            StaffRow row = sorted.get(i);
             chart.addBar(row.staff.getStaffName() + "\n" + row.staff.getStaffId(),
                     row.completed,
                     "(" + row.completed + " task" + (row.completed == 1 ? "" : "s") + ")");
@@ -168,11 +168,14 @@ public class StaffProductivityReport {
         return chart;
     }
 
-    private ReportChart buildAverageChart(LinkedListInterface<StaffRow> rows) {
+    private ReportChart buildAverageChart(ListInterface<StaffRow> rows) {
         ReportChart chart = new ReportChart("Average Completion Time per Staff (min)");
-        StaffRow[] sorted = toSorted(rows, Comparator.comparingDouble(StaffRow::average)
-                .thenComparingInt(r -> r.completed));
-        for (StaffRow row : sorted) {
+        ListInterface<AverageSortRow> sorted = new DoublyLinkedList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            sorted.addSorted(new AverageSortRow(rows.get(i)));
+        }
+        for (int i = 0; i < sorted.size(); i++) {
+            StaffRow row = sorted.get(i).row;
             chart.addBar(row.staff.getStaffName() + "\n" + row.staff.getStaffId(),
                     row.average(),
                     "(" + row.completed + " task" + (row.completed == 1 ? "" : "s")
@@ -181,16 +184,7 @@ public class StaffProductivityReport {
         return chart;
     }
 
-    private StaffRow[] toSorted(LinkedListInterface<StaffRow> rows, Comparator<StaffRow> comparator) {
-        StaffRow[] array = new StaffRow[rows.size()];
-        for (int i = 0; i < rows.size(); i++) {
-            array[i] = rows.get(i);
-        }
-        Arrays.sort(array, comparator);
-        return array;
-    }
-
-    private String[] buildSummary(LinkedListInterface<StaffRow> rows) {
+    private String[] buildSummary(ListInterface<StaffRow> rows) {
         StaffRow topPerformer = null;
         StaffRow fastest = null;
         StaffRow slowest = null;
@@ -269,14 +263,36 @@ public class StaffProductivityReport {
         }
     }
 
+    // sorts by average ascending, then completed ascending for the average chart
+    private static class AverageSortRow implements Comparable<AverageSortRow> {
+        final StaffRow row;
+
+        AverageSortRow(StaffRow row) {
+            this.row = row;
+        }
+
+        @Override
+        public int compareTo(AverageSortRow other) {
+            int c = Double.compare(row.average(), other.row.average());
+            if (c != 0) {
+                return c;
+            }
+            c = Integer.compare(row.completed, other.row.completed);
+            if (c != 0) {
+                return c;
+            }
+            return row.staff.getStaffId().compareToIgnoreCase(other.row.staff.getStaffId());
+        }
+    }
+
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
         }
 
@@ -284,7 +300,7 @@ public class StaffProductivityReport {
             return table;
         }
 
-        public LinkedListInterface<ReportChart> getCharts() {
+        public ListInterface<ReportChart> getCharts() {
             return charts;
         }
 

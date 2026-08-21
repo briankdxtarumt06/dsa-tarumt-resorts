@@ -1,8 +1,10 @@
 package tarumtresort.dao;
 
+// Author: Chai Chee Tong
+
 import java.nio.file.Path;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
@@ -10,7 +12,7 @@ import tarumtresort.utility.JsonFileHandler;
 public class GuestDAO {
     private final String FILE_NAME = "data/guestList.json";
 
-    public void saveToFile(LinkedListInterface<Guest> list) {
+    public void saveToFile(ListInterface<Guest> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -18,11 +20,10 @@ public class GuestDAO {
         }
     }
 
-    /** Loads guests into the given list, replacing its current contents. */
-    public void loadFromFile(LinkedListInterface<Guest> list) {
+    public void loadFromFile(ListInterface<Guest> list) {
         list.clear();
         try {
-            LinkedList<Guest> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Guest.class);
+            DoublyLinkedList<Guest> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), Guest.class);
             for (int i = 0; i < loaded.size(); i++) {
                 list.addBack(loaded.get(i));
             }

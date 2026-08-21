@@ -1,23 +1,18 @@
 package tarumtresort.report.InquiryReport;
 
+import java.time.LocalDateTime;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.InquiryDAO;
 import tarumtresort.dao.ReservationDAO;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Reservation;
-import tarumtresort.entity.enums.InquiryType;
-import tarumtresort.entity.enums.RoomType;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class InquiryReportController {
 
     private final InquiryDAO inquiryDAO = new InquiryDAO();
@@ -31,44 +26,45 @@ public class InquiryReportController {
     }
 
     public void generatePendingInquiryReport() {
-        InquiryType filterType = ui().inputInquiryTypeFilter();
+        InquiryReportUI ui = ui();
+        LocalDateTime[] range = ui.inputOptionalDateTimeRange("inquiry created time");
 
-        LinkedListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
-        PendingInquiryReport.Result result = new PendingInquiryReport(inquiries, guests).generate(filterType);
+        PendingInquiryReport.Result result = new PendingInquiryReport(inquiries, guests)
+                .generate(range[0], range[1]);
 
         if (isEmpty(result.getTable())) {
-            ConsoleUtil.printError("No pending inquiries found"
-                    + (filterType == null ? "." : " for query type " + filterType + "."));
-            ui().pressEnterToContinue();
+            ConsoleUtil.printError("No pending inquiries found for the selected date range.");
+            ui.pressEnterToContinue();
             return;
         }
 
-        new PendingInquiryUI(ui()).render(result);
-        ui().pressEnterToContinue();
+        new PendingInquiryUI(ui).render(result);
+        ui.pressEnterToContinue();
     }
 
     public void generateRoomTypeInquiryDistributionReport() {
-        RoomType filterType = ui().inputRoomTypeFilter();
+        InquiryReportUI ui = ui();
+        LocalDateTime[] range = ui.inputOptionalDateTimeRange("inquiry created time");
 
-        LinkedListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
-        LinkedListInterface<Reservation> reservations = new LinkedList<>();
+        ListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
+        ListInterface<Reservation> reservations = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(reservations);
 
         RoomTypeInquiryDistributionReport.Result result =
-                new RoomTypeInquiryDistributionReport(inquiries, reservations).generate(filterType);
+                new RoomTypeInquiryDistributionReport(inquiries, reservations).generate(range[0], range[1]);
 
         if (isEmpty(result.getTable())) {
-            ConsoleUtil.printError("No resolved inquiries found"
-                    + (filterType == null ? "." : " for room type " + filterType + "."));
-            ui().pressEnterToContinue();
+            ConsoleUtil.printError("No resolved inquiries found for the selected date range.");
+            ui.pressEnterToContinue();
             return;
         }
 
-        new RoomTypeInquiryDistributionUI(ui()).render(result);
-        ui().pressEnterToContinue();
+        new RoomTypeInquiryDistributionUI(ui).render(result);
+        ui.pressEnterToContinue();
     }
 
     private boolean isEmpty(String[][] table) {

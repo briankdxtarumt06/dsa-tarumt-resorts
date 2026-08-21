@@ -2,8 +2,8 @@ package tarumtresort.report.LoyaltyReport;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
 import tarumtresort.dao.RewardDAO;
@@ -34,8 +34,8 @@ public class LoyaltyReportController {
         }
         Tier tierFilter = ui().inputTierFilter();
 
-        LinkedListInterface<Member> members = memberDAO.retrieveFromFile();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Member> members = memberDAO.retrieveFromFile();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
         MembershipPerformanceReport.Result result = new MembershipPerformanceReport(members, guests)
@@ -51,9 +51,9 @@ public class LoyaltyReportController {
         }
         String statusFilter = ui().inputStatusFilter();
 
-        LinkedListInterface<Member> members = memberDAO.retrieveFromFile();
-        LinkedListInterface<Reward> rewards = rewardDAO.retrieveFromFile();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Member> members = memberDAO.retrieveFromFile();
+        ListInterface<Reward> rewards = rewardDAO.retrieveFromFile();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
         RedemptionVoucherReport.Result result = new RedemptionVoucherReport(members, rewards, guests)

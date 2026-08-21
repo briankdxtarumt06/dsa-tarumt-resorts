@@ -1,9 +1,6 @@
 package tarumtresort.report.InquiryReport;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class PendingInquiryUI {
 
     private static final String TITLE = "PENDING INQUIRY OVERVIEW REPORT";

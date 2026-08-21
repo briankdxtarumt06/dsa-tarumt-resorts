@@ -2,10 +2,11 @@ package tarumtresort.control;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
@@ -28,9 +29,9 @@ public class LoyaltyController {
     private static final int PAGE_SIZE = 20;
 
     // ADT declaration
-    private LinkedListInterface<Member> memberList = new LinkedList<>();
-    private LinkedListInterface<Reward> rewardList = new LinkedList<>();
-    private LinkedListInterface<Guest> guestList = new LinkedList<>();
+    private ListInterface<Member> memberList = new DoublyLinkedList<>();
+    private ListInterface<Reward> rewardList = new DoublyLinkedList<>();
+    private ListInterface<Guest> guestList = new DoublyLinkedList<>();
 
     // DAO declaration
     private MemberDAO memberDAO = new MemberDAO();
@@ -93,7 +94,7 @@ public class LoyaltyController {
                         System.out.println("\n  Returning to main menu...");
                         break;
                     default:
-                        System.out.println("\n  ✗ Invalid choice! Please try again.");
+                        System.out.println("\n ?! Invalid choice! Please try again.");
                 }
             } while (choice != 0);
         } catch (Exception e) {
@@ -108,7 +109,7 @@ public class LoyaltyController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Member> display;
+            ListInterface<Member> display;
             if (tierFilter != null) {
                 display = getMembersByTier(tierFilter);
             } else {
@@ -122,7 +123,7 @@ public class LoyaltyController {
                 page = pageCount - 1;
             }
 
-            LinkedListInterface<Member> pageList = pageOf(display, page);
+            ListInterface<Member> pageList = pageOf(display, page);
             int choice = moduleUI.printMemberListMenu(pageList, page, pageCount, hasFilter,
                     hasDeleted, this::findGuest);
 
@@ -172,12 +173,12 @@ public class LoyaltyController {
     private void restoreDeletedMemberFlow() {
         int page = 0;
         while (true) {
-            LinkedListInterface<Member> deleted = getDeletedMembers();
+            ListInterface<Member> deleted = getDeletedMembers();
             int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);  // adt method
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<Member> pageList = pageOf(deleted, page);
+            ListInterface<Member> pageList = pageOf(deleted, page);
             int choice = moduleUI.printDeletedMembersMenu(pageList, page, pageCount, this::findGuest);
             if (choice == 0) {
                 return;
@@ -213,7 +214,7 @@ public class LoyaltyController {
         }
     }
 
-    private void viewMember(LinkedListInterface<Member> pageList) {
+    private void viewMember(ListInterface<Member> pageList) {
         if (pageList.isEmpty()) {  // adt method
             moduleUI.showMessage("(No member records)");
             return;
@@ -264,8 +265,8 @@ public class LoyaltyController {
 
     // =============== member queries ===============
 
-    public LinkedListInterface<Member> getMembersByTier(String tier) {
-        LinkedListInterface<Member> filteredList = new LinkedList<>();
+    public ListInterface<Member> getMembersByTier(String tier) {
+        ListInterface<Member> filteredList = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {  // adt method
             Member member = memberList.get(i);  // adt method 
             if (!member.isDeleted() && member.getTier() != null && member.getTier().name().equalsIgnoreCase(tier)) {
@@ -275,8 +276,9 @@ public class LoyaltyController {
         return filteredList;
     }
 
-    private <T extends Comparable<T>> LinkedList<T> pageOf(LinkedListInterface<T> list, int page) {
-        LinkedList<T> result = new LinkedList<>();
+    // the rows of one page (PAGE_SIZE at most), starting at page * PAGE_SIZE
+    private <T extends Comparable<T>> DoublyLinkedList<T> pageOf(ListInterface<T> list, int page) {
+        DoublyLinkedList<T> result = new DoublyLinkedList<>();
         int start = page * PAGE_SIZE;
         int end = Math.min(list.size(), start + PAGE_SIZE);  // adt method
         for (int i = start; i < end; i++) {
@@ -293,7 +295,7 @@ public class LoyaltyController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Reward> display;
+            ListInterface<Reward> display;
             if (tierFilter != null) {
                 display = getRewardsByMinTier(tierFilter);
             } else {
@@ -308,7 +310,7 @@ public class LoyaltyController {
                 page = pageCount - 1;
             }
 
-            LinkedListInterface<Reward> pageList = pageOf(display, page);
+            ListInterface<Reward> pageList = pageOf(display, page);
             int choice = moduleUI.printRewardListMenu(pageList, page, pageCount, hasFilter,
                     hasDeleted, sortLabelOf(sortMode));
 
@@ -363,12 +365,12 @@ public class LoyaltyController {
     private void restoreDeletedRewardFlow() {
         int page = 0;
         while (true) {
-            LinkedListInterface<Reward> deleted = getDeletedRewards();
+            ListInterface<Reward> deleted = getDeletedRewards();
             int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);  // adt method
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<Reward> pageList = pageOf(deleted, page);
+            ListInterface<Reward> pageList = pageOf(deleted, page);
             int choice = moduleUI.printDeletedRewardsMenu(pageList, page, pageCount);
             if (choice == 0) {
                 return;
@@ -405,9 +407,9 @@ public class LoyaltyController {
         }
     }
 
-    private LinkedListInterface<Reward> sortedRewardView(LinkedListInterface<Reward> source, int sortMode) {
+    private ListInterface<Reward> sortedRewardView(ListInterface<Reward> source, int sortMode) {
         if (sortMode == 2) {
-            LinkedListInterface<Reward> result = new LinkedList<>();
+            ListInterface<Reward> result = new DoublyLinkedList<>();
             for (int i = source.size() - 1; i >= 0; i--) {  // adt method
                 result.addBack(source.get(i)); // adt method
             }
@@ -427,7 +429,7 @@ public class LoyaltyController {
         }
     }
 
-    private void viewReward(LinkedListInterface<Reward> pageList) {
+    private void viewReward(ListInterface<Reward> pageList) {
         if (pageList.isEmpty()) { // adt method
             moduleUI.showMessage("(No rewards in the catalogue)");
             return;
@@ -521,8 +523,8 @@ public class LoyaltyController {
                 minTier, roomType, voucherValue, discountPercent));
     }
 
-    public LinkedListInterface<Reward> getRewardsByName(String keyword) {
-        LinkedListInterface<Reward> filteredList = new LinkedList<>();
+    public ListInterface<Reward> getRewardsByName(String keyword) {
+        ListInterface<Reward> filteredList = new DoublyLinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {  // adt method
             Reward reward = rewardList.get(i); // adt method
             if (!reward.isDeleted() && reward.getName() != null
@@ -533,8 +535,8 @@ public class LoyaltyController {
         return filteredList;
     }
 
-    public LinkedListInterface<Reward> getRewardsByMinTier(Tier tier) {
-        LinkedListInterface<Reward> filteredList = new LinkedList<>();
+    public ListInterface<Reward> getRewardsByMinTier(Tier tier) {
+        ListInterface<Reward> filteredList = new DoublyLinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {  // adt method
             Reward reward = rewardList.get(i); // adt method
             if (reward.isDeleted()) {
@@ -548,8 +550,8 @@ public class LoyaltyController {
         return filteredList;
     }
 
-    public LinkedListInterface<Reward> getRewardsEligibleFor(Tier tier) {
-        LinkedListInterface<Reward> eligible = new LinkedList<>();
+    public ListInterface<Reward> getRewardsEligibleFor(Tier tier) {
+        ListInterface<Reward> eligible = new DoublyLinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) {  // adt method
             Reward reward = rewardList.get(i); // adt method
             if (reward.isDeleted()) {
@@ -574,7 +576,7 @@ public class LoyaltyController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Member> display;
+            ListInterface<Member> display;
             if (tierFilter != null) {
                 display = getMembersByTier(tierFilter);
             } else {
@@ -587,7 +589,7 @@ public class LoyaltyController {
                 page = pageCount - 1;
             }
 
-            LinkedListInterface<Member> pageList = pageOf(display, page);
+            ListInterface<Member> pageList = pageOf(display, page);
             int choice = moduleUI.printPointsListMenu(pageList, page, pageCount, hasFilter,
                     this::findGuest, m -> getAvailableBalance(m.getMemberId(), LocalDateTime.now()));
 
@@ -640,7 +642,8 @@ public class LoyaltyController {
         }
     }
 
-    private void viewMemberPoints(LinkedListInterface<Member> pageList) {
+    // view flow: pick a member from the current page, then run its points action menu
+    private void viewMemberPoints(ListInterface<Member> pageList) {
         String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
@@ -690,7 +693,7 @@ public class LoyaltyController {
             moduleUI.showMessage("Member has no guest account linked.");
             return;
         }
-        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+        ListInterface<Notification> list = getNotifications(member.getGuestId());
         moduleUI.displayNotifications(list);
         if (moduleUI.confirmMarkAllRead()) {
             for (int i = 0; i < list.size(); i++) { // adt method
@@ -728,7 +731,7 @@ public class LoyaltyController {
     public int getUnreadNotificationCount() {
         int count = 0;
         for (int i = 0; i < guestList.size(); i++) { // adt method
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 Notification n = list.get(j); // adt method
                 if (!n.isRead() && !n.isDeleted()) {
@@ -742,7 +745,7 @@ public class LoyaltyController {
     public int markAllNotificationsRead() {
         int count = 0;
         for (int i = 0; i < guestList.size(); i++) { // adt method
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 Notification n = list.get(j); // adt method
                 if (!n.isRead()) {
@@ -763,7 +766,7 @@ public class LoyaltyController {
             return 0;
         }
         int count = 0;
-        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+        ListInterface<Notification> list = getNotifications(member.getGuestId());
         for (int i = 0; i < list.size(); i++) { // adt method
             if (!list.get(i).isRead()) { // adt method
                 count++;
@@ -781,7 +784,7 @@ public class LoyaltyController {
             return 0;
         }
         int count = 0;
-        LinkedListInterface<Notification> list = guest.getNotificationList();
+        ListInterface<Notification> list = guest.getNotificationList();
         for (int i = 0; i < list.size(); i++) { // adt method
             Notification n = list.get(i); // adt method
             if (!n.isRead() && !n.isDeleted()) {
@@ -797,7 +800,7 @@ public class LoyaltyController {
             return 0;
         }
         int count = 0;
-        LinkedListInterface<Notification> list = guest.getNotificationList();
+        ListInterface<Notification> list = guest.getNotificationList();
         for (int i = 0; i < list.size(); i++) { // adt method
             Notification n = list.get(i); // adt method
             if (!n.isRead() && !n.isDeleted()) {
@@ -821,7 +824,7 @@ public class LoyaltyController {
         if (guest == null) {
             return 0;
         }
-        LinkedListInterface<Notification> list = guest.getNotificationList();
+        ListInterface<Notification> list = guest.getNotificationList();
         for (int j = 0; j < list.size(); j++) { // adt method
             Notification n = list.get(j); // adt method
             if (!n.isRead()) {
@@ -840,12 +843,12 @@ public class LoyaltyController {
     private void runNotificationCentre() {
         int memberPage = 0;
         while (true) {
-            LinkedListInterface<Member> display = getActiveMembers();
+            ListInterface<Member> display = getActiveMembers();
             int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE); // adt method
             if (memberPage >= pageCount) {
                 memberPage = pageCount - 1;
             }
-            LinkedListInterface<Member> pageList = pageOf(display, memberPage);
+            ListInterface<Member> pageList = pageOf(display, memberPage);
 
             String[][] memberRows = new String[pageList.size()][]; // adt method
             for (int i = 0; i < pageList.size(); i++) { // adt method
@@ -903,7 +906,7 @@ public class LoyaltyController {
         }
         int page = 0;
         while (true) {
-            LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+            ListInterface<Notification> list = getNotifications(member.getGuestId());
             int pageCount = Math.max(1, (list.size() + PAGE_SIZE - 1) / PAGE_SIZE); // adt method
             if (page >= pageCount) {
                 page = pageCount - 1;
@@ -980,7 +983,7 @@ public class LoyaltyController {
         return text.substring(0, max - 3) + "...";
     }
 
-    private String pickMemberFromPage(LinkedListInterface<Member> pageList) {
+    private String pickMemberFromPage(ListInterface<Member> pageList) {
         if (pageList.isEmpty()) { // adt method
             moduleUI.showMessage("(No member records)");
             return null;
@@ -1020,7 +1023,7 @@ public class LoyaltyController {
         return null;
     }
 
-    public LinkedListInterface<Member> getMembers() {
+    public ListInterface<Member> getMembers() {
         return memberList;
     }
 
@@ -1044,7 +1047,7 @@ public class LoyaltyController {
         member.setDeleted(true);
 
         int rejected = 0;
-        LinkedListInterface<RedemptionRecord> records = member.getRedemptionRecordList();
+        ListInterface<RedemptionRecord> records = member.getRedemptionRecordList();
         for (int i = 0; i < records.size(); i++) { // adt method
             RedemptionRecord r = records.get(i); // adt method
             if (r != null && "PENDING".equals(r.getStatus())) {
@@ -1070,8 +1073,8 @@ public class LoyaltyController {
         return "Member " + memberId + " restored.";
     }
 
-    public LinkedListInterface<Member> getActiveMembers() {
-        LinkedListInterface<Member> active = new LinkedList<>();
+    public ListInterface<Member> getActiveMembers() {
+        ListInterface<Member> active = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) { // adt method
             Member m = memberList.get(i);  // adt method
             if (!m.isDeleted()) { // adt method
@@ -1081,8 +1084,8 @@ public class LoyaltyController {
         return active;
     }
 
-    public LinkedListInterface<Member> getDeletedMembers() {
-        LinkedListInterface<Member> deleted = new LinkedList<>();
+    public ListInterface<Member> getDeletedMembers() {
+        ListInterface<Member> deleted = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) { // adt method
             Member m = memberList.get(i);  // adt method
             if (m.isDeleted()) {
@@ -1136,7 +1139,7 @@ public class LoyaltyController {
         moduleUI.showMessage(addReward(reward));
     }
 
-    public LinkedListInterface<Reward> getRewards() {
+    public ListInterface<Reward> getRewards() {
         return rewardList;
     }
 
@@ -1187,8 +1190,8 @@ public class LoyaltyController {
         return "Reward " + rewardId + " restored.";
     }
 
-    public LinkedListInterface<Reward> getActiveRewards() {
-        LinkedListInterface<Reward> active = new LinkedList<>();
+    public ListInterface<Reward> getActiveRewards() {
+        ListInterface<Reward> active = new DoublyLinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) { // adt method
             Reward r = rewardList.get(i); // adt method
             if (!r.isDeleted()) {
@@ -1198,8 +1201,8 @@ public class LoyaltyController {
         return active;
     }
 
-    public LinkedListInterface<Reward> getDeletedRewards() {
-        LinkedListInterface<Reward> deleted = new LinkedList<>();
+    public ListInterface<Reward> getDeletedRewards() {
+        ListInterface<Reward> deleted = new DoublyLinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) { // adt method
             Reward r = rewardList.get(i); // adt method
             if (r.isDeleted()) {
@@ -1222,7 +1225,7 @@ public class LoyaltyController {
         reward.setRoomType(roomType);
         reward.setVoucherValue(voucherValue);
         reward.setDiscountPercent(discountPercent);
-        LinkedListInterface<Reward> reordered = new LinkedList<>();
+        ListInterface<Reward> reordered = new DoublyLinkedList<>();
         for (int i = 0; i < rewardList.size(); i++) { // adt method
             reordered.addSorted(rewardList.get(i)); // adt method
         }
@@ -1272,9 +1275,7 @@ public class LoyaltyController {
         }
     }
 
-    // =============== staff flows ===============
-
-    private void earnPointsFlow(LinkedListInterface<Member> pageList) {
+    private void earnPointsFlow(ListInterface<Member> pageList) {
         String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
@@ -1292,7 +1293,7 @@ public class LoyaltyController {
         moduleUI.showMessage(earnPoints(memberId, amount, description, LocalDateTime.now()));
     }
 
-    private void requestRedemptionFlow(LinkedListInterface<Member> pageList) {
+    private void requestRedemptionFlow(ListInterface<Member> pageList) {
         String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
@@ -1301,7 +1302,7 @@ public class LoyaltyController {
         if (member == null) {
             return;
         }
-        LinkedListInterface<Reward> eligible = getRewardsEligibleFor(member.getTier());
+        ListInterface<Reward> eligible = getRewardsEligibleFor(member.getTier());
         String rewardId = moduleUI.selectReward(eligible);
         if (rewardId == null) {
             return;
@@ -1310,7 +1311,7 @@ public class LoyaltyController {
     }
 
     private void processRedemptionRequestsFlow() {
-        LinkedListInterface<RedemptionRecord> pending = getPendingRedemptions();
+        ListInterface<RedemptionRecord> pending = getPendingRedemptions();
         String redemptionId = moduleUI.selectPendingRequest(pending);
         if (redemptionId == null) {
             return;
@@ -1329,10 +1330,10 @@ public class LoyaltyController {
 
     // =============== transaction & redemption queries ===============
 
-    public LinkedListInterface<PointTransaction> getPointTransactions() {
-        LinkedListInterface<PointTransaction> result = new LinkedList<>();
+    public ListInterface<PointTransaction> getPointTransactions() {
+        ListInterface<PointTransaction> result = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) { // adt method
-            LinkedListInterface<PointTransaction> list = memberList.get(i).getPointTransactionList();  // adt method
+            ListInterface<PointTransaction> list = memberList.get(i).getPointTransactionList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 result.addBack(list.get(j)); // adt method
             }
@@ -1340,10 +1341,10 @@ public class LoyaltyController {
         return result;
     }
 
-    public LinkedListInterface<RedemptionRecord> getRedemptions() {
-        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
+    public ListInterface<RedemptionRecord> getRedemptions() {
+        ListInterface<RedemptionRecord> result = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) { // adt method
-            LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();  // adt method
+            ListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 result.addBack(list.get(j)); // adt method
             }
@@ -1351,13 +1352,13 @@ public class LoyaltyController {
         return result;
     }
 
-    public LinkedListInterface<PointTransaction> getTransactions(String memberId) {
-        LinkedListInterface<PointTransaction> result = new LinkedList<>();
+    public ListInterface<PointTransaction> getTransactions(String memberId) {
+        ListInterface<PointTransaction> result = new DoublyLinkedList<>();
         Member member = findMember(memberId);
         if (member == null) {
             return result;
         }
-        LinkedListInterface<PointTransaction> list = member.getPointTransactionList();
+        ListInterface<PointTransaction> list = member.getPointTransactionList();
         for (int i = 0; i < list.size(); i++) { // adt method
             result.addBack(list.get(i)); // adt method
         }
@@ -1374,7 +1375,7 @@ public class LoyaltyController {
 
         int totalExpired = 0;
         StringBuilder report = new StringBuilder();
-        LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
+        ListInterface<PointTransaction> txs = getTransactions(memberId);
         for (int i = 0; i < txs.size(); i++) { // adt method
             PointTransaction t = txs.get(i); // adt method
             if (t.isExpired(now)) {
@@ -1501,7 +1502,7 @@ public class LoyaltyController {
         // FIFO: consume earliest-expiring lots first (list is sorted by expiry date)
         int remainingCost = cost;
         StringBuilder breakdown = new StringBuilder();
-        LinkedListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
+        ListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
         for (int i = 0; i < txs.size() && remainingCost > 0; i++) { // adt method
             PointTransaction t = txs.get(i); // adt method
             int used = Math.min(t.getRemainingPoints(), remainingCost);
@@ -1544,13 +1545,13 @@ public class LoyaltyController {
                 + "New balance for " + member.getMemberId() + ": " + member.getPoints();
     }
 
-    public LinkedListInterface<RedemptionRecord> getAvailableVouchers(String memberId) {
-        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
+    public ListInterface<RedemptionRecord> getAvailableVouchers(String memberId) {
+        ListInterface<RedemptionRecord> result = new DoublyLinkedList<>();
         Member member = findMember(memberId);
         if (member == null) {
             return result;
         }
-        LinkedListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
+        ListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
         for (int i = 0; i < list.size(); i++) { // adt method
             RedemptionRecord r = list.get(i); // adt method
             if ("APPROVED".equals(r.getStatus())
@@ -1569,7 +1570,7 @@ public class LoyaltyController {
         if (member == null) {
             return "Member not found: " + memberId;
         }
-        LinkedListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
+        ListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
         for (int i = 0; i < list.size(); i++) { // adt method
             RedemptionRecord r = list.get(i); // adt method
             if (r.getRedemptionId().equals(redemptionId)) {
@@ -1624,13 +1625,13 @@ public class LoyaltyController {
         return "Rejected redemption request " + redemptionId + ".";
     }
 
-    public LinkedListInterface<RedemptionRecord> getPendingRedemptions() {
-        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
+    public ListInterface<RedemptionRecord> getPendingRedemptions() {
+        ListInterface<RedemptionRecord> result = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) { // adt method
             if (memberList.get(i).isDeleted()) {  // adt method
                 continue;
             }
-            LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();  // adt method
+            ListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 if ("PENDING".equals(list.get(j).getStatus())) { // adt method
                     result.addBack(list.get(j)); // adt method
@@ -1642,7 +1643,7 @@ public class LoyaltyController {
 
     private RedemptionRecord findRedemption(String redemptionId) {
         for (int i = 0; i < memberList.size(); i++) { // adt method
-            LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList(); // adt method
+            ListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList(); // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 if (list.get(j).getRedemptionId().equals(redemptionId)) { // adt method
                     return list.get(j); // adt method
@@ -1663,7 +1664,7 @@ public class LoyaltyController {
 
     private void recomputeBalance(Member member) {
         int sum = 0;
-        LinkedListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
+        ListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
         for (int i = 0; i < txs.size(); i++) { // adt method
             sum += txs.get(i).getRemainingPoints(); // adt method
         }
@@ -1684,7 +1685,7 @@ public class LoyaltyController {
         try {
             int max = 0;
             for (int i = 0; i < memberList.size(); i++) { // adt method
-                LinkedListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList(); // adt method
+                ListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList(); // adt method
                 for (int j = 0; j < tlist.size(); j++) { // adt method
                     String tid = tlist.get(j).getTransactionId(); // adt method
                     if (tid != null && tid.matches("PT\\d+")) {
@@ -1708,7 +1709,7 @@ public class LoyaltyController {
 
     private PointTransaction findTransaction(String transactionId) {
         for (int i = 0; i < memberList.size(); i++) { // adt method
-            LinkedListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList(); // adt method
+            ListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList(); // adt method
             for (int j = 0; j < tlist.size(); j++) { // adt method
                 if (tlist.get(j).getTransactionId().equals(transactionId)) { // adt method
                     return tlist.get(j); // adt method
@@ -1722,7 +1723,7 @@ public class LoyaltyController {
         try {
             int max = 0;
             for (int i = 0; i < memberList.size(); i++) { // adt method
-                LinkedListInterface<RedemptionRecord> rlist = memberList.get(i).getRedemptionRecordList(); // adt method
+                ListInterface<RedemptionRecord> rlist = memberList.get(i).getRedemptionRecordList(); // adt method
                 for (int j = 0; j < rlist.size(); j++) { // adt method
                     String rid = rlist.get(j).getRedemptionId(); // adt method
                     if (rid != null && rid.matches("RR\\d+")) {
@@ -1751,7 +1752,7 @@ public class LoyaltyController {
             if (owner.isDeleted()) {
                 continue;
             }
-            LinkedListInterface<PointTransaction> tlist = owner.getPointTransactionList();
+            ListInterface<PointTransaction> tlist = owner.getPointTransactionList();
             for (int j = 0; j < tlist.size(); j++) { // adt method
             PointTransaction t = tlist.get(j); // adt method
             if (t.isExpired(now) || t.getRemainingPoints() <= 0) {
@@ -1789,7 +1790,7 @@ public class LoyaltyController {
         if (guest == null) {
             return false;
         }
-        LinkedListInterface<Notification> list = guest.getNotificationList();
+        ListInterface<Notification> list = guest.getNotificationList();
         for (int i = 0; i < list.size(); i++) { // adt method
             Notification n = list.get(i); // adt method
             if (!n.isDeleted() && message != null && message.equals(n.getMessage())) {
@@ -1799,13 +1800,13 @@ public class LoyaltyController {
         return false;
     }
 
-    public LinkedListInterface<Notification> getNotifications(String guestId) {
+    public ListInterface<Notification> getNotifications(String guestId) {
         Guest guest = findGuest(guestId);
         if (guest == null) {
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
-        LinkedListInterface<Notification> result = new LinkedList<>();
-        LinkedListInterface<Notification> list = guest.getNotificationList();
+        ListInterface<Notification> result = new DoublyLinkedList<>();
+        ListInterface<Notification> list = guest.getNotificationList();
         for (int i = 0; i < list.size(); i++) { // adt method
             Notification n = list.get(i); // adt method
             if (!n.isDeleted()) {
@@ -1817,7 +1818,7 @@ public class LoyaltyController {
 
     public String markNotificationRead(String notificationId) {
         for (int i = 0; i < guestList.size(); i++) { // adt method
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 Notification n = list.get(j); // adt method
                 if (n.getNotificationId().equals(notificationId)) {
@@ -1835,7 +1836,7 @@ public class LoyaltyController {
             return "Notification id cannot be null.";
         }
         for (int i = 0; i < guestList.size(); i++) { // adt method
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
             for (int j = 0; j < list.size(); j++) { // adt method
                 Notification n = list.get(j); // adt method
                 if (notificationId.equals(n.getNotificationId())) {
@@ -1855,7 +1856,7 @@ public class LoyaltyController {
         try {
             int max = 0;
             for (int i = 0; i < guestList.size(); i++) { // adt method
-                LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+                ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
                 for (int j = 0; j < list.size(); j++) { // adt method
                     String nid = list.get(j).getNotificationId(); // adt method
                     if (nid != null && nid.matches("NT\\d+")) {
@@ -1898,7 +1899,7 @@ public class LoyaltyController {
 
     public int getCumulativeEarned(String memberId) {
         int total = 0;
-        LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
+        ListInterface<PointTransaction> txs = getTransactions(memberId);
         for (int i = 0; i < txs.size(); i++) { // adt method
             int change = txs.get(i).getPointChange(); // adt method
             if (change > 0) {

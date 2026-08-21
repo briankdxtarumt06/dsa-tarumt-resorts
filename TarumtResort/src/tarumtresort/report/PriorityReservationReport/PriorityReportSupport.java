@@ -2,43 +2,22 @@ package tarumtresort.report.PriorityReservationReport;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.PriorityReservation;
 import tarumtresort.entity.Reservation;
+import tarumtresort.entity.Staff;
 import tarumtresort.entity.enums.PriorityLevel;
 import tarumtresort.entity.enums.ReservationStatus;
 
 // Author: Lee Boon Yew
-/**
- * Shared queue mechanics for both Priority Reservation reports.
- *
- * Holds the one thing this module exists to decide - the order guests are
- * served in - plus the two measurements that only mean something inside a
- * priority queue:
- *
- *   GUESTS DISPLACED  how many reservations registered EARLIER than this one
- *                     but sit BEHIND it in the queue. Plain meaning: how many
- *                     people this guest jumped ahead of.
- *
- *   TIMES OVERTAKEN   the mirror image - how often this record was passed by
- *                     someone who registered LATER. A tier that is overtaken
- *                     often is a tier the queue is failing.
- *
- * Ordering rule matches PriorityReservationController.generateVIPQueue:
- * highest rank first, ties broken by earliest registration (FIFO within a
- * tier). It is expressed here as compareTo + addSorted (insertion sort)
- * rather than the controller's selection sort, and the report classes own it
- * so that no report ever calls back into the controller.
- */
-public class QueueOrdering {
 
-    private QueueOrdering() {
+public final class PriorityReportSupport {
+
+    private PriorityReportSupport() {
     }
 
-    /**
-     * Service-level promise per tier, in minutes. Management sets these: the
-     * higher the tier, the shorter the wait the resort has committed to.
-     */
+    // ==================== QUEUE MECHANICS ====================
     public static int slaTargetMinutes(PriorityLevel level) {
         if (level == null) {
             return Integer.MAX_VALUE;
@@ -59,15 +38,7 @@ public class QueueOrdering {
                 || status == ReservationStatus.CHECKED_OUT;
     }
 
-    /**
-     * Assigns 1-based queue positions, then computes guestsDisplaced and
-     * timesOvertaken in a single pass over every ordered pair.
-     *
-     * For each pair (i, j) with i ahead of j, if j registered EARLIER than i
-     * then i has displaced j: i jumped the queue past a guest who was already
-     * waiting. That increments i's displacement and j's overtaken count.
-     */
-    public static void assignPositionsAndDisplacement(LinkedListInterface<Entry> queue) {
+    public static void assignPositionsAndDisplacement(ListInterface<QueueEntry> queue) {
         if (queue == null) {
             return;
         }
@@ -76,12 +47,12 @@ public class QueueOrdering {
             queue.get(i).position = i + 1;
         }
         for (int i = 0; i < total; i++) {
-            Entry ahead = queue.get(i);
+            QueueEntry ahead = queue.get(i);
             if (ahead.registeredAt == null) {
                 continue;
             }
             for (int j = i + 1; j < total; j++) {
-                Entry behind = queue.get(j);
+                QueueEntry behind = queue.get(j);
                 if (behind.registeredAt == null) {
                     continue;
                 }
@@ -93,12 +64,7 @@ public class QueueOrdering {
         }
     }
 
-    /**
-     * Self-check on the ordering: counts places where a LOWER rank sits ahead
-     * of a HIGHER rank. On a correctly ordered queue this is always 0, so any
-     * other number printed in a report means compareTo is wrong.
-     */
-    public static int countPriorityInversions(LinkedListInterface<Entry> queue) {
+    public static int countPriorityInversions(ListInterface<QueueEntry> queue) {
         if (queue == null || queue.size() < 2) {
             return 0;
         }
@@ -111,11 +77,7 @@ public class QueueOrdering {
         return inversions;
     }
 
-    /**
-     * One queued priority reservation. Sorting into a LinkedList via
-     * addSorted produces the VIP queue order directly.
-     */
-    public static class Entry implements Comparable<Entry> {
+    public static class QueueEntry implements Comparable<QueueEntry> {
 
         private final PriorityReservation priority;
         private final Reservation reservation;
@@ -125,7 +87,7 @@ public class QueueOrdering {
         private int guestsDisplaced;
         private int timesOvertaken;
 
-        public Entry(PriorityReservation priority, Reservation reservation) {
+        public QueueEntry(PriorityReservation priority, Reservation reservation) {
             this.priority = priority;
             this.reservation = reservation;
             this.registeredAt = (reservation == null || reservation.getTimestamps() == null)
@@ -169,7 +131,6 @@ public class QueueOrdering {
             return priority == null ? "-" : priority.getReservationId();
         }
 
-        /** A level set by a staff member rather than derived from loyalty tier. */
         public boolean isOverridden() {
             return priority != null
                     && priority.getOverriddenBy() != null
@@ -181,12 +142,6 @@ public class QueueOrdering {
             return level == null ? Integer.MIN_VALUE : level.getRank();
         }
 
-        /**
-         * Minutes the guest has waited.
-         *   served   registration to assignedTime, falling back to check-in
-         *   waiting  registration to now (still accruing)
-         *   other    null, so cancelled records never distort an average
-         */
         public Long waitingMinutes() {
             if (registeredAt == null) {
                 return null;
@@ -214,10 +169,8 @@ public class QueueOrdering {
             return waited != null && waited > slaTargetMinutes(getLevel());
         }
 
-        // highest rank first, then earliest registration (FIFO inside a tier),
-        // then reservation id so the order is fully deterministic
         @Override
-        public int compareTo(Entry other) {
+        public int compareTo(QueueEntry other) {
             int comparison = Integer.compare(other.rank(), rank());
             if (comparison != 0) {
                 return comparison;
@@ -233,6 +186,144 @@ public class QueueOrdering {
                 return -1;
             }
             return getReservationId().compareToIgnoreCase(other.getReservationId());
+        }
+    }
+
+    public static class ReservationIndex {
+
+        private final ListInterface<Key> keys = new DoublyLinkedList<>();
+
+        public ReservationIndex(ListInterface<Reservation> reservations) {
+            if (reservations == null) {
+                return;
+            }
+            for (int i = 0; i < reservations.size(); i++) {
+                Reservation reservation = reservations.get(i);
+                if (reservation == null || reservation.getReservationId() == null) {
+                    continue;
+                }
+                keys.addSorted(new Key(reservation));
+            }
+        }
+
+        public int size() {
+            return keys.size();
+        }
+
+        public Reservation find(String reservationId) {
+            if (reservationId == null) {
+                return null;
+            }
+            int low = 0;
+            int high = keys.size() - 1;
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                Key key = keys.get(mid);
+                if (key == null) {
+                    return null;
+                }
+                int comparison = key.id().compareToIgnoreCase(reservationId);
+                if (comparison == 0) {
+                    return key.reservation;
+                }
+                if (comparison < 0) {
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return null;
+        }
+
+        private static class Key implements Comparable<Key> {
+
+            private final Reservation reservation;
+
+            Key(Reservation reservation) {
+                this.reservation = reservation;
+            }
+
+            String id() {
+                return reservation.getReservationId();
+            }
+
+            @Override
+            public int compareTo(Key other) {
+                return id().compareToIgnoreCase(other.id());
+            }
+        }
+    }
+
+    public static class StaffIndex {
+
+        private final ListInterface<Key> keys = new DoublyLinkedList<>();
+
+        public StaffIndex(ListInterface<Staff> staffList) {
+            if (staffList == null) {
+                return;
+            }
+            for (int i = 0; i < staffList.size(); i++) {
+                Staff staff = staffList.get(i);
+                if (staff == null || staff.getStaffId() == null) {
+                    continue;
+                }
+                keys.addSorted(new Key(staff));
+            }
+        }
+
+        public int size() {
+            return keys.size();
+        }
+
+        public Staff find(String staffId) {
+            if (staffId == null) {
+                return null;
+            }
+            int low = 0;
+            int high = keys.size() - 1;
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                Key key = keys.get(mid);
+                if (key == null) {
+                    return null;
+                }
+                int comparison = key.id().compareToIgnoreCase(staffId);
+                if (comparison == 0) {
+                    return key.staff;
+                }
+                if (comparison < 0) {
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return null;
+        }
+
+        public String nameOf(String staffId) {
+            Staff staff = find(staffId);
+            if (staff != null && staff.getStaffName() != null && !staff.getStaffName().isEmpty()) {
+                return staff.getStaffName();
+            }
+            return (staffId == null || staffId.isEmpty()) ? "-" : staffId;
+        }
+
+        private static class Key implements Comparable<Key> {
+
+            private final Staff staff;
+
+            Key(Staff staff) {
+                this.staff = staff;
+            }
+
+            String id() {
+                return staff.getStaffId();
+            }
+
+            @Override
+            public int compareTo(Key other) {
+                return id().compareToIgnoreCase(other.id());
+            }
         }
     }
 }

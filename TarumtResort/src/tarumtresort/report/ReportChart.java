@@ -1,13 +1,13 @@
 package tarumtresort.report;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 
 // Author: Brian Kam Ding Xian
 public class ReportChart implements Comparable<ReportChart> {
 
     private final String title;
-    private final LinkedListInterface<Bar> bars = new LinkedList<>();
+    private final ListInterface<Bar> bars = new DoublyLinkedList<>();
 
     public ReportChart(String title) {
         this.title = title;
@@ -21,7 +21,7 @@ public class ReportChart implements Comparable<ReportChart> {
         return title;
     }
 
-    public LinkedListInterface<Bar> getBars() {
+    public ListInterface<Bar> getBars() {
         return bars;
     }
 
