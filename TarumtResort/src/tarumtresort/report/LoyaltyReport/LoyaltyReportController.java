@@ -62,7 +62,7 @@ public class LoyaltyReportController {
         ui().pressEnterToContinue();
     }
 
-    private ReportUI ui() {
-        return new ReportUI(scanner);
+    private LoyaltyReportUI ui() {
+        return new LoyaltyReportUI(scanner);
     }
 }

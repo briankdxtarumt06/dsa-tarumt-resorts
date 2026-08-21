@@ -22,7 +22,7 @@ import tarumtresort.utility.TablePrinter;
  *
  * @author Brian
  */
-public class ReportUI {
+public class LoyaltyReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
 
@@ -46,7 +46,7 @@ public class ReportUI {
 
     private final Scanner scanner;
 
-    public ReportUI(Scanner scanner) {
+    public LoyaltyReportUI(Scanner scanner) {
         this.scanner = scanner;
     }
 

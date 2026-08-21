@@ -6,9 +6,9 @@ public class RedemptionVoucherUI {
 
     private static final String TITLE = "REDEMPTION & VOUCHER REPORT";
 
-    private final ReportUI ui;
+    private final LoyaltyReportUI ui;
 
-    public RedemptionVoucherUI(ReportUI ui) {
+    public RedemptionVoucherUI(LoyaltyReportUI ui) {
         this.ui = ui;
     }
 

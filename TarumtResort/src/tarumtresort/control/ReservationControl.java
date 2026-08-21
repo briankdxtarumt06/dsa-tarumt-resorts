@@ -2289,7 +2289,6 @@ public class ReservationControl {
         }
     }
 
-    // called from bookRoom() - one combined payment for the whole booking session
     public Payment processBookingPayment(ListInterface<Reservation> reservations,
             Member member, LoyaltyController loyaltyController) {
         if (reservations == null || reservations.size() == 0) {
@@ -2302,8 +2301,6 @@ public class ReservationControl {
             totalRoomCharge += pricePerNight * r.getNumberOfNights();
         }
 
-        // ---- vouchers: each voucher offsets its own room type's subtotal (capped);
-        // generic vouchers (null room type) offset the remaining session charge.
         ListInterface<RedemptionRecord> appliedVouchers = new DoublyLinkedList<>();
         ListInterface<Double> appliedDeductions = new DoublyLinkedList<>();
         if (member != null) {
@@ -2342,7 +2339,7 @@ public class ReservationControl {
 
                 String redemptionId = getReservationUI().selectVoucher(applicable);
                 if (redemptionId == null) {
-                    break; // staff chose 0 - no more vouchers
+                    break; 
                 }
                 RedemptionRecord chosen = findVoucher(applicable, redemptionId);
                 if (chosen == null) {
@@ -2351,8 +2348,6 @@ public class ReservationControl {
                 double pool = chosen.getRoomType() == null
                         ? genericPool
                         : poolByType[chosen.getRoomType().ordinal()];
-                // fixed-RM vouchers deduct their value (capped at the pool);
-                // percentage vouchers deduct percent% of the room-type pool
                 double deduction;
                 if (chosen.getDiscountPercent() != null) {
                     deduction = pool * chosen.getDiscountPercent() / 100.0;
@@ -2390,7 +2385,6 @@ public class ReservationControl {
         }
         double chargeAfterVouchers = Math.max(0.0, totalRoomCharge - voucherTotal);
 
-        // member tier discount (after vouchers, before SC & tax)
         int discountPercent = member == null ? 0 : member.getTier().getDiscountPercent();
         double discount = chargeAfterVouchers * discountPercent / 100.0;
         double netRoomCharge = chargeAfterVouchers - discount;
@@ -2404,7 +2398,7 @@ public class ReservationControl {
 
         PaymentMethod method = askPaymentMethod(getReservationUI());
         if (method == null) {
-            return null; // guest cancelled payment
+            return null; 
         }
         Payment payment = new Payment(
             generatePaymentId(),
@@ -2423,7 +2417,6 @@ public class ReservationControl {
             payment.addReservationId(reservations.get(i).getReservationId());
         }
 
-        // vouchers are only consumed once the payment is recorded
         for (int i = 0; i < appliedVouchers.size(); i++) {
             loyaltyController.useVoucher(member.getMemberId(),
                     appliedVouchers.get(i).getRedemptionId());
@@ -2432,7 +2425,6 @@ public class ReservationControl {
         paymentList.addBack(payment);
         paymentDAO.saveToFile(paymentList);
 
-        // loyalty: 1 point per RM1 of the total bill paid (incl. SC & tax)
         int pointsEarned = (int) Math.round(total);
         if (member != null && pointsEarned > 0) {
             System.out.println(loyaltyController.earnPoints(member.getMemberId(), pointsEarned,
@@ -2459,9 +2451,6 @@ public class ReservationControl {
         return null;
     }
 
-    // refund policy: 100% refund if cancelled at least 24 hours before the
-    // 12pm check-in moment; 0% refund if cancelled within the last 24 hours.
-    // Called from cancelReservation() after the reservation is removed.
     public double refundReservation(Reservation r) {
         if (r == null || r.getTimestamps() == null || r.getTimestamps().getExpectedCheckInDate() == null) {
             return 0.0;

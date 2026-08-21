@@ -6,9 +6,9 @@ public class MembershipPerformanceUI {
 
     private static final String TITLE = "MEMBERSHIP & TIER PERFORMANCE REPORT";
 
-    private final ReportUI ui;
+    private final LoyaltyReportUI ui;
 
-    public MembershipPerformanceUI(ReportUI ui) {
+    public MembershipPerformanceUI(LoyaltyReportUI ui) {
         this.ui = ui;
     }
 
