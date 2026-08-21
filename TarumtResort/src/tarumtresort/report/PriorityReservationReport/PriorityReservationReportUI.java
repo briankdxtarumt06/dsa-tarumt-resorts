@@ -47,7 +47,6 @@ public class PriorityReservationReportUI {
     }
 
     // -------------------- filter prompts --------------------
-
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
         System.out.println("  " + fieldLabel.toUpperCase() + " - DATE RANGE");
@@ -75,7 +74,6 @@ public class PriorityReservationReportUI {
         }
     }
 
-    /** Reservation status filter. Returns null for "all statuses". */
     public ReservationStatus selectStatusFilter() {
         ReservationStatus[] values = ReservationStatus.values();
         System.out.println("\n========================================");
@@ -90,7 +88,6 @@ public class PriorityReservationReportUI {
         return choice == 0 ? null : values[choice - 1];
     }
 
-    /** Room type filter. Returns null for "all room types". */
     public RoomType selectRoomTypeFilter() {
         RoomType[] values = RoomType.values();
         System.out.println("\n========================================");
@@ -120,7 +117,6 @@ public class PriorityReservationReportUI {
         return choice == 0 ? null : values[choice - 1];
     }
 
-    /** Override scope: 0 = all records, 1 = overridden only, 2 = non-overridden only. */
     public int selectOverrideScope() {
         System.out.println("\n========================================");
         System.out.println("  OVERRIDE SCOPE");
@@ -386,7 +382,6 @@ public class PriorityReservationReportUI {
         }
     }
 
-    /** A rendered chart plus the number of scale rows, used to align baselines. */
     private final class ChartBlock {
         private final String[] lines;
         private final int scaleRows;
@@ -396,7 +391,6 @@ public class PriorityReservationReportUI {
             this.scaleRows = scaleRows;
         }
 
-        /** Inserts blank rows between the title and the caret to match a taller chart. */
         String[] alignedTo(int targetRows) {
             int shortfall = targetRows - scaleRows;
             if (shortfall <= 0) {
@@ -412,7 +406,6 @@ public class PriorityReservationReportUI {
         }
     }
 
-    /** One chart rendered into fixed-width lines: title, scale, bars, axis, labels. */
     private ChartBlock buildChartBlock(ReportChart chart, String axisCaption) {
         ListInterface<ReportChart.Bar> bars = chart.getBars();
         int barCount = bars.size();
@@ -433,7 +426,6 @@ public class PriorityReservationReportUI {
         String[][] labels = labelLines(bars, barCount);
         int labelRows = labels.length == 0 ? 0 : labels[0].length;
 
-        // title + caret + scale rows + axis + label rows
         String[] block = new String[1 + 1 + rows + 1 + labelRows];
         int line = 0;
 
@@ -445,7 +437,6 @@ public class PriorityReservationReportUI {
                     + barRow(heights, rowY, barCount, pitch);
         }
 
-        // keep the dash run short enough that the arrow and its caption survive
         String caption = (axisCaption == null || axisCaption.isEmpty()) ? "" : " " + axisCaption;
         int dashBudget = BLOCK_WIDTH - scaleWidth - 1 - caption.length();
         int dashes = Math.max(1, Math.min(barCount * pitch, dashBudget));

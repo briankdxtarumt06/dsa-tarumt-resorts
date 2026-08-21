@@ -131,7 +131,6 @@ public final class PriorityReportSupport {
             return priority == null ? "-" : priority.getReservationId();
         }
 
-        /** A level set by a staff member rather than derived from loyalty tier. */
         public boolean isOverridden() {
             return priority != null
                     && priority.getOverriddenBy() != null
@@ -211,7 +210,6 @@ public final class PriorityReportSupport {
             return keys.size();
         }
 
-        /** Binary search by reservation id. Returns null when the id is absent. */
         public Reservation find(String reservationId) {
             if (reservationId == null) {
                 return null;
@@ -277,7 +275,6 @@ public final class PriorityReportSupport {
             return keys.size();
         }
 
-        /** Binary search by staff id. Returns null when the id is absent. */
         public Staff find(String staffId) {
             if (staffId == null) {
                 return null;
@@ -303,7 +300,6 @@ public final class PriorityReportSupport {
             return null;
         }
 
-        /** Staff name for a staff id, falling back to the raw id then a dash. */
         public String nameOf(String staffId) {
             Staff staff = find(staffId);
             if (staff != null && staff.getStaffName() != null && !staff.getStaffName().isEmpty()) {

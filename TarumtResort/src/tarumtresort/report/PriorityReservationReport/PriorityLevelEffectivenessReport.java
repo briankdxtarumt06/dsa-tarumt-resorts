@@ -26,17 +26,14 @@ public class PriorityLevelEffectivenessReport {
     public Result generate(LocalDateTime from, LocalDateTime to,
             ReservationStatus statusFilter, RoomType roomTypeFilter) {
 
-        // SORT: index the reservations by id so the join below can binary search
         PriorityReportSupport.ReservationIndex index = new PriorityReportSupport.ReservationIndex(reservationList);
 
-        // SORT: build the full VIP queue by rank desc, then FIFO within a tier
         ListInterface<PriorityReportSupport.QueueEntry> queue = new DoublyLinkedList<>();
         for (int i = 0; i < priorityList.size(); i++) {
             PriorityReservation priority = priorityList.get(i);
             if (priority == null || priority.isDeleted()) {
                 continue;
             }
-            // SEARCH: binary search the sorted index instead of a linear scan
             Reservation reservation = index.find(priority.getReservationId());
             if (reservation == null || reservation.isDeleted()) {
                 continue;
@@ -45,7 +42,6 @@ public class PriorityLevelEffectivenessReport {
         }
         PriorityReportSupport.assignPositionsAndDisplacement(queue);
 
-        // aggregate the filtered records into one bucket per tier
         TierRow[] buckets = new TierRow[PriorityLevel.values().length];
         int totalRecords = 0;
         int totalOverridden = 0;
@@ -85,7 +81,6 @@ public class PriorityLevelEffectivenessReport {
             }
         }
 
-        // SORT: tier rows by rank descending, via compareTo + addSorted
         ListInterface<TierRow> rows = new DoublyLinkedList<>();
         for (TierRow bucket : buckets) {
             if (bucket != null) {
@@ -135,7 +130,6 @@ public class PriorityLevelEffectivenessReport {
 
     private String[][] toTable(ListInterface<TierRow> rows) {
         String[][] table = new String[rows.size() + 1][10];
-        // headers kept short so the rendered table stays inside DOC_WIDTH (132)
         table[0] = new String[] { "Tier", "Rank", "Records", "Avg Q.Pos",
                 "Best/Wst", "Avg Serve", "Waiting Now", "Overtaken", "Breaches",
                 "Tier/Ovr" };
@@ -188,9 +182,11 @@ public class PriorityLevelEffectivenessReport {
             PriorityReportSupport.QueueEntry worstCase) {
 
         double compliance = totalMeasured == 0
-                ? 100 : (double) (totalMeasured - totalBreaches) / totalMeasured * 100;
+                ? 100
+                : (double) (totalMeasured - totalBreaches) / totalMeasured * 100;
         double overrideShare = totalRecords == 0
-                ? 0 : (double) totalOverridden / totalRecords * 100;
+                ? 0
+                : (double) totalOverridden / totalRecords * 100;
 
         TierRow mostOvertaken = null;
         for (int i = 0; i < rows.size(); i++) {
@@ -327,7 +323,6 @@ public class PriorityLevelEffectivenessReport {
 
     // -------------------- result --------------------
     public static class Result {
-
         private final String[][] table;
         private final ListInterface<ReportChart> charts;
         private final String[] summary;

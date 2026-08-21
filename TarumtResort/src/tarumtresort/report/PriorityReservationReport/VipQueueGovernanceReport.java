@@ -30,18 +30,15 @@ public class VipQueueGovernanceReport {
     public Result generate(LocalDateTime from, LocalDateTime to,
             PriorityLevel minLevel, int overrideScope) {
 
-        // SORT: index both lookup sets so the joins below can binary search
         PriorityReportSupport.ReservationIndex reservationIndex = new PriorityReportSupport.ReservationIndex(reservationList);
         PriorityReportSupport.StaffIndex staffIndex = new PriorityReportSupport.StaffIndex(staffList);
 
-        // SORT: the VIP queue itself - rank desc, then FIFO within a tier
         ListInterface<PriorityReportSupport.QueueEntry> queue = new DoublyLinkedList<>();
         for (int i = 0; i < priorityList.size(); i++) {
             PriorityReservation priority = priorityList.get(i);
             if (priority == null || priority.isDeleted()) {
                 continue;
             }
-            // SEARCH: binary search rather than a linear scan per record
             Reservation reservation = reservationIndex.find(priority.getReservationId());
             if (reservation == null || reservation.isDeleted()) {
                 continue;
@@ -87,7 +84,6 @@ public class VipQueueGovernanceReport {
             }
         }
 
-        // SORT: authorisers by guests displaced desc, via compareTo + addSorted
         ListInterface<StaffTally> rankedTallies = new DoublyLinkedList<>();
         for (int i = 0; i < tallies.size(); i++) {
             rankedTallies.addSorted(tallies.get(i));
@@ -102,7 +98,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- filtering --------------------
-
     private boolean passesFilters(PriorityReportSupport.QueueEntry entry, LocalDateTime from, LocalDateTime to,
             PriorityLevel minLevel, int overrideScope) {
         if (!inRange(entry.getRegisteredAt(), from, to)) {
@@ -134,8 +129,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- staff tally --------------------
-
-    // linear search over a short list of authorisers, then accumulate
     private void recordTally(ListInterface<StaffTally> tallies, PriorityReportSupport.StaffIndex staffIndex,
             PriorityReportSupport.QueueEntry entry) {
         String staffId = entry.getPriority().getOverriddenBy();
@@ -159,10 +152,8 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- table --------------------
-
     private String[][] toTable(ListInterface<PriorityReportSupport.QueueEntry> shown, PriorityReportSupport.StaffIndex staffIndex) {
         String[][] table = new String[shown.size() + 1][8];
-        // headers kept short so the rendered table stays inside DOC_WIDTH (132)
         table[0] = new String[] { "Pos", "Reservation", "Priority", "Displaced",
                 "Wait (min)", "Room Type", "Authorised By", "Override Reason" };
         for (int i = 0; i < shown.size(); i++) {
@@ -197,7 +188,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- charts --------------------
-
     private ListInterface<ReportChart> buildCharts(ListInterface<StaffTally> tallies) {
         ListInterface<ReportChart> charts = new DoublyLinkedList<>();
 
@@ -217,7 +207,6 @@ public class VipQueueGovernanceReport {
         return charts;
     }
 
-    // the vertical chart slots are narrow, so a full name will not fit
     private String firstName(String name) {
         if (name == null || name.isEmpty()) {
             return "-";
@@ -227,7 +216,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- summary --------------------
-
     private String[] buildSummary(ListInterface<PriorityReportSupport.QueueEntry> shown,
             ListInterface<StaffTally> tallies, int queueDepth, int overriddenCount,
             int emergencyGrants, int unjustified, int displacedByOverrides,
@@ -278,7 +266,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- row --------------------
-
     private static class StaffTally implements Comparable<StaffTally> {
 
         private final String staffId;
@@ -293,7 +280,6 @@ public class VipQueueGovernanceReport {
             this.staffName = staffName;
         }
 
-        // most guests displaced first, then most overrides, then by id
         @Override
         public int compareTo(StaffTally other) {
             int comparison = Integer.compare(other.guestsDisplaced, guestsDisplaced);
