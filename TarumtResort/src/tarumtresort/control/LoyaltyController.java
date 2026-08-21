@@ -20,31 +20,25 @@ import tarumtresort.entity.enums.NotificationType;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.LoyaltyReport.LoyaltyReportController;
-import tarumtresort.report.ReportChart;
-import tarumtresort.report.ReportResult;
-import tarumtresort.report.ReportUI;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- * Combined controller for the loyalty module: member management, reward
- * catalogue management, points earning/expiry, and redemption requests.
- * Previously split across PointsController, MemberController and
- * RewardController; merged so all loyalty data is loaded once and shared.
- */
+// Author: Imam Mahdi Ali Ang Attuko
 public class LoyaltyController {
 
+    private static final int PAGE_SIZE = 20;
+
+    // ADT declaration
     private LinkedListInterface<Member> memberList = new LinkedList<>();
     private LinkedListInterface<Reward> rewardList = new LinkedList<>();
     private LinkedListInterface<Guest> guestList = new LinkedList<>();
 
+    // DAO declaration
     private MemberDAO memberDAO = new MemberDAO();
     private RewardDAO rewardDAO = new RewardDAO();
     private GuestDAO guestDAO = new GuestDAO();
 
-    private ReportUI reportUI;
+    // UI declaration
     private LoyaltyRewardsUI moduleUI;
-
-    private static final int PAGE_SIZE = 20;
 
     private static final DateTimeFormatter NOTIF_DATE_FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -57,7 +51,6 @@ public class LoyaltyController {
         memberList = memberDAO.retrieveFromFile();
         rewardList = rewardDAO.retrieveFromFile();
         guestDAO.loadFromFile(guestList);
-        reportUI = new ReportUI(scanner, "LOYALTY & REWARDS MODULE SUBSYSTEM");
         moduleUI = new LoyaltyRewardsUI(scanner);
         reconcileTiersOnLoad();
     }
@@ -70,7 +63,6 @@ public class LoyaltyController {
         run();
     }
 
-    // entry point for the loyalty module (mirrors HousekeepingController.runHousekeeping)
     public void run() {
         try {
             ConsoleUtil.clearScreen();
@@ -107,9 +99,6 @@ public class LoyaltyController {
         }
     }
 
-    // ======================= MENU ENTRY POINTS =======================
-
-    /** Member management list page (mirrors HousekeepingController.runStaffManagement). */
     public void runMemberMenu() {
         String tierFilter = null;
         int page = 0;

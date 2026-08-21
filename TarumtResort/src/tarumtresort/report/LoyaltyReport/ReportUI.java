@@ -1,4 +1,4 @@
-package tarumtresort.report;
+package tarumtresort.report.LoyaltyReport;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -9,6 +9,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
 import tarumtresort.entity.enums.Tier;
+import tarumtresort.report.ReportResult;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.ReportGraph;
 import tarumtresort.utility.TablePrinter;
@@ -17,8 +18,8 @@ import tarumtresort.utility.TablePrinter;
  *
  * @author Brian
  *
- * Shared report UI: submenu, date-range input, and formal report printing.
- * Used by ReportMenu to avoid polluting HousekeepingUI with report logic.
+ * Loyalty report UI: date-range input, secondary filters, and formal report printing.
+ * Lives beside the loyalty report classes (mirrors HousekeepingReport/HousekeepingReportUI).
  */
 public class ReportUI {
 
@@ -66,12 +67,12 @@ public class ReportUI {
 
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
-        System.out.println("  " + fieldLabel.toUpperCase() + " — DATE RANGE");
+        System.out.println("  " + fieldLabel.toUpperCase() + " â€” DATE RANGE");
         System.out.println("========================================");
         System.out.println("  1. This Month");
         System.out.println("  2. Last Month");
         System.out.println("  3. Specific Month (pick month & year)");
-        System.out.println("  4. This Week (Mon — Sun)");
+        System.out.println("  4. This Week (Mon â€” Sun)");
         System.out.println("  5. Last 7 Days");
         System.out.println("  6. Today");
         System.out.println("  7. All Time (no limit)");

@@ -12,7 +12,6 @@ import tarumtresort.entity.Member;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.ReportResult;
-import tarumtresort.report.ReportUI;
 
 // Housekeeping-style facade for loyalty reports - date-range-only, Current header (ReportUI)
 public class LoyaltyReportController {
