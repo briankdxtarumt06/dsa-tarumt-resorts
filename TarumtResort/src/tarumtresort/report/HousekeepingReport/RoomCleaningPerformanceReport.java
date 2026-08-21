@@ -157,11 +157,11 @@ public class RoomCleaningPerformanceReport {
 
     private int standardMinutes(RoomType type) {
         return switch (type) {
-            case STANDARD_SINGLE -> 25;
+            case STANDARD_SINGLE -> 30;
             case STANDARD_DOUBLE -> 30;
-            case STANDARD_TRIPLE -> 35;
-            case DELUXE_SINGLE -> 30;
-            case DELUXE_DOUBLE -> 35;
+            case STANDARD_TRIPLE -> 30;
+            case DELUXE_SINGLE -> 40;
+            case DELUXE_DOUBLE -> 40;
             case DELUXE_TRIPLE -> 40;
             case SUITE -> 50;
         };
