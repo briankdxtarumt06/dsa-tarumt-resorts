@@ -4,19 +4,19 @@ package tarumtresort.utility;
 public class TablePrinter {
 
     public static final int DOC_WIDTH = 132;
+    private static final boolean IS_NETBEANS = false;
 
-    // Not Supported by NetBeans
-    private static final char HORIZONTAL = '═';
-    private static final char VERTICAL = '║';
-    private static final char CORNER_TL = '╔';
-    private static final char CORNER_TR = '╗';
-    private static final char CORNER_BL = '╚';
-    private static final char CORNER_BR = '╝';
-    private static final char T_DOWN = '╦';
-    private static final char T_UP = '╩';
-    private static final char T_RIGHT = '╠';
-    private static final char T_LEFT = '╣';
-    private static final char CROSS = '╬';
+    private static final char HORIZONTAL = IS_NETBEANS ? '-' : '═';
+    private static final char VERTICAL = IS_NETBEANS ? '|' : '║';
+    private static final char CORNER_TL = IS_NETBEANS ? '+' : '╔';
+    private static final char CORNER_TR = IS_NETBEANS ? '+' : '╗';
+    private static final char CORNER_BL = IS_NETBEANS ? '+' : '╚';
+    private static final char CORNER_BR = IS_NETBEANS ? '+' : '╝';
+    private static final char T_DOWN = IS_NETBEANS ? '+' : '╦';
+    private static final char T_UP = IS_NETBEANS ? '+' : '╩';
+    private static final char T_RIGHT = IS_NETBEANS ? '+' : '╠';
+    private static final char T_LEFT = IS_NETBEANS ? '+' : '╣';
+    private static final char CROSS = IS_NETBEANS ? '+' : '╬';
 
     // Supported by NetBeans
     // private static final char HORIZONTAL = '-';

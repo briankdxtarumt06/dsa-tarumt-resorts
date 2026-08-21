@@ -37,6 +37,8 @@ public class HousekeepingReportUI {
         1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000
     };
 
+    private static final boolean IS_NETBEANS = false;
+
     private final Scanner scanner;
 
     public HousekeepingReportUI(Scanner scanner) {
@@ -63,7 +65,7 @@ public class HousekeepingReportUI {
 
     private LocalDateTime[] readDateTimeRangeChoice(String fieldLabel) {
         while (true) {
-            System.out.print("Enter option (0-7) (blank = all time): ");
+            System.out.print("Enter option (blank = all time) (0-7): ");
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) {
                 System.out.println();
@@ -227,7 +229,12 @@ public class HousekeepingReportUI {
     }
 
     public void printTableSection(String[][] table) {
-        if (table == null || table.length == 0) {
+        if (table == null || table.length <= 1) {
+            TablePrinter.printFullWidthLine('-');
+            TablePrinter.printCentered("No records found.");
+            TablePrinter.printFullWidthLine('-');
+            System.out.println();
+            TablePrinter.printFullWidthLine('=');
             return;
         }
         String[] header = table[0];
@@ -245,10 +252,15 @@ public class HousekeepingReportUI {
         System.out.println();
         TablePrinter.printCentered("GRAPHICAL REPRESENTATION OF " + reportTitle);
         System.out.println();
-        if (charts != null) {
-            for (int i = 0; i < charts.size(); i++) {
-                printCenteredChart(charts.get(i));
-            }
+        if (charts == null || charts.isEmpty()) {
+            TablePrinter.printCentered("No chart data.");
+            System.out.println();
+            TablePrinter.printFullWidthLine('=');
+            System.out.println();
+            return;
+        }
+        for (int i = 0; i < charts.size(); i++) {
+            printCenteredChart(charts.get(i));
         }
         TablePrinter.printFullWidthLine('=');
         System.out.println();
@@ -327,7 +339,7 @@ public class HousekeepingReportUI {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < barCount; i++) {
             if (heights[i] >= y) {
-                sb.append(repeat(' ', pad)).append(" ██ ").append(repeat(' ', gap));
+                sb.append(repeat(' ', pad)).append(IS_NETBEANS ? "##" : " ██ ").append(repeat(' ', gap));
             } else {
                 sb.append(repeat(' ', pitch));
             }

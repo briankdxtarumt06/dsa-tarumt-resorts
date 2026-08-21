@@ -962,7 +962,7 @@ public class HousekeepingController {
         task.getStatusHistory().addFront(new TaskStatusChange(TaskStatus.PENDING, null, LocalDateTime.now()));
         taskList.addSorted(task);
         taskDAO.saveTaskList(taskList);
-        appendTaskStatusChange(task, TaskStatus.PENDING.name(), LocalDateTime.now());
+        appendTaskStatusChange(task, TaskStatus.PENDING.toString(), LocalDateTime.now());
         return taskId;
     }
 
@@ -1075,7 +1075,7 @@ public class HousekeepingController {
             ConsoleUtil.printError("Status update failed during room/worker update: " + e.getMessage());
             return "UPDATE_FAILED";
         }
-        appendTaskStatusChange(task, newStatus.name(), LocalDateTime.now());
+        appendTaskStatusChange(task, newStatus.toString(), LocalDateTime.now());
         taskDAO.saveTaskList(taskList);
         return "UPDATED";
     }
@@ -1133,7 +1133,7 @@ public class HousekeepingController {
                     if (task.getTaskType() == TaskType.INSPECTION) {
                         setRoomStatus(task.getRoomId(), RoomStatus.AVAILABLE);
                     }
-                    appendTaskStatusChange(task, TaskStatus.COMPLETED.name(), LocalDateTime.now());
+                    appendTaskStatusChange(task, TaskStatus.COMPLETED.toString(), LocalDateTime.now());
                     taskDAO.saveTaskList(taskList);
                     return "TASK_COMPLETED";
                 }
@@ -1179,7 +1179,7 @@ public class HousekeepingController {
             ConsoleUtil.printError("Rollback failed during room status update: " + e.getMessage());
             return "UPDATE_FAILED";
         }
-        appendTaskStatusChange(task, previous.name(), LocalDateTime.now());
+        appendTaskStatusChange(task, previous.toString(), LocalDateTime.now());
         taskDAO.saveTaskList(taskList);
         return "ROLLED_BACK";
     }
@@ -1274,7 +1274,7 @@ public class HousekeepingController {
         if (staff != null) {
             recomputeStaffAvailability(staff);
         }
-        appendAssignmentChange(assignment, endStatus.name(), LocalDateTime.now());
+        appendAssignmentChange(assignment, endStatus.toString(), LocalDateTime.now());
     }
 
     public void recomputeStaffAvailability(Staff staff) {
@@ -1581,7 +1581,7 @@ public class HousekeepingController {
                     assignment.getTaskAssignmentId(),
                     staff == null ? "-" : staff.getStaffId() + " (" + staff.getStaffName() + ")",
                     task == null ? "-" : task.getTaskId() + " (" + task.getTaskName() + ")",
-                    assignment.getStatus() == null ? "-" : assignment.getStatus().name(),
+                    assignment.getStatus() == null ? "-" : assignment.getStatus().toString(),
                     DateTimeUtil.readable(assignment.getDateTimeAssigned()),
                     DateTimeUtil.readable(assignment.getDateTimeEnded())
             };
