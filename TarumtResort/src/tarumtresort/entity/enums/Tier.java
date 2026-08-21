@@ -1,5 +1,6 @@
 package tarumtresort.entity.enums;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public enum Tier {
     SILVER(5),
     GOLD(8),

@@ -1,11 +1,10 @@
 package tarumtresort.boundary;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.function.Function;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Notification;
@@ -17,15 +16,7 @@ import tarumtresort.entity.enums.Tier;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- * Module boundary for the Loyalty & Rewards subsystem.
- * Launched from TarumtResort via MainMenuUI case 5.
- *
- * Flat structure (mirrors HousekeepingUI): one class, one shared Scanner,
- * and a single set of banner/menu/input helpers reused by every screen.
- * Member / Reward / Points / Notification / Report screens are all public
- * instance methods on this class.
- */
+// Author: Imam Mahdi Ali Ang Attuko
 public class LoyaltyRewardsUI {
 
     private final Scanner scanner;
@@ -42,9 +33,6 @@ public class LoyaltyRewardsUI {
         return scanner;
     }
 
-    // ==================================================================
-    // MODULE MENU
-    // ==================================================================
     public int getMenuChoice() {
         return getMenuChoice(0);
     }
@@ -91,19 +79,18 @@ public class LoyaltyRewardsUI {
                 }
 
                 System.out.printf(
-                    "  ✗ Please enter a number between %d and %d!%n",
+                    " ?! Please enter a number between %d and %d!%n",
                     min, max
                 );
 
             } catch (NumberFormatException e) {
                 System.out.println(
-                    "  ✗ Invalid input! Please enter a valid number."
+                    " ?! Invalid input! Please enter a valid number."
                 );
             }
         }
     }
 
-    /** "RM20.00" for fixed-RM vouchers, "20%" for percentage vouchers, "-" otherwise. */
     static String rewardValueLabel(Reward r) {
         if (r.getDiscountPercent() != null) {
             return r.getDiscountPercent() + "%";
@@ -114,9 +101,6 @@ public class LoyaltyRewardsUI {
         return "-";
     }
 
-    // ==================================================================
-    // SHARED BANNER / MENU HELPERS (defined once, mirrored from HousekeepingUI)
-    // ==================================================================
     private static void printBanner(String title) {
         System.out.println("\n" + BANNER_LINE);
         System.out.println(center(title, BANNER_WIDTH));
@@ -171,7 +155,6 @@ public class LoyaltyRewardsUI {
                     return value;
                 }
             } catch (NumberFormatException e) {
-                // continue retry until integer input
             }
             ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
         }
@@ -200,10 +183,7 @@ public class LoyaltyRewardsUI {
         return text.substring(0, width - 3) + "...";
     }
 
-    // ==================================================================
-    // MEMBER MANAGEMENT
-    // ==================================================================
-    public int printMemberListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+    public int printMemberListMenu(ListInterface<Member> pageList, int page, int pageCount,
             boolean hasFilter, boolean hasDeleted, Function<String, Guest> guestResolver) {
         clearScreen();
         printBanner("MEMBER MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -245,7 +225,7 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int printDeletedMembersMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+    public int printDeletedMembersMenu(ListInterface<Member> pageList, int page, int pageCount,
             Function<String, Guest> guestResolver) {
         clearScreen();
         printBanner("DELETED MEMBERS (Page " + (page + 1) + " of " + pageCount + ")");
@@ -352,10 +332,7 @@ public class LoyaltyRewardsUI {
         return tiers[index];
     }
 
-    // ==================================================================
-    // POINTS & REDEMPTION MANAGEMENT
-    // ==================================================================
-    public int printPointsListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+    public int printPointsListMenu(ListInterface<Member> pageList, int page, int pageCount,
             boolean hasFilter, Function<String, Guest> guestResolver,
             Function<Member, Integer> balanceResolver) {
         clearScreen();
@@ -411,7 +388,7 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, 4);
     }
 
-    public String selectReward(LinkedListInterface<Reward> rewards) {
+    public String selectReward(ListInterface<Reward> rewards) {
         if (rewards.isEmpty()) {
             System.out.println("No rewards available for this member's tier.");
             ConsoleUtil.pressEnterToContinue(scanner);
@@ -480,7 +457,7 @@ public class LoyaltyRewardsUI {
                 member.getMemberId(), member.getTier(), balance);
     }
 
-    public void displayTransactions(LinkedListInterface<PointTransaction> txs) {
+    public void displayTransactions(ListInterface<PointTransaction> txs) {
         if (txs.isEmpty()) {
             System.out.println("No transactions found.");
             return;
@@ -504,7 +481,7 @@ public class LoyaltyRewardsUI {
                 rows);
     }
 
-    public void displayNotifications(LinkedListInterface<Notification> list) {
+    public void displayNotifications(ListInterface<Notification> list) {
         if (list.isEmpty()) {
             System.out.println("No notifications for this member.");
             return;
@@ -518,13 +495,12 @@ public class LoyaltyRewardsUI {
         }
     }
 
-    /** @return true if the user wants to mark all notifications as read. */
     public boolean confirmMarkAllRead() {
         System.out.print("Mark all as read? (y/n): ");
         return scanner.nextLine().trim().equalsIgnoreCase("y");
     }
 
-    public String selectPendingRequest(LinkedListInterface<RedemptionRecord> pending) {
+    public String selectPendingRequest(ListInterface<RedemptionRecord> pending) {
         if (pending.isEmpty()) {
             System.out.println("No pending redemption requests.");
             ConsoleUtil.pressEnterToContinue(scanner);
@@ -552,7 +528,6 @@ public class LoyaltyRewardsUI {
         return pending.get(index).getRedemptionId();
     }
 
-    /** @return "a" to approve, "r" to reject, or null for anything else. */
     public String approveOrReject() {
         System.out.print("Approve or reject? (a/r/c to cancel): ");
         String answer = scanner.nextLine().trim();
@@ -575,10 +550,7 @@ public class LoyaltyRewardsUI {
         return "VALID";
     }
 
-    // ==================================================================
-    // REWARD MANAGEMENT
-    // ==================================================================
-    public int printRewardListMenu(LinkedListInterface<Reward> pageList, int page, int pageCount,
+    public int printRewardListMenu(ListInterface<Reward> pageList, int page, int pageCount,
             boolean hasFilter, boolean hasDeleted, String sortLabel) {
         clearScreen();
         printBanner("REWARD MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -626,7 +598,7 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int printDeletedRewardsMenu(LinkedListInterface<Reward> pageList, int page, int pageCount) {
+    public int printDeletedRewardsMenu(ListInterface<Reward> pageList, int page, int pageCount) {
         clearScreen();
         printBanner("DELETED REWARDS (Page " + (page + 1) + " of " + pageCount + ")");
         if (pageList.isEmpty()) {
@@ -821,7 +793,6 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter discount percent", 1, 100);
     }
 
-    /** Shows a summary of the reward being created (mirrors HousekeepingUI.printTaskCreationSummary). */
     public void printRewardCreationSummary(Reward reward) {
         printSection("Reward Summary");
         System.out.println("  Reward ID   : " + reward.getRewardId());
@@ -870,7 +841,6 @@ public class LoyaltyRewardsUI {
         }
     }
 
-    /** Prompts for a tier (1-4), empty keeps the current tier, 0 cancels. */
     public Tier promptTierWithDefault(String prompt, Tier current) {
         System.out.print(prompt + " (1=SILVER, 2=GOLD, 3=PLATINUM, 4=DIAMOND)"
                 + " (" + current + ") (0 to cancel): ");
@@ -889,14 +859,11 @@ public class LoyaltyRewardsUI {
                 return Tier.values()[idx - 1];
             }
         } catch (NumberFormatException e) {
-            // fall through
         }
         ConsoleUtil.printError("Invalid tier, keeping current value.");
         return current;
     }
 
-    /** Prompts for a room type (1-7), 'none' clears it, empty keeps. No cancel - the
-     *  whole update is aborted at the earlier fields or at the voucher value prompt. */
     public RoomType promptRoomTypeWithDefault(String prompt, RoomType current) {
         System.out.print(prompt + " (1-7 = type, 'none' = generic, empty = keep"
                 + " (" + (current == null ? "Any" : current.name()) + ")): ");
@@ -913,13 +880,11 @@ public class LoyaltyRewardsUI {
                 return RoomType.values()[idx - 1];
             }
         } catch (NumberFormatException e) {
-            // fall through
         }
         ConsoleUtil.printError("Invalid room type, keeping current value.");
         return current;
     }
 
-    /** Prompts for a voucher value (RM); empty keeps, 0 cancels. */
     public Double promptDoubleWithDefault(String prompt, Double current) {
         System.out.print(prompt + " (" + (current == null ? "none" : "RM" + current) + ") (0 to cancel): ");
         String input = scanner.nextLine().trim();
@@ -937,17 +902,11 @@ public class LoyaltyRewardsUI {
                 return value;
             }
         } catch (NumberFormatException e) {
-            // fall through
         }
         ConsoleUtil.printError("Invalid value, keeping current value.");
         return current;
     }
 
-    /**
-     * Prompts for the voucher type during an update.
-     * Returns 1 = Fixed RM, 2 = Percentage, 0 = keep current (no change),
-     * or null = cancelled.
-     */
     public Integer promptVoucherTypeWithDefault(Reward reward) {
         String currentType = reward.getDiscountPercent() != null
                 ? reward.getDiscountPercent() + "% OFF"
@@ -961,7 +920,7 @@ public class LoyaltyRewardsUI {
             return null;
         }
         if (input.isEmpty()) {
-            return 0; // keep current
+            return 0; 
         }
         if (input.equals("1") || input.equals("2")) {
             return Integer.parseInt(input);
@@ -970,7 +929,6 @@ public class LoyaltyRewardsUI {
         return 0;
     }
 
-    /** Prompts for a discount percent (1-100); empty keeps, 0 cancels. */
     public Integer promptPercentWithDefault(String prompt, Integer current) {
         System.out.print(prompt + " (" + (current == null ? "none" : current + "%") + ") (0 to cancel): ");
         String input = scanner.nextLine().trim();
@@ -988,19 +946,11 @@ public class LoyaltyRewardsUI {
                 return value;
             }
         } catch (NumberFormatException e) {
-            // fall through
         }
         ConsoleUtil.printError("Invalid percent (1-100), keeping current value.");
         return current;
     }
 
-    // ==================================================================
-    // NOTIFICATION CENTRE
-    // ==================================================================
-    /** Member list for the notification centre.
-     *  @param rows  page rows: {No., Member ID, Name, Unread}
-     *  @return 1 = view notifications, 2 = mark all read (all members),
-     *          next/previous page numbers, 0 = back */
     public int printMemberListMenu(String[][] rows, int page, int pageCount, int totalUnread) {
         ConsoleUtil.clearScreen();
         printBanner("NOTIFICATION CENTRE (Page " + (page + 1) + " of " + pageCount + ")");
@@ -1028,11 +978,6 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    /** A single member's notifications.
-     *  @param memberId   member id for the banner
-     *  @param memberName member name for the banner
-     *  @param rows       page rows: {No., Type, Message, Date, Status}
-     *  @return 1 = mark all read, 2 = delete notification, next/previous page numbers, 0 = back to members */
     public int printMemberNotificationsMenu(String memberId, String memberName,
             String[][] rows, int page, int pageCount) {
         ConsoleUtil.clearScreen();
@@ -1059,32 +1004,21 @@ public class LoyaltyRewardsUI {
         printSeparator();
         return inputIntChoice("Enter choice", 0, action - 1);
     }
-
-    // ==================================================================
-    // REPORTS
-    // ==================================================================
+    
     public int getReportMenuChoice() {
         ConsoleUtil.clearScreen();
         printBanner("LOYALTY & REWARDS REPORTS");
         System.out.println("  1. Membership & Tier Performance Report");
         System.out.println("  2. Redemption & Voucher Report");
-        System.out.println("  3. Point Expiry & Tier Progression Report");
         System.out.println("  0. Back");
         printSeparator();
-        return inputIntChoice("Enter choice", 0, 3);
+        return inputIntChoice("Enter choice", 0, 2);
     }
 
-    // Housekeeping-style: date-range-only reports, no extra filters (like HousekeepingReportUI)
-
-    // ==================================================================
-    // SHARED INPUT / OUTPUT (used across member / reward / points / notification screens)
-    // ==================================================================
     public int inputListIndex(String entityLabel, int max) {
         return inputListChoice(entityLabel, "view", max);
     }
 
-    /** Like {@link #inputListIndex(String,int)} but lets the caller specify the action verb
-     *  (e.g. "delete") so the prompt reads naturally. */
     public int inputListIndex(String entityLabel, String actionVerb, int max) {
         return inputListChoice(entityLabel, actionVerb, max);
     }
@@ -1093,7 +1027,6 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter " + entityLabel + " number to " + actionVerb + " (0 = cancel)", 0, max);
     }
 
-    /** Asks a yes/no confirmation; returns true only on an explicit 'y'. */
     public boolean confirm(String message) {
         System.out.println("\n==========Confirmation==========");
         System.out.println("  " + message);
@@ -1105,13 +1038,11 @@ public class LoyaltyRewardsUI {
         return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
     }
 
-    /** Prints an error message in red and waits for the user to press Enter. */
     public void showError(String message) {
         ConsoleUtil.printError(message);
         pause();
     }
 
-    /** Prints a message and waits for the user to press Enter. */
     public void showMessage(String message) {
         System.out.println(message);
         pause();

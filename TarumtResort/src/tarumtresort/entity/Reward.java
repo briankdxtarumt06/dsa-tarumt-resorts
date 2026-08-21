@@ -3,6 +3,7 @@ package tarumtresort.entity;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.Tier;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class Reward implements Comparable<Reward> {
     private String rewardId;
     private String name;
@@ -74,21 +75,14 @@ public class Reward implements Comparable<Reward> {
         this.pointCost = pointCost;
     }
 
-    /**
-     * @return the RM value of this reward if it is a voucher, or null if it is not.
-     */
     public Double getVoucherValue() {
         return voucherValue;
     }
 
-    /** Sets the RM value for voucher-type rewards; null means not a voucher. */
     public void setVoucherValue(Double voucherValue) {
         this.voucherValue = voucherValue;
     }
 
-    /**
-     * @return the lowest tier allowed to redeem this reward (null = SILVER).
-     */
     public Tier getMinTier() {
         return minTier;
     }
@@ -97,9 +91,6 @@ public class Reward implements Comparable<Reward> {
         this.minTier = minTier;
     }
 
-    /**
-     * @return the room type this voucher applies to, or null for a generic voucher.
-     */
     public RoomType getRoomType() {
         return roomType;
     }
@@ -108,10 +99,6 @@ public class Reward implements Comparable<Reward> {
         this.roomType = roomType;
     }
 
-    /**
-     * @return the percentage discount for percent-type vouchers, or null if
-     *         this reward is not a percentage voucher.
-     */
     public Integer getDiscountPercent() {
         return discountPercent;
     }
@@ -120,7 +107,6 @@ public class Reward implements Comparable<Reward> {
         this.discountPercent = discountPercent;
     }
 
-    /** Soft-delete flag: the record stays for history but is hidden from active views. */
     public boolean isDeleted() {
         return isDeleted;
     }

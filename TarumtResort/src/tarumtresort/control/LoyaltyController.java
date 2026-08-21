@@ -2,10 +2,11 @@ package tarumtresort.control;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
@@ -28,9 +29,9 @@ public class LoyaltyController {
     private static final int PAGE_SIZE = 20;
 
     // ADT declaration
-    private LinkedListInterface<Member> memberList = new LinkedList<>();
-    private LinkedListInterface<Reward> rewardList = new LinkedList<>();
-    private LinkedListInterface<Guest> guestList = new LinkedList<>();
+    private ListInterface<Member> memberList = new DoublyLinkedList<>();
+    private ListInterface<Reward> rewardList = new DoublyLinkedList<>();
+    private ListInterface<Guest> guestList = new DoublyLinkedList<>();
 
     // DAO declaration
     private MemberDAO memberDAO = new MemberDAO();
@@ -58,6 +59,8 @@ public class LoyaltyController {
     public LoyaltyController(LoyaltyRewardsUI ui) {
         this(ui.getScanner());
     }
+
+    // =============== module entry ===============
 
     public void runLoyaltyRewards() {
         run();
@@ -91,7 +94,7 @@ public class LoyaltyController {
                         System.out.println("\n  Returning to main menu...");
                         break;
                     default:
-                        System.out.println("\n  ✗ Invalid choice! Please try again.");
+                        System.out.println("\n ?! Invalid choice! Please try again.");
                 }
             } while (choice != 0);
         } catch (Exception e) {
@@ -99,12 +102,14 @@ public class LoyaltyController {
         }
     }
 
+    // =============== member menu flows ===============
+
     public void runMemberMenu() {
         String tierFilter = null;
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Member> display;
+            ListInterface<Member> display;
             if (tierFilter != null) {
                 display = getMembersByTier(tierFilter);
             } else {
@@ -112,13 +117,13 @@ public class LoyaltyController {
             }
 
             boolean hasFilter = tierFilter != null;
-            boolean hasDeleted = getDeletedMembers().size() > 0;
-            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            boolean hasDeleted = getDeletedMembers().size() > 0;  // adt method
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);  // adt method
             if (page >= pageCount) {
-                page = pageCount - 1; // clamp after the list shrank
+                page = pageCount - 1;
             }
 
-            LinkedListInterface<Member> pageList = pageOf(display, page);
+            ListInterface<Member> pageList = pageOf(display, page);
             int choice = moduleUI.printMemberListMenu(pageList, page, pageCount, hasFilter,
                     hasDeleted, this::findGuest);
 
@@ -127,33 +132,33 @@ public class LoyaltyController {
             }
 
             int action = 1;
-            if (choice == action++) { // 1. View Details
+            if (choice == action++) {
                 viewMember(pageList);
-            } else if (choice == action++) { // 2. Filter by Tier
+            } else if (choice == action++) { 
                 String tier = moduleUI.inputTierFilter();
                 if (tier != null) {
                     tierFilter = tier;
                     page = 0;
                 }
-            } else if (hasDeleted && choice == action++) { // 3. Restore Deleted Member
+            } else if (hasDeleted && choice == action++) {
                 restoreDeletedMemberFlow();
             } else {
                 boolean matched = false;
-                if (page < pageCount - 1) { // Next Page
+                if (page < pageCount - 1) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page++;
                     }
                 }
-                if (!matched && page > 0) { // Previous Page
+                if (!matched && page > 0) { 
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page--;
                     }
                 }
-                if (!matched && hasFilter) { // Clear Filter
+                if (!matched && hasFilter) { 
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -165,41 +170,40 @@ public class LoyaltyController {
         }
     }
 
-    /** Deleted-members list: pick one, confirm, and restore it (undo soft delete). */
     private void restoreDeletedMemberFlow() {
         int page = 0;
         while (true) {
-            LinkedListInterface<Member> deleted = getDeletedMembers();
-            int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            ListInterface<Member> deleted = getDeletedMembers();
+            int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);  // adt method
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<Member> pageList = pageOf(deleted, page);
+            ListInterface<Member> pageList = pageOf(deleted, page);
             int choice = moduleUI.printDeletedMembersMenu(pageList, page, pageCount, this::findGuest);
             if (choice == 0) {
                 return;
             }
             int action = 1;
-            if (choice == action++) { // 1. Restore Selected Member
-                int index = moduleUI.inputListIndex("member", pageList.size());
+            if (choice == action++) {
+                int index = moduleUI.inputListIndex("member", pageList.size());  // adt method
                 if (index == 0) {
                     continue;
                 }
-                Member member = pageList.get(index - 1);
+                Member member = pageList.get(index - 1);  // adt method
                 if (member != null && moduleUI.confirm("Restore member " + member.getMemberId() + "?")) {
                     moduleUI.showMessage(restoreMember(member.getMemberId()));
                 }
                 return;
             } else {
                 boolean matched = false;
-                if (page < pageCount - 1) { // Next Page
+                if (page < pageCount - 1) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page++;
                     }
                 }
-                if (!matched && page > 0) { // Previous Page
+                if (!matched && page > 0) {
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -210,23 +214,21 @@ public class LoyaltyController {
         }
     }
 
-    // view flow: pick a member from the current page, then run its action menu
-    private void viewMember(LinkedListInterface<Member> pageList) {
-        if (pageList.isEmpty()) {
+    private void viewMember(ListInterface<Member> pageList) {
+        if (pageList.isEmpty()) {  // adt method
             moduleUI.showMessage("(No member records)");
             return;
         }
-        int num = moduleUI.inputListIndex("member", pageList.size());
+        int num = moduleUI.inputListIndex("member", pageList.size());  // adt method
         if (num == 0) {
             return;
         }
-        Member member = pageList.get(num - 1);
+        Member member = pageList.get(num - 1);  // adt method
         if (member != null) {
             handleMemberActions(member);
         }
     }
 
-    // select-entity action loop for one member: details -> action -> details
     private void handleMemberActions(Member member) {
         while (true) {
             moduleUI.displayProfile(member, findGuest(member.getGuestId()));
@@ -237,60 +239,63 @@ public class LoyaltyController {
             }
 
             switch (action) {
-                case 1: // Update Member Tier
+                case 1: 
                     moduleUI.show("Current tier: " + member.getTier());
                     Tier tier = moduleUI.selectTier();
                     if (tier != null) {
                         moduleUI.showMessage(updateMember(member.getMemberId(), tier));
                     }
                     break;
-                case 2: // Remove Member
+                case 2:
                     if (moduleUI.confirm("Remove member " + member.getMemberId()
                             + "? (soft delete - can be restored later)")) {
                         moduleUI.showMessage(removeMember(member.getMemberId()));
                     }
-                    return; // member is gone; back to the list
+                    return;
                 default:
                     break;
             }
 
-            member = findMember(member.getMemberId()); // re-read so details stay fresh
+            member = findMember(member.getMemberId());
             if (member == null) {
                 return;
             }
         }
     }
 
-    public LinkedListInterface<Member> getMembersByTier(String tier) {
-        LinkedListInterface<Member> filteredList = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            Member member = memberList.get(i);
+    // =============== member queries ===============
+
+    public ListInterface<Member> getMembersByTier(String tier) {
+        ListInterface<Member> filteredList = new DoublyLinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) {  // adt method
+            Member member = memberList.get(i);  // adt method 
             if (!member.isDeleted() && member.getTier() != null && member.getTier().name().equalsIgnoreCase(tier)) {
-                filteredList.addBack(member);
+                filteredList.addBack(member); // adt method
             }
         }
         return filteredList;
     }
 
     // the rows of one page (PAGE_SIZE at most), starting at page * PAGE_SIZE
-    private <T extends Comparable<T>> LinkedList<T> pageOf(LinkedListInterface<T> list, int page) {
-        LinkedList<T> result = new LinkedList<>();
+    private <T extends Comparable<T>> DoublyLinkedList<T> pageOf(ListInterface<T> list, int page) {
+        DoublyLinkedList<T> result = new DoublyLinkedList<>();
         int start = page * PAGE_SIZE;
-        int end = Math.min(list.size(), start + PAGE_SIZE);
+        int end = Math.min(list.size(), start + PAGE_SIZE);  // adt method
         for (int i = start; i < end; i++) {
-            result.addBack(list.get(i));
+            result.addBack(list.get(i)); // adt method
         }
         return result;
     }
 
-    /** Reward catalogue list page (mirrors HousekeepingController.runTaskManagement). */
+    // =============== reward menu flows ===============
+
     public void runRewardMenu() {
         Tier tierFilter = null;
-        int sortMode = 0; // 0 = default, 1 = points asc, 2 = points desc
+        int sortMode = 0;
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Reward> display;
+            ListInterface<Reward> display;
             if (tierFilter != null) {
                 display = getRewardsByMinTier(tierFilter);
             } else {
@@ -299,13 +304,13 @@ public class LoyaltyController {
             display = sortedRewardView(display, sortMode);
 
             boolean hasFilter = tierFilter != null;
-            boolean hasDeleted = getDeletedRewards().size() > 0;
-            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            boolean hasDeleted = getDeletedRewards().size() > 0;  // adt method
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);  // adt method
             if (page >= pageCount) {
-                page = pageCount - 1; // clamp after the list shrank
+                page = pageCount - 1;
             }
 
-            LinkedListInterface<Reward> pageList = pageOf(display, page);
+            ListInterface<Reward> pageList = pageOf(display, page);
             int choice = moduleUI.printRewardListMenu(pageList, page, pageCount, hasFilter,
                     hasDeleted, sortLabelOf(sortMode));
 
@@ -314,38 +319,38 @@ public class LoyaltyController {
             }
 
             int action = 1;
-            if (choice == action++) { // 1. View Details
+            if (choice == action++) { 
                 viewReward(pageList);
-            } else if (choice == action++) { // 2. Add New Reward
+            } else if (choice == action++) { 
                 addRewardFlow();
-            } else if (choice == action++) { // 3. Filter by Min Tier
+            } else if (choice == action++) { 
                 Tier tier = moduleUI.inputMinTierFilter();
                 if (tier != null) {
                     tierFilter = tier;
                     page = 0;
                 }
-            } else if (choice == action++) { // 4. Sort by Points
+            } else if (choice == action++) {
                 sortMode = (sortMode + 1) % 3;
                 page = 0;
-            } else if (hasDeleted && choice == action++) { // 5. Restore Deleted Reward
+            } else if (hasDeleted && choice == action++) {
                 restoreDeletedRewardFlow();
             } else {
                 boolean matched = false;
-                if (page < pageCount - 1) { // Next Page
+                if (page < pageCount - 1) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page++;
                     }
                 }
-                if (!matched && page > 0) { // Previous Page
+                if (!matched && page > 0) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page--;
                     }
                 }
-                if (!matched && hasFilter) { // Clear Filter
+                if (!matched && hasFilter) {
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -357,27 +362,26 @@ public class LoyaltyController {
         }
     }
 
-    /** Deleted-rewards list: pick one, confirm, and restore it (undo soft delete). */
     private void restoreDeletedRewardFlow() {
         int page = 0;
         while (true) {
-            LinkedListInterface<Reward> deleted = getDeletedRewards();
-            int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            ListInterface<Reward> deleted = getDeletedRewards();
+            int pageCount = Math.max(1, (deleted.size() + PAGE_SIZE - 1) / PAGE_SIZE);  // adt method
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<Reward> pageList = pageOf(deleted, page);
+            ListInterface<Reward> pageList = pageOf(deleted, page);
             int choice = moduleUI.printDeletedRewardsMenu(pageList, page, pageCount);
             if (choice == 0) {
                 return;
             }
             int action = 1;
-            if (choice == action++) { // 1. Restore Selected Reward
-                int index = moduleUI.inputListIndex("reward", pageList.size());
+            if (choice == action++) {
+                int index = moduleUI.inputListIndex("reward", pageList.size());  // adt method
                 if (index == 0) {
                     continue;
                 }
-                Reward reward = pageList.get(index - 1);
+                Reward reward = pageList.get(index - 1); // adt method
                 if (reward != null && moduleUI.confirm("Restore reward " + reward.getRewardId()
                         + " (" + reward.getName() + ")?")) {
                     moduleUI.showMessage(restoreReward(reward.getRewardId()));
@@ -385,14 +389,14 @@ public class LoyaltyController {
                 return;
             } else {
                 boolean matched = false;
-                if (page < pageCount - 1) { // Next Page
+                if (page < pageCount - 1) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page++;
                     }
                 }
-                if (!matched && page > 0) { // Previous Page
+                if (!matched && page > 0) {
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -403,13 +407,11 @@ public class LoyaltyController {
         }
     }
 
-    /** Rewards in the requested point-cost order. Mode 0 keeps the catalogue
-     *  order (already points-ascending), mode 1 = low→high, mode 2 = high→low. */
-    private LinkedListInterface<Reward> sortedRewardView(LinkedListInterface<Reward> source, int sortMode) {
+    private ListInterface<Reward> sortedRewardView(ListInterface<Reward> source, int sortMode) {
         if (sortMode == 2) {
-            LinkedListInterface<Reward> result = new LinkedList<>();
-            for (int i = source.size() - 1; i >= 0; i--) {
-                result.addBack(source.get(i));
+            ListInterface<Reward> result = new DoublyLinkedList<>();
+            for (int i = source.size() - 1; i >= 0; i--) {  // adt method
+                result.addBack(source.get(i)); // adt method
             }
             return result;
         }
@@ -427,23 +429,21 @@ public class LoyaltyController {
         }
     }
 
-    // view flow: pick a reward from the current page, then run its action menu
-    private void viewReward(LinkedListInterface<Reward> pageList) {
-        if (pageList.isEmpty()) {
+    private void viewReward(ListInterface<Reward> pageList) {
+        if (pageList.isEmpty()) { // adt method
             moduleUI.showMessage("(No rewards in the catalogue)");
             return;
         }
-        int num = moduleUI.inputListIndex("reward", pageList.size());
+        int num = moduleUI.inputListIndex("reward", pageList.size());  // adt method
         if (num == 0) {
             return;
         }
-        Reward reward = pageList.get(num - 1);
+        Reward reward = pageList.get(num - 1); // adt method
         if (reward != null) {
             handleRewardActions(reward);
         }
     }
 
-    // select-entity action loop for one reward: details -> action -> details
     private void handleRewardActions(Reward reward) {
         while (true) {
             moduleUI.displayRewardDetails(reward);
@@ -454,20 +454,20 @@ public class LoyaltyController {
             }
 
             switch (action) {
-                case 1: // Update Reward
+                case 1:
                     updateRewardPrompt(reward);
                     break;
-                case 2: // Remove Reward
+                case 2:
                     if (moduleUI.confirm("Remove reward " + reward.getRewardId()
                             + " (" + reward.getName() + ")? (soft delete - can be restored later)")) {
                         moduleUI.showMessage(removeReward(reward.getRewardId()));
                     }
-                    return; // reward is gone; back to the list
+                    return;
                 default:
                     break;
             }
 
-            reward = findReward(reward.getRewardId()); // re-read so details stay fresh
+            reward = findReward(reward.getRewardId());
             if (reward == null) {
                 return;
             }
@@ -523,51 +523,50 @@ public class LoyaltyController {
                 minTier, roomType, voucherValue, discountPercent));
     }
 
-    public LinkedListInterface<Reward> getRewardsByName(String keyword) {
-        LinkedListInterface<Reward> filteredList = new LinkedList<>();
-        for (int i = 0; i < rewardList.size(); i++) {
-            Reward reward = rewardList.get(i);
+    public ListInterface<Reward> getRewardsByName(String keyword) {
+        ListInterface<Reward> filteredList = new DoublyLinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {  // adt method
+            Reward reward = rewardList.get(i); // adt method
             if (!reward.isDeleted() && reward.getName() != null
                     && reward.getName().toLowerCase().contains(keyword.toLowerCase())) {
-                filteredList.addBack(reward);
+                filteredList.addBack(reward); // adt method
             }
         }
         return filteredList;
     }
 
-    /** Rewards whose minimum redeemable tier is exactly the given tier. */
-    public LinkedListInterface<Reward> getRewardsByMinTier(Tier tier) {
-        LinkedListInterface<Reward> filteredList = new LinkedList<>();
-        for (int i = 0; i < rewardList.size(); i++) {
-            Reward reward = rewardList.get(i);
+    public ListInterface<Reward> getRewardsByMinTier(Tier tier) {
+        ListInterface<Reward> filteredList = new DoublyLinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {  // adt method
+            Reward reward = rewardList.get(i); // adt method
             if (reward.isDeleted()) {
                 continue;
             }
             Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
             if (minTier == tier) {
-                filteredList.addBack(reward);
+                filteredList.addBack(reward); // adt method
             }
         }
         return filteredList;
     }
 
-    /** Rewards the given tier (and above) is allowed to redeem. */
-    public LinkedListInterface<Reward> getRewardsEligibleFor(Tier tier) {
-        LinkedListInterface<Reward> eligible = new LinkedList<>();
-        for (int i = 0; i < rewardList.size(); i++) {
-            Reward reward = rewardList.get(i);
+    public ListInterface<Reward> getRewardsEligibleFor(Tier tier) {
+        ListInterface<Reward> eligible = new DoublyLinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) {  // adt method
+            Reward reward = rewardList.get(i); // adt method
             if (reward.isDeleted()) {
                 continue;
             }
             Tier minTier = reward.getMinTier() == null ? Tier.SILVER : reward.getMinTier();
             if (tier != null && tier.ordinal() >= minTier.ordinal()) {
-                eligible.addBack(reward);
+                eligible.addBack(reward); // adt method
             }
         }
         return eligible;
     }
 
-    /** Points, redemption and notification list page (mirrors HousekeepingController.runAssignmentManagement). */
+    // =============== points menu flows ===============
+
     public void runPointsMenu() {
         String alert = generateExpiryAlerts(LocalDateTime.now());
         if (!alert.startsWith("No new")) {
@@ -577,7 +576,7 @@ public class LoyaltyController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Member> display;
+            ListInterface<Member> display;
             if (tierFilter != null) {
                 display = getMembersByTier(tierFilter);
             } else {
@@ -585,12 +584,12 @@ public class LoyaltyController {
             }
 
             boolean hasFilter = tierFilter != null;
-            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE); // adt method
             if (page >= pageCount) {
-                page = pageCount - 1; // clamp after the list shrank
+                page = pageCount - 1;
             }
 
-            LinkedListInterface<Member> pageList = pageOf(display, page);
+            ListInterface<Member> pageList = pageOf(display, page);
             int choice = moduleUI.printPointsListMenu(pageList, page, pageCount, hasFilter,
                     this::findGuest, m -> getAvailableBalance(m.getMemberId(), LocalDateTime.now()));
 
@@ -599,17 +598,17 @@ public class LoyaltyController {
             }
 
             int action = 1;
-            if (choice == action++) { // 1. View Details
+            if (choice == action++) { 
                 viewMemberPoints(pageList);
-            } else if (choice == action++) { // 2. Earn Points
+            } else if (choice == action++) {
                 earnPointsFlow(pageList);
-            } else if (choice == action++) { // 3. Request Redemption
+            } else if (choice == action++) {
                 requestRedemptionFlow(pageList);
-            } else if (choice == action++) { // 4. Process Redemption Requests
+            } else if (choice == action++) {
                 processRedemptionRequestsFlow();
-            } else if (choice == action++) { // 5. Generate Expiry Alerts
+            } else if (choice == action++) {
                 moduleUI.showMessage(generateExpiryAlerts(LocalDateTime.now()));
-            } else if (choice == action++) { // 6. Filter by Tier
+            } else if (choice == action++) {
                 String tier = moduleUI.inputTierFilter();
                 if (tier != null) {
                     tierFilter = tier;
@@ -617,21 +616,21 @@ public class LoyaltyController {
                 }
             } else {
                 boolean matched = false;
-                if (page < pageCount - 1) { // Next Page
+                if (page < pageCount - 1) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page++;
                     }
                 }
-                if (!matched && page > 0) { // Previous Page
+                if (!matched && page > 0) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page--;
                     }
                 }
-                if (!matched && hasFilter) { // Clear Filter
+                if (!matched && hasFilter) {
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -644,7 +643,7 @@ public class LoyaltyController {
     }
 
     // view flow: pick a member from the current page, then run its points action menu
-    private void viewMemberPoints(LinkedListInterface<Member> pageList) {
+    private void viewMemberPoints(ListInterface<Member> pageList) {
         String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
@@ -655,7 +654,6 @@ public class LoyaltyController {
         }
     }
 
-    // select-entity action loop for one member's points: balance -> action -> balance
     private void handleMemberPointsActions(Member member) {
         while (true) {
             moduleUI.displayBalance(member, getAvailableBalance(member.getMemberId(), LocalDateTime.now()));
@@ -666,24 +664,24 @@ public class LoyaltyController {
             }
 
             switch (action) {
-                case 1: // Run Expiry Check
+                case 1:
                     moduleUI.showMessage(expirePoints(member.getMemberId(), LocalDateTime.now()));
                     break;
-                case 2: // View Transaction History
+                case 2: 
                     moduleUI.displayTransactions(getTransactions(member.getMemberId()));
                     moduleUI.pause();
                     break;
-                case 3: // View Tier Progression
+                case 3:     
                     moduleUI.showMessage(getTierProgress(member.getMemberId()));
                     break;
-                case 4: // View Notifications
+                case 4:
                     viewMemberNotifications(member);
                     break;
                 default:
                     break;
             }
 
-            member = findMember(member.getMemberId()); // re-read so balance stays fresh
+            member = findMember(member.getMemberId());
             if (member == null) {
                 return;
             }
@@ -695,20 +693,19 @@ public class LoyaltyController {
             moduleUI.showMessage("Member has no guest account linked.");
             return;
         }
-        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
+        ListInterface<Notification> list = getNotifications(member.getGuestId());
         moduleUI.displayNotifications(list);
         if (moduleUI.confirmMarkAllRead()) {
-            for (int i = 0; i < list.size(); i++) {
-                markNotificationRead(list.get(i).getNotificationId());
+            for (int i = 0; i < list.size(); i++) { // adt method
+                markNotificationRead(list.get(i).getNotificationId()); // adt method
             }
             moduleUI.show("All notifications marked as read.");
         }
         moduleUI.pause();
     }
 
-    // ======================= REPORTS =======================
+    // =============== reports ===============
 
-    /** Housekeeping-style reports: date-range-only, Current header via ReportUI */
     private void runReports() {
         LoyaltyReportController reportController = new LoyaltyReportController(moduleUI.getScanner());
         while (true) {
@@ -723,24 +720,20 @@ public class LoyaltyController {
                 case 2:
                     reportController.generateRedemptionVoucherReport();
                     break;
-                case 3:
-                    reportController.generatePointExpiryReport();
-                    break;
                 default:
                     break;
             }
         }
     }
 
-    // ---- report helpers (moved to report/LoyaltyReport/*) ----
+    // =============== notifications - counts & marking ===============
 
-    /** Unread notification count across ALL members (module menu badge). */
     public int getUnreadNotificationCount() {
         int count = 0;
-        for (int i = 0; i < guestList.size(); i++) {
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
-            for (int j = 0; j < list.size(); j++) {
-                Notification n = list.get(j);
+        for (int i = 0; i < guestList.size(); i++) { // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                Notification n = list.get(j); // adt method
                 if (!n.isRead() && !n.isDeleted()) {
                     count++;
                 }
@@ -749,13 +742,12 @@ public class LoyaltyController {
         return count;
     }
 
-    /** Marks every notification across all members as read; returns how many were flipped. */
     public int markAllNotificationsRead() {
         int count = 0;
-        for (int i = 0; i < guestList.size(); i++) {
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
-            for (int j = 0; j < list.size(); j++) {
-                Notification n = list.get(j);
+        for (int i = 0; i < guestList.size(); i++) { // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                Notification n = list.get(j); // adt method
                 if (!n.isRead()) {
                     n.setRead(true);
                     count++;
@@ -768,23 +760,21 @@ public class LoyaltyController {
         return count;
     }
 
-    /** Unread notification count for ONE member (member list column). */
     public int getUnreadNotificationCount(String memberId) {
         Member member = findMember(memberId);
         if (member == null || member.getGuestId() == null) {
             return 0;
         }
         int count = 0;
-        LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
-        for (int i = 0; i < list.size(); i++) {
-            if (!list.get(i).isRead()) {
+        ListInterface<Notification> list = getNotifications(member.getGuestId());
+        for (int i = 0; i < list.size(); i++) { // adt method
+            if (!list.get(i).isRead()) { // adt method
                 count++;
             }
         }
         return count;
     }
 
-    /** Unread notification count for ONE guest (guest management column). */
     public int getUnreadNotificationCountByGuest(String guestId) {
         if (guestId == null) {
             return 0;
@@ -794,9 +784,9 @@ public class LoyaltyController {
             return 0;
         }
         int count = 0;
-        LinkedListInterface<Notification> list = guest.getNotificationList();
-        for (int i = 0; i < list.size(); i++) {
-            Notification n = list.get(i);
+        ListInterface<Notification> list = guest.getNotificationList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            Notification n = list.get(i); // adt method
             if (!n.isRead() && !n.isDeleted()) {
                 count++;
             }
@@ -804,16 +794,15 @@ public class LoyaltyController {
         return count;
     }
 
-    /** Marks ONE guest's notifications as read; returns how many were flipped. */
     public int markGuestNotificationsRead(String guestId) {
         Guest guest = findGuest(guestId);
         if (guest == null) {
             return 0;
         }
         int count = 0;
-        LinkedListInterface<Notification> list = guest.getNotificationList();
-        for (int i = 0; i < list.size(); i++) {
-            Notification n = list.get(i);
+        ListInterface<Notification> list = guest.getNotificationList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            Notification n = list.get(i); // adt method
             if (!n.isRead() && !n.isDeleted()) {
                 n.setRead(true);
                 count++;
@@ -825,7 +814,6 @@ public class LoyaltyController {
         return count;
     }
 
-    /** Marks one member's notifications as read; returns how many were flipped. */
     public int markMemberNotificationsRead(String memberId) {
         Member member = findMember(memberId);
         if (member == null || member.getGuestId() == null) {
@@ -836,9 +824,9 @@ public class LoyaltyController {
         if (guest == null) {
             return 0;
         }
-        LinkedListInterface<Notification> list = guest.getNotificationList();
-        for (int j = 0; j < list.size(); j++) {
-            Notification n = list.get(j);
+        ListInterface<Notification> list = guest.getNotificationList();
+        for (int j = 0; j < list.size(); j++) { // adt method
+            Notification n = list.get(j); // adt method
             if (!n.isRead()) {
                 n.setRead(true);
                 count++;
@@ -850,21 +838,21 @@ public class LoyaltyController {
         return count;
     }
 
-    /** Notification centre: pick a member, then manage that member's notifications. */
+    // =============== notification centre screens ===============
+
     private void runNotificationCentre() {
         int memberPage = 0;
         while (true) {
-            // level 1: all active members with their unread counts
-            LinkedListInterface<Member> display = getActiveMembers();
-            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            ListInterface<Member> display = getActiveMembers();
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE); // adt method
             if (memberPage >= pageCount) {
                 memberPage = pageCount - 1;
             }
-            LinkedListInterface<Member> pageList = pageOf(display, memberPage);
+            ListInterface<Member> pageList = pageOf(display, memberPage);
 
-            String[][] memberRows = new String[pageList.size()][];
-            for (int i = 0; i < pageList.size(); i++) {
-                Member m = pageList.get(i);
+            String[][] memberRows = new String[pageList.size()][]; // adt method
+            for (int i = 0; i < pageList.size(); i++) { // adt method
+                Member m = pageList.get(i); // adt method
                 Guest g = m.getGuestId() == null ? null : findGuest(m.getGuestId());
                 memberRows[i] = new String[] {
                     String.valueOf(i + 1), m.getMemberId(),
@@ -879,27 +867,27 @@ public class LoyaltyController {
                 return;
             }
             int action = 1;
-            if (choice == action++) { // 1. View Notifications - pick a member
-                int index = moduleUI.inputListIndex("member number", pageList.size());
+            if (choice == action++) {
+                int index = moduleUI.inputListIndex("member number", pageList.size()); // adt method
                 if (index == 0) {
                     continue;
                 }
-                viewMemberNotificationsCentre(pageList.get(index - 1));
-            } else if (choice == action++) { // 2. Mark All Read (all members)
+                viewMemberNotificationsCentre(pageList.get(index - 1)); // adt method
+            } else if (choice == action++) {
                 int marked = markAllNotificationsRead();
                 moduleUI.showMessage(marked + " notification(s) marked as read.");
                 moduleUI.pause();
                 memberPage = 0;
             } else {
                 boolean matched = false;
-                if (memberPage < pageCount - 1) { // Next Page
+                if (memberPage < pageCount - 1) {
                     matched = choice == action;
                     action++;
                     if (matched) {
                         memberPage++;
                     }
                 }
-                if (!matched && memberPage > 0) { // Previous Page
+                if (!matched && memberPage > 0) { 
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -910,7 +898,6 @@ public class LoyaltyController {
         }
     }
 
-    /** Level 2: one member's notifications, newest first, with per-member mark-all-read. */
     private void viewMemberNotificationsCentre(Member member) {
         if (member.getGuestId() == null) {
             moduleUI.showMessage("Member has no guest account linked.");
@@ -919,15 +906,15 @@ public class LoyaltyController {
         }
         int page = 0;
         while (true) {
-            LinkedListInterface<Notification> list = getNotifications(member.getGuestId());
-            int pageCount = Math.max(1, (list.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            ListInterface<Notification> list = getNotifications(member.getGuestId());
+            int pageCount = Math.max(1, (list.size() + PAGE_SIZE - 1) / PAGE_SIZE); // adt method
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
             int from = page * PAGE_SIZE;
-            String[][] rows = new String[Math.min(PAGE_SIZE, list.size() - from)][];
+            String[][] rows = new String[Math.min(PAGE_SIZE, list.size() - from)][]; // adt method
             for (int k = 0; k < rows.length; k++) {
-                Notification n = list.get(from + k);
+                Notification n = list.get(from + k); // adt method
                 rows[k] = new String[] {
                     String.valueOf(k + 1), n.getType() == null ? "-" : n.getType().name(),
                     truncate(n.getMessage(), 48),
@@ -942,24 +929,24 @@ public class LoyaltyController {
                 return;
             }
             int action = 1;
-            if (choice == action++) { // 1. Mark All Read (this member)
+            if (choice == action++) {
                 int marked = markMemberNotificationsRead(member.getMemberId());
                 moduleUI.showMessage(marked + " notification(s) marked as read.");
                 moduleUI.pause();
                 page = 0;
-            } else if (choice == action++) { // 2. Delete Notification
-                if (list.isEmpty()) {
+            } else if (choice == action++) {
+                if (list.isEmpty()) { // adt method
                     moduleUI.showMessage("(No notifications to delete)");
                     moduleUI.pause();
                 } else {
-                    int num = moduleUI.inputListIndex("notification", "delete", list.size());
+                    int num = moduleUI.inputListIndex("notification", "delete", list.size()); // adt method
                     if (num != 0) {
-                        Notification target = list.get(num - 1);
+                        Notification target = list.get(num - 1); // adt method
                         if (moduleUI.confirm("Delete notification "
                                 + target.getNotificationId() + "? (y/n): ")) {
                             moduleUI.showMessage(deleteNotification(target.getNotificationId()));
                             int newPageCount = Math.max(1,
-                                    (getNotifications(member.getGuestId()).size() + PAGE_SIZE - 1) / PAGE_SIZE);
+                                    (getNotifications(member.getGuestId()).size() + PAGE_SIZE - 1) / PAGE_SIZE); // adt method
                             if (page >= newPageCount) {
                                 page = newPageCount - 1;
                             }
@@ -969,14 +956,14 @@ public class LoyaltyController {
                 }
             } else {
                 boolean matched = false;
-                if (page < pageCount - 1) { // Next Page
+                if (page < pageCount - 1) { 
                     matched = choice == action;
                     action++;
                     if (matched) {
                         page++;
                     }
                 }
-                if (!matched && page > 0) { // Previous Page
+                if (!matched && page > 0) {
                     matched = choice == action;
                     action++;
                     if (matched) {
@@ -987,6 +974,8 @@ public class LoyaltyController {
         }
     }
 
+    // =============== shared ui helpers ===============
+
     private static String truncate(String text, int max) {
         if (text == null || text.length() <= max) {
             return text == null ? "" : text;
@@ -994,23 +983,21 @@ public class LoyaltyController {
         return text.substring(0, max - 3) + "...";
     }
 
-    // pick a member by its on-screen number from the current page (0 = cancel)
-    private String pickMemberFromPage(LinkedListInterface<Member> pageList) {
-        if (pageList.isEmpty()) {
+    private String pickMemberFromPage(ListInterface<Member> pageList) {
+        if (pageList.isEmpty()) { // adt method
             moduleUI.showMessage("(No member records)");
             return null;
         }
-        int num = moduleUI.inputListIndex("member", pageList.size());
+        int num = moduleUI.inputListIndex("member", pageList.size()); // adt method
         if (num == 0) {
             return null;
         }
-        Member member = pageList.get(num - 1);
+        Member member = pageList.get(num - 1); // adt method
         return member == null ? null : member.getMemberId();
     }
 
-    // ======================= MEMBER MANAGEMENT =======================
+    // =============== member management ===============
 
-    /** Registers an existing guest as a member (called from Guest Management). */
     public String registerMember(Guest guest) {
         if (guest == null || guest.getGuestId() == null) {
             return "Guest cannot be null and must have an id.";
@@ -1020,15 +1007,15 @@ public class LoyaltyController {
             return "This guest is already registered as member: " + existing.getMemberId() + ".";
         }
         Member member = new Member(nextMemberId(), 0, Tier.SILVER, LocalDateTime.now(), guest.getGuestId());
-        memberList.addSorted(member);
+        memberList.addSorted(member);  // adt method
         persistMembers();
         return "Guest " + guest.getName() + " registered as member " + member.getMemberId()
                 + " (Tier: " + member.getTier() + ").";
     }
 
     public Member findMemberByGuestId(String guestId) {
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            Member m = memberList.get(i);  // adt method
             if (m.getGuestId() != null && m.getGuestId().equals(guestId) && !m.isDeleted()) {
                 return m;
             }
@@ -1036,14 +1023,14 @@ public class LoyaltyController {
         return null;
     }
 
-    public LinkedListInterface<Member> getMembers() {
+    public ListInterface<Member> getMembers() {
         return memberList;
     }
 
     public Member findMember(String memberId) {
-        for (int i = 0; i < memberList.size(); i++) {
-            if (memberList.get(i).getMemberId().equals(memberId)) {
-                return memberList.get(i);
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            if (memberList.get(i).getMemberId().equals(memberId)) {  // adt method
+                return memberList.get(i);  // adt method
             }
         }
         return null;
@@ -1059,11 +1046,10 @@ public class LoyaltyController {
         }
         member.setDeleted(true);
 
-        // auto-reject any still-pending redemption requests
         int rejected = 0;
-        LinkedListInterface<RedemptionRecord> records = member.getRedemptionRecordList();
-        for (int i = 0; i < records.size(); i++) {
-            RedemptionRecord r = records.get(i);
+        ListInterface<RedemptionRecord> records = member.getRedemptionRecordList();
+        for (int i = 0; i < records.size(); i++) { // adt method
+            RedemptionRecord r = records.get(i); // adt method
             if (r != null && "PENDING".equals(r.getStatus())) {
                 r.setStatus("REJECTED");
                 rejected++;
@@ -1074,7 +1060,6 @@ public class LoyaltyController {
                 + " pending redemption request(s) rejected.";
     }
 
-    /** Undoes a soft delete so the member appears in active views again. */
     public String restoreMember(String memberId) {
         Member member = findMember(memberId);
         if (member == null) {
@@ -1088,25 +1073,23 @@ public class LoyaltyController {
         return "Member " + memberId + " restored.";
     }
 
-    /** Members that are active (not soft-deleted) - used for all list views. */
-    public LinkedListInterface<Member> getActiveMembers() {
-        LinkedListInterface<Member> active = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
-            if (!m.isDeleted()) {
-                active.addBack(m);
+    public ListInterface<Member> getActiveMembers() {
+        ListInterface<Member> active = new DoublyLinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            Member m = memberList.get(i);  // adt method
+            if (!m.isDeleted()) { // adt method
+                active.addBack(m); // adt method
             }
         }
         return active;
     }
 
-    /** Soft-deleted members (history kept, hidden from active views). */
-    public LinkedListInterface<Member> getDeletedMembers() {
-        LinkedListInterface<Member> deleted = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
+    public ListInterface<Member> getDeletedMembers() {
+        ListInterface<Member> deleted = new DoublyLinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            Member m = memberList.get(i);  // adt method
             if (m.isDeleted()) {
-                deleted.addBack(m);
+                deleted.addBack(m); // adt method
             }
         }
         return deleted;
@@ -1125,8 +1108,8 @@ public class LoyaltyController {
     public String nextMemberId() {
         try {
             int max = 0;
-            for (int i = 0; i < memberList.size(); i++) {
-                String mid = memberList.get(i).getMemberId();
+            for (int i = 0; i < memberList.size(); i++) { // adt method
+                String mid = memberList.get(i).getMemberId();  // adt method
                 if (mid != null && mid.matches("M\\d+")) {
                     int n = Integer.parseInt(mid.substring(1));
                     if (n > max) {
@@ -1136,11 +1119,11 @@ public class LoyaltyController {
             }
             return String.format("M%03d", max + 1);
         } catch (RuntimeException e) {
-            return String.format("M%03d", memberList.size() + 1);
+            return String.format("M%03d", memberList.size() + 1); // adt method
         }
     }
 
-    // ======================= REWARD MANAGEMENT =======================
+    // =============== reward management ===============
 
     private void addRewardFlow() {
         Reward reward = moduleUI.inputNewReward(nextRewardId());
@@ -1156,14 +1139,14 @@ public class LoyaltyController {
         moduleUI.showMessage(addReward(reward));
     }
 
-    public LinkedListInterface<Reward> getRewards() {
+    public ListInterface<Reward> getRewards() {
         return rewardList;
     }
 
     public Reward findReward(String rewardId) {
-        for (int i = 0; i < rewardList.size(); i++) {
-            if (rewardList.get(i).getRewardId().equals(rewardId)) {
-                return rewardList.get(i);
+        for (int i = 0; i < rewardList.size(); i++) { // adt method
+            if (rewardList.get(i).getRewardId().equals(rewardId)) { // adt method
+                return rewardList.get(i); // adt method
             }
         }
         return null;
@@ -1176,7 +1159,7 @@ public class LoyaltyController {
         if (findReward(reward.getRewardId()) != null) {
             return "Reward id already exists: " + reward.getRewardId();
         }
-        rewardList.addSorted(reward);
+        rewardList.addSorted(reward); // adt method
         persistRewards();
         return "Reward added: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
     }
@@ -1194,7 +1177,6 @@ public class LoyaltyController {
         return "Reward removed (soft delete): " + reward.getName() + " (" + rewardId + ").";
     }
 
-    /** Undoes a soft delete so the reward appears in active views again. */
     public String restoreReward(String rewardId) {
         Reward reward = findReward(rewardId);
         if (reward == null) {
@@ -1208,25 +1190,23 @@ public class LoyaltyController {
         return "Reward " + rewardId + " restored.";
     }
 
-    /** Rewards that are active (not soft-deleted) - used for all list views. */
-    public LinkedListInterface<Reward> getActiveRewards() {
-        LinkedListInterface<Reward> active = new LinkedList<>();
-        for (int i = 0; i < rewardList.size(); i++) {
-            Reward r = rewardList.get(i);
+    public ListInterface<Reward> getActiveRewards() {
+        ListInterface<Reward> active = new DoublyLinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) { // adt method
+            Reward r = rewardList.get(i); // adt method
             if (!r.isDeleted()) {
-                active.addBack(r);
+                active.addBack(r); // adt method
             }
         }
         return active;
     }
 
-    /** Soft-deleted rewards (history kept, hidden from active views). */
-    public LinkedListInterface<Reward> getDeletedRewards() {
-        LinkedListInterface<Reward> deleted = new LinkedList<>();
-        for (int i = 0; i < rewardList.size(); i++) {
-            Reward r = rewardList.get(i);
+    public ListInterface<Reward> getDeletedRewards() {
+        ListInterface<Reward> deleted = new DoublyLinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) { // adt method
+            Reward r = rewardList.get(i); // adt method
             if (r.isDeleted()) {
-                deleted.addBack(r);
+                deleted.addBack(r); // adt method
             }
         }
         return deleted;
@@ -1245,13 +1225,13 @@ public class LoyaltyController {
         reward.setRoomType(roomType);
         reward.setVoucherValue(voucherValue);
         reward.setDiscountPercent(discountPercent);
-        LinkedListInterface<Reward> reordered = new LinkedList<>();
-        for (int i = 0; i < rewardList.size(); i++) {
-            reordered.addSorted(rewardList.get(i));
+        ListInterface<Reward> reordered = new DoublyLinkedList<>();
+        for (int i = 0; i < rewardList.size(); i++) { // adt method
+            reordered.addSorted(rewardList.get(i)); // adt method
         }
-        rewardList.clear();
-        for (int i = 0; i < reordered.size(); i++) {
-            rewardList.addBack(reordered.get(i));
+        rewardList.clear(); // adt method
+        for (int i = 0; i < reordered.size(); i++) { // adt method
+            rewardList.addBack(reordered.get(i)); // adt method
         }
         persistRewards();
         return "Reward updated: " + reward.getName() + " (" + reward.getPointCost() + " pts).";
@@ -1260,8 +1240,8 @@ public class LoyaltyController {
     public String nextRewardId() {
         try {
             int max = 0;
-            for (int i = 0; i < rewardList.size(); i++) {
-                String rid = rewardList.get(i).getRewardId();
+            for (int i = 0; i < rewardList.size(); i++) { // adt method
+                String rid = rewardList.get(i).getRewardId(); // adt method
                 if (rid != null && rid.matches("R\\d+")) {
                     int n = Integer.parseInt(rid.substring(1));
                     if (n > max) {
@@ -1271,18 +1251,18 @@ public class LoyaltyController {
             }
             return String.format("R%03d", max + 1);
         } catch (RuntimeException e) {
-            return String.format("R%03d", rewardList.size() + 1);
+            return String.format("R%03d", rewardList.size() + 1); // adt method
         }
     }
 
-    // ======================= POINTS & REDEMPTION =======================
+    // =============== tier reconciliation ===============
 
     private void reconcileTiersOnLoad() {
         boolean changed = false;
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            Member m = memberList.get(i);  // adt method
             if (m.isDeleted()) {
-                continue; // soft-deleted members keep their stored tier
+                continue; 
             }
             Tier correct = tierFor(getCumulativeEarned(m.getMemberId()));
             if (m.getTier() != correct) {
@@ -1295,7 +1275,7 @@ public class LoyaltyController {
         }
     }
 
-    private void earnPointsFlow(LinkedListInterface<Member> pageList) {
+    private void earnPointsFlow(ListInterface<Member> pageList) {
         String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
@@ -1313,7 +1293,7 @@ public class LoyaltyController {
         moduleUI.showMessage(earnPoints(memberId, amount, description, LocalDateTime.now()));
     }
 
-    private void requestRedemptionFlow(LinkedListInterface<Member> pageList) {
+    private void requestRedemptionFlow(ListInterface<Member> pageList) {
         String memberId = pickMemberFromPage(pageList);
         if (memberId == null) {
             return;
@@ -1322,7 +1302,7 @@ public class LoyaltyController {
         if (member == null) {
             return;
         }
-        LinkedListInterface<Reward> eligible = getRewardsEligibleFor(member.getTier());
+        ListInterface<Reward> eligible = getRewardsEligibleFor(member.getTier());
         String rewardId = moduleUI.selectReward(eligible);
         if (rewardId == null) {
             return;
@@ -1331,7 +1311,7 @@ public class LoyaltyController {
     }
 
     private void processRedemptionRequestsFlow() {
-        LinkedListInterface<RedemptionRecord> pending = getPendingRedemptions();
+        ListInterface<RedemptionRecord> pending = getPendingRedemptions();
         String redemptionId = moduleUI.selectPendingRequest(pending);
         if (redemptionId == null) {
             return;
@@ -1348,40 +1328,44 @@ public class LoyaltyController {
         }
     }
 
-    public LinkedListInterface<PointTransaction> getPointTransactions() {
-        LinkedListInterface<PointTransaction> result = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            LinkedListInterface<PointTransaction> list = memberList.get(i).getPointTransactionList();
-            for (int j = 0; j < list.size(); j++) {
-                result.addBack(list.get(j));
+    // =============== transaction & redemption queries ===============
+
+    public ListInterface<PointTransaction> getPointTransactions() {
+        ListInterface<PointTransaction> result = new DoublyLinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            ListInterface<PointTransaction> list = memberList.get(i).getPointTransactionList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                result.addBack(list.get(j)); // adt method
             }
         }
         return result;
     }
 
-    public LinkedListInterface<RedemptionRecord> getRedemptions() {
-        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();
-            for (int j = 0; j < list.size(); j++) {
-                result.addBack(list.get(j));
+    public ListInterface<RedemptionRecord> getRedemptions() {
+        ListInterface<RedemptionRecord> result = new DoublyLinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            ListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                result.addBack(list.get(j)); // adt method
             }
         }
         return result;
     }
 
-    public LinkedListInterface<PointTransaction> getTransactions(String memberId) {
-        LinkedListInterface<PointTransaction> result = new LinkedList<>();
+    public ListInterface<PointTransaction> getTransactions(String memberId) {
+        ListInterface<PointTransaction> result = new DoublyLinkedList<>();
         Member member = findMember(memberId);
         if (member == null) {
             return result;
         }
-        LinkedListInterface<PointTransaction> list = member.getPointTransactionList();
-        for (int i = 0; i < list.size(); i++) {
-            result.addBack(list.get(i));
+        ListInterface<PointTransaction> list = member.getPointTransactionList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            result.addBack(list.get(i)); // adt method
         }
         return result;
     }
+
+    // =============== points & expiry ===============
 
     public String expirePoints(String memberId, LocalDateTime now) {
         Member member = findMember(memberId);
@@ -1391,9 +1375,9 @@ public class LoyaltyController {
 
         int totalExpired = 0;
         StringBuilder report = new StringBuilder();
-        LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
-        for (int i = 0; i < txs.size(); i++) {
-            PointTransaction t = txs.get(i);
+        ListInterface<PointTransaction> txs = getTransactions(memberId);
+        for (int i = 0; i < txs.size(); i++) { // adt method
+            PointTransaction t = txs.get(i); // adt method
             if (t.isExpired(now)) {
                 totalExpired += t.getRemainingPoints();
                 report.append("  - ").append(t.getRemainingPoints())
@@ -1411,6 +1395,7 @@ public class LoyaltyController {
         return "No points expired for " + memberId + ".";
     }
 
+    // called from ReservationControl payment - 1 pt per RM1 of the bill paid
     public String earnPoints(String memberId, int amount, String description, LocalDateTime date) {
         Member member = findMember(memberId);
         if (member == null) {
@@ -1425,7 +1410,7 @@ public class LoyaltyController {
         PointTransaction t = new PointTransaction(nextTransactionId(), date,
                 description == null || description.isBlank() ? "Points earned" : description,
                 amount, expiry, amount, memberId);
-        member.getPointTransactionList().addSorted(t);
+        member.getPointTransactionList().addSorted(t); // adt method
         recomputeBalance(member);
         recomputeTier(member, date);
         persistMembers();
@@ -1433,11 +1418,7 @@ public class LoyaltyController {
                 + member.getPoints();
     }
 
-    /**
-     * Deduct points - used when a booking refund claws back the points that
-     * were earned at payment. Writes a negative PointTransaction (never
-     * expires) clamped so the member's balance cannot go below zero.
-     */
+    // refund claw-back: deduct previously earned points when a paid booking is refunded
     public String deductPoints(String memberId, int amount, String description, LocalDateTime date) {
         Member member = findMember(memberId);
         if (member == null) {
@@ -1455,13 +1436,15 @@ public class LoyaltyController {
         PointTransaction t = new PointTransaction(nextTransactionId(), date,
                 description == null || description.isBlank() ? "Points deducted" : description,
                 -deduction, date, -deduction, memberId);
-        member.getPointTransactionList().addSorted(t);
+        member.getPointTransactionList().addSorted(t); // adt method
         recomputeBalance(member);
         recomputeTier(member, date);
         persistMembers();
         return deduction + " pts deducted from " + memberId + " (refund claw-back). New balance: "
                 + member.getPoints();
     }
+
+    // =============== redemption & vouchers ===============
 
     public String requestRedemption(String memberId, String rewardId, LocalDateTime now) {
         Member member = findMember(memberId);
@@ -1486,7 +1469,7 @@ public class LoyaltyController {
             return "Insufficient points: " + memberId + " needs " + cost + " pts but only has "
                     + member.getPoints() + ".";
         }
-        member.getRedemptionRecordList().addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId));
+        member.getRedemptionRecordList().addSorted(new RedemptionRecord(nextRedemptionId(), now, memberId, rewardId)); // adt method
         persistMembers();
         return "Redemption requested: " + reward.getName() + " (" + cost + " pts) for " + memberId
                 + " - pending approval.";
@@ -1516,11 +1499,12 @@ public class LoyaltyController {
                     + " no longer has enough points (" + member.getPoints() + "/" + cost + ").";
         }
 
+        // FIFO: consume earliest-expiring lots first (list is sorted by expiry date)
         int remainingCost = cost;
         StringBuilder breakdown = new StringBuilder();
-        LinkedListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
-        for (int i = 0; i < txs.size() && remainingCost > 0; i++) {
-            PointTransaction t = txs.get(i);
+        ListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
+        for (int i = 0; i < txs.size() && remainingCost > 0; i++) { // adt method
+            PointTransaction t = txs.get(i); // adt method
             int used = Math.min(t.getRemainingPoints(), remainingCost);
             if (used > 0) {
                 t.setRemainingPoints(t.getRemainingPoints() - used);
@@ -1533,8 +1517,6 @@ public class LoyaltyController {
         recomputeBalance(member);
         record.setStatus("APPROVED");
 
-        // voucher-type rewards: issue a redeemable code and lock in the value
-        // (either a fixed RM amount or a percentage discount)
         String voucherNote = "";
         if (reward.getVoucherValue() != null && reward.getVoucherValue() > 0) {
             record.setVoucherCode(generateVoucherCode(redemptionId));
@@ -1563,49 +1545,34 @@ public class LoyaltyController {
                 + "New balance for " + member.getMemberId() + ": " + member.getPoints();
     }
 
-    /**
-     * Returns the member's unused, approved voucher redemptions - the vouchers
-     * that can be offered to the customer at payment time.
-     *
-     * @param memberId the member to look up
-     * @return approved, unused vouchers (empty list if none)
-     */
-    public LinkedListInterface<RedemptionRecord> getAvailableVouchers(String memberId) {
-        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
+    public ListInterface<RedemptionRecord> getAvailableVouchers(String memberId) {
+        ListInterface<RedemptionRecord> result = new DoublyLinkedList<>();
         Member member = findMember(memberId);
         if (member == null) {
             return result;
         }
-        LinkedListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
-        for (int i = 0; i < list.size(); i++) {
-            RedemptionRecord r = list.get(i);
+        ListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            RedemptionRecord r = list.get(i); // adt method
             if ("APPROVED".equals(r.getStatus())
                     && !r.isUsed()
                     && r.getVoucherCode() != null
                     && ((r.getVoucherValue() != null && r.getVoucherValue() > 0)
                         || (r.getDiscountPercent() != null && r.getDiscountPercent() > 0))) {
-                result.addBack(r);
+                result.addBack(r); // adt method
             }
         }
         return result;
     }
 
-    /**
-     * Marks an approved, unused voucher as used. Called by the payment flow
-     * once the voucher value has been applied to the customer's bill.
-     *
-     * @param memberId     the member who owns the voucher
-     * @param redemptionId the redemption (voucher) to mark used
-     * @return a result message for the UI
-     */
     public String useVoucher(String memberId, String redemptionId) {
         Member member = findMember(memberId);
         if (member == null) {
             return "Member not found: " + memberId;
         }
-        LinkedListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
-        for (int i = 0; i < list.size(); i++) {
-            RedemptionRecord r = list.get(i);
+        ListInterface<RedemptionRecord> list = member.getRedemptionRecordList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            RedemptionRecord r = list.get(i); // adt method
             if (r.getRedemptionId().equals(redemptionId)) {
                 if (!"APPROVED".equals(r.getStatus())) {
                     return "Voucher " + redemptionId + " is not approved ("
@@ -1628,7 +1595,6 @@ public class LoyaltyController {
         return "Voucher not found: " + redemptionId;
     }
 
-    /** Generates a unique-looking voucher code, e.g. VCH-RR0001-8F3K. */
     private String generateVoucherCode(String redemptionId) {
         String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         Random random = new Random();
@@ -1659,16 +1625,16 @@ public class LoyaltyController {
         return "Rejected redemption request " + redemptionId + ".";
     }
 
-    public LinkedListInterface<RedemptionRecord> getPendingRedemptions() {
-        LinkedListInterface<RedemptionRecord> result = new LinkedList<>();
-        for (int i = 0; i < memberList.size(); i++) {
-            if (memberList.get(i).isDeleted()) {
-                continue; // deleted members' requests were auto-rejected
+    public ListInterface<RedemptionRecord> getPendingRedemptions() {
+        ListInterface<RedemptionRecord> result = new DoublyLinkedList<>();
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            if (memberList.get(i).isDeleted()) {  // adt method
+                continue;
             }
-            LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();
-            for (int j = 0; j < list.size(); j++) {
-                if ("PENDING".equals(list.get(j).getStatus())) {
-                    result.addBack(list.get(j));
+            ListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                if ("PENDING".equals(list.get(j).getStatus())) { // adt method
+                    result.addBack(list.get(j)); // adt method
                 }
             }
         }
@@ -1676,11 +1642,11 @@ public class LoyaltyController {
     }
 
     private RedemptionRecord findRedemption(String redemptionId) {
-        for (int i = 0; i < memberList.size(); i++) {
-            LinkedListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList();
-            for (int j = 0; j < list.size(); j++) {
-                if (list.get(j).getRedemptionId().equals(redemptionId)) {
-                    return list.get(j);
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            ListInterface<RedemptionRecord> list = memberList.get(i).getRedemptionRecordList(); // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                if (list.get(j).getRedemptionId().equals(redemptionId)) { // adt method
+                    return list.get(j); // adt method
                 }
             }
         }
@@ -1698,12 +1664,14 @@ public class LoyaltyController {
 
     private void recomputeBalance(Member member) {
         int sum = 0;
-        LinkedListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
-        for (int i = 0; i < txs.size(); i++) {
-            sum += txs.get(i).getRemainingPoints();
+        ListInterface<PointTransaction> txs = getTransactions(member.getMemberId());
+        for (int i = 0; i < txs.size(); i++) { // adt method
+            sum += txs.get(i).getRemainingPoints(); // adt method
         }
         member.setPoints(sum);
     }
+
+    // =============== persistence ===============
 
     private void persistMembers() {
         memberDAO.saveToFile(memberList);
@@ -1716,10 +1684,10 @@ public class LoyaltyController {
     private String nextTransactionId() {
         try {
             int max = 0;
-            for (int i = 0; i < memberList.size(); i++) {
-                LinkedListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList();
-                for (int j = 0; j < tlist.size(); j++) {
-                    String tid = tlist.get(j).getTransactionId();
+            for (int i = 0; i < memberList.size(); i++) { // adt method
+                ListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList(); // adt method
+                for (int j = 0; j < tlist.size(); j++) { // adt method
+                    String tid = tlist.get(j).getTransactionId(); // adt method
                     if (tid != null && tid.matches("PT\\d+")) {
                         int n = Integer.parseInt(tid.substring(2));
                         if (n > max) {
@@ -1740,11 +1708,11 @@ public class LoyaltyController {
     }
 
     private PointTransaction findTransaction(String transactionId) {
-        for (int i = 0; i < memberList.size(); i++) {
-            LinkedListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList();
-            for (int j = 0; j < tlist.size(); j++) {
-                if (tlist.get(j).getTransactionId().equals(transactionId)) {
-                    return tlist.get(j);
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            ListInterface<PointTransaction> tlist = memberList.get(i).getPointTransactionList(); // adt method
+            for (int j = 0; j < tlist.size(); j++) { // adt method
+                if (tlist.get(j).getTransactionId().equals(transactionId)) { // adt method
+                    return tlist.get(j); // adt method
                 }
             }
         }
@@ -1754,10 +1722,10 @@ public class LoyaltyController {
     private String nextRedemptionId() {
         try {
             int max = 0;
-            for (int i = 0; i < memberList.size(); i++) {
-                LinkedListInterface<RedemptionRecord> rlist = memberList.get(i).getRedemptionRecordList();
-                for (int j = 0; j < rlist.size(); j++) {
-                    String rid = rlist.get(j).getRedemptionId();
+            for (int i = 0; i < memberList.size(); i++) { // adt method
+                ListInterface<RedemptionRecord> rlist = memberList.get(i).getRedemptionRecordList(); // adt method
+                for (int j = 0; j < rlist.size(); j++) { // adt method
+                    String rid = rlist.get(j).getRedemptionId(); // adt method
                     if (rid != null && rid.matches("RR\\d+")) {
                         int n = Integer.parseInt(rid.substring(2));
                         if (n > max) {
@@ -1774,17 +1742,19 @@ public class LoyaltyController {
 
     private static final int ALERT_DAYS_BEFORE_EXPIRY = 7;
 
+    // =============== expiry alerts ===============
+
     public String generateExpiryAlerts(LocalDateTime now) {
         int created = 0;
         StringBuilder summary = new StringBuilder();
-        for (int i = 0; i < memberList.size(); i++) {
-            Member owner = memberList.get(i);
+        for (int i = 0; i < memberList.size(); i++) { // adt method
+            Member owner = memberList.get(i); // adt method
             if (owner.isDeleted()) {
-                continue; // no expiry alerts for soft-deleted members
+                continue;
             }
-            LinkedListInterface<PointTransaction> tlist = owner.getPointTransactionList();
-            for (int j = 0; j < tlist.size(); j++) {
-            PointTransaction t = tlist.get(j);
+            ListInterface<PointTransaction> tlist = owner.getPointTransactionList();
+            for (int j = 0; j < tlist.size(); j++) { // adt method
+            PointTransaction t = tlist.get(j); // adt method
             if (t.isExpired(now) || t.getRemainingPoints() <= 0) {
                 continue;
             }
@@ -1800,7 +1770,7 @@ public class LoyaltyController {
             String message = "Your " + t.getRemainingPoints() + " pts (tx " + t.getTransactionId()
                     + ") will expire on " + t.getExpiryDate().toLocalDate() + ".";
             if (hasNotification(member.getGuestId(), message)) {
-                continue; // already alerted
+                continue;
             }
             notifyMember(member, NotificationType.POINT_EXPIRY, message, now);
             created++;
@@ -1813,14 +1783,16 @@ public class LoyaltyController {
         return "No new expiry alerts to generate.";
     }
 
+    // =============== notification operations ===============
+
     private boolean hasNotification(String guestId, String message) {
         Guest guest = findGuest(guestId);
         if (guest == null) {
             return false;
         }
-        LinkedListInterface<Notification> list = guest.getNotificationList();
-        for (int i = 0; i < list.size(); i++) {
-            Notification n = list.get(i);
+        ListInterface<Notification> list = guest.getNotificationList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            Notification n = list.get(i); // adt method
             if (!n.isDeleted() && message != null && message.equals(n.getMessage())) {
                 return true;
             }
@@ -1828,27 +1800,27 @@ public class LoyaltyController {
         return false;
     }
 
-    public LinkedListInterface<Notification> getNotifications(String guestId) {
+    public ListInterface<Notification> getNotifications(String guestId) {
         Guest guest = findGuest(guestId);
         if (guest == null) {
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
-        LinkedListInterface<Notification> result = new LinkedList<>();
-        LinkedListInterface<Notification> list = guest.getNotificationList();
-        for (int i = 0; i < list.size(); i++) {
-            Notification n = list.get(i);
+        ListInterface<Notification> result = new DoublyLinkedList<>();
+        ListInterface<Notification> list = guest.getNotificationList();
+        for (int i = 0; i < list.size(); i++) { // adt method
+            Notification n = list.get(i); // adt method
             if (!n.isDeleted()) {
-                result.addBack(n);
+                result.addBack(n); // adt method
             }
         }
         return result;
     }
 
     public String markNotificationRead(String notificationId) {
-        for (int i = 0; i < guestList.size(); i++) {
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
-            for (int j = 0; j < list.size(); j++) {
-                Notification n = list.get(j);
+        for (int i = 0; i < guestList.size(); i++) { // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                Notification n = list.get(j); // adt method
                 if (n.getNotificationId().equals(notificationId)) {
                     n.setRead(true);
                     guestDAO.saveToFile(guestList);
@@ -1859,15 +1831,14 @@ public class LoyaltyController {
         return "Notification not found: " + notificationId;
     }
 
-    /** Soft-deletes a notification by id (hidden from all lists/counts, data retained). */
     public String deleteNotification(String notificationId) {
         if (notificationId == null) {
             return "Notification id cannot be null.";
         }
-        for (int i = 0; i < guestList.size(); i++) {
-            LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
-            for (int j = 0; j < list.size(); j++) {
-                Notification n = list.get(j);
+        for (int i = 0; i < guestList.size(); i++) { // adt method
+            ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+            for (int j = 0; j < list.size(); j++) { // adt method
+                Notification n = list.get(j); // adt method
                 if (notificationId.equals(n.getNotificationId())) {
                     if (n.isDeleted()) {
                         return "Notification " + notificationId + " is already deleted.";
@@ -1884,10 +1855,10 @@ public class LoyaltyController {
     private String nextNotificationId() {
         try {
             int max = 0;
-            for (int i = 0; i < guestList.size(); i++) {
-                LinkedListInterface<Notification> list = guestList.get(i).getNotificationList();
-                for (int j = 0; j < list.size(); j++) {
-                    String nid = list.get(j).getNotificationId();
+            for (int i = 0; i < guestList.size(); i++) { // adt method
+                ListInterface<Notification> list = guestList.get(i).getNotificationList();  // adt method
+                for (int j = 0; j < list.size(); j++) { // adt method
+                    String nid = list.get(j).getNotificationId(); // adt method
                     if (nid != null && nid.matches("NT\\d+")) {
                         int n = Integer.parseInt(nid.substring(2));
                         if (n > max) {
@@ -1903,9 +1874,9 @@ public class LoyaltyController {
     }
 
     public Guest findGuest(String guestId) {
-        for (int i = 0; i < guestList.size(); i++) {
-            if (guestList.get(i).getGuestId().equals(guestId)) {
-                return guestList.get(i);
+        for (int i = 0; i < guestList.size(); i++) { // adt method
+            if (guestList.get(i).getGuestId().equals(guestId)) { // adt method
+                return guestList.get(i);  // adt method
             }
         }
         return null;
@@ -1928,9 +1899,9 @@ public class LoyaltyController {
 
     public int getCumulativeEarned(String memberId) {
         int total = 0;
-        LinkedListInterface<PointTransaction> txs = getTransactions(memberId);
-        for (int i = 0; i < txs.size(); i++) {
-            int change = txs.get(i).getPointChange();
+        ListInterface<PointTransaction> txs = getTransactions(memberId);
+        for (int i = 0; i < txs.size(); i++) { // adt method
+            int change = txs.get(i).getPointChange(); // adt method
             if (change > 0) {
                 total += change;
             }

@@ -2,7 +2,7 @@ package tarumtresort.entity.enums;
 
 // Author: Brian Kam Ding Xian
 public enum TaskType {
-    CHECKOUT_CLEAN("Checkout Clean"),
+    CLEANING("Cleaning"),
     ROOM_SERVICE("Room Service"),
     INSPECTION("Inspection"),
     MAINTENANCE("Maintenance"),
@@ -24,7 +24,7 @@ public enum TaskType {
             return UNKNOWN;
         }
         return switch (type.trim().toUpperCase().replace(" ", "_")) {
-            case "CHECKOUT_CLEAN", "HOUSEKEEPING" -> CHECKOUT_CLEAN;
+            case "CLEANING", "HOUSEKEEPING" -> CLEANING;
             case "ROOM_SERVICE" -> ROOM_SERVICE;
             case "INSPECTION" -> INSPECTION;
             case "MAINTENANCE" -> MAINTENANCE;

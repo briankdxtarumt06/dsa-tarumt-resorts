@@ -3,7 +3,7 @@ package tarumtresort.boundary;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.PriorityReservation;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Staff;
@@ -11,6 +11,7 @@ import tarumtresort.entity.enums.PriorityLevel;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
+// Author: Lee Boon Yew
 public class PriorityReservationUI {
 
     private static final int BANNER_WIDTH = 60;
@@ -25,6 +26,8 @@ public class PriorityReservationUI {
     public PriorityReservationUI(Scanner scanner) {
         this.scanner = scanner;
     }
+
+    // -------------------- banners & layout --------------------
 
     public static void printBanner(String title) {
         System.out.println("\n" + BANNER_LINE);
@@ -61,6 +64,8 @@ public class PriorityReservationUI {
         int left = pad / 2;
         return " ".repeat(left) + text + " ".repeat(pad - left);
     }
+
+    // -------------------- menus --------------------
 
     public int printPriorityListMenu(String[][] tableData, int page, int pageCount, boolean hasFilter) {
         clearScreen();
@@ -110,6 +115,8 @@ public class PriorityReservationUI {
         return inputIntChoice("Enter choice", 0, 3);
     }
 
+    // -------------------- detail views --------------------
+
     public static void printDetails(String[][] details) {
         if (details == null || details.length == 0) {
             return;
@@ -147,9 +154,10 @@ public class PriorityReservationUI {
         });
     }
 
-    // VIP QUEUE (waiting members only)
-    public void displayVIPQueue(LinkedListInterface<Reservation> queue,
-            LinkedListInterface<PriorityReservation> priorities) {
+    // -------------------- VIP queue (waiting members only) --------------------
+
+    public void displayVIPQueue(ListInterface<Reservation> queue,
+            ListInterface<PriorityReservation> priorities) {
         ConsoleUtil.clearScreen();
         printBanner("VIP QUEUE (Waiting Members)");
         if (queue.isEmpty()) {
@@ -175,8 +183,9 @@ public class PriorityReservationUI {
         printSeparator();
     }
 
-    // OVERRIDE
-    public Reservation selectReservation(LinkedListInterface<Reservation> reservations) {
+    // -------------------- override selection & preview --------------------
+
+    public Reservation selectReservation(ListInterface<Reservation> reservations) {
         clearScreen();
         printBanner("SELECT RESERVATION (Non-Member, Waiting)");
         if (reservations.isEmpty()) {
@@ -205,7 +214,7 @@ public class PriorityReservationUI {
         return reservations.get(num - 1);
     }
 
-    public Staff selectStaff(LinkedListInterface<Staff> staffList) {
+    public Staff selectStaff(ListInterface<Staff> staffList) {
         clearScreen();
         printBanner("SELECT STAFF");
         if (staffList.isEmpty()) {
@@ -280,7 +289,8 @@ public class PriorityReservationUI {
         printSeparator();
     }
 
-    // INPUT / MESSAGES
+    // -------------------- input & messages --------------------
+
     public int inputListIndex(String label, int max) {
         return inputIntChoice("Enter " + label + " number (0 = cancel)", 0, max);
     }
@@ -357,7 +367,9 @@ public class PriorityReservationUI {
         }
     }
 
-    private PriorityLevel findLevel(LinkedListInterface<PriorityReservation> priorities, String reservationId) {
+    // -------------------- private helpers --------------------
+
+    private PriorityLevel findLevel(ListInterface<PriorityReservation> priorities, String reservationId) {
         for (int i = 0; i < priorities.size(); i++) {
             if (priorities.get(i).getReservationId().equals(reservationId)) {
                 return priorities.get(i).getPriorityLevel();

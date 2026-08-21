@@ -3,6 +3,7 @@ package tarumtresort.entity;
 import java.time.LocalDateTime;
 import tarumtresort.entity.enums.NotificationType;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class Notification implements Comparable<Notification> {
     private String notificationId;
     private NotificationType type;

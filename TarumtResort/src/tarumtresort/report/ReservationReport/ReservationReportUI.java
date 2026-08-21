@@ -1,4 +1,4 @@
-package tarumtresort.report.InquiryReport;
+package tarumtresort.report.ReservationReport;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -9,29 +9,31 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
 import tarumtresort.adt.ListInterface;
+import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-// Author: Fong Wen Ling
-public class InquiryReportUI {
+// Author: Chai Chee Tong
+
+public class ReservationReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
 
     private static final String UNIVERSITY =
             "TUNKU ABDUL RAHMAN UNIVERSITY OF MANAGEMENT AND TECHNOLOGY";
-    private static final String SUBSYSTEM = "FRONT-DESK INQUIRY MODULE";
+    private static final String SUBSYSTEM = "RESERVATION AND ROOM MANAGEMENT";
     private static final String CONFIDENTIAL =
             UNIVERSITY + " HIGHLY CONFIDENTIAL DOCUMENT";
-
-    private static final DateTimeFormatter TIMESTAMP_FMT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final String[] MONTHS = {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     };
+
+    private static final DateTimeFormatter TIMESTAMP_FMT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final int[] NICE_STEPS = {
         1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000
@@ -39,7 +41,7 @@ public class InquiryReportUI {
 
     private final Scanner scanner;
 
-    public InquiryReportUI(Scanner scanner) {
+    public ReservationReportUI(Scanner scanner) {
         this.scanner = scanner;
     }
 
@@ -70,6 +72,21 @@ public class InquiryReportUI {
             case 7: return new LocalDateTime[] { null, null };
             default: return rangeCustom(fieldLabel);
         }
+    }
+
+    /** Reservation status filter. Returns null for "all statuses". */
+    public ReservationStatus selectStatusFilter() {
+        ReservationStatus[] values = ReservationStatus.values();
+        System.out.println("\n========================================");
+        System.out.println("  FILTER BY RESERVATION STATUS");
+        System.out.println("========================================");
+        System.out.println("  0. All Statuses (no filter)");
+        for (int i = 0; i < values.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + values[i].name());
+        }
+        System.out.println("========================================");
+        int choice = getIntInput("Enter option", 0, values.length);
+        return choice == 0 ? null : values[choice - 1];
     }
 
     private LocalDateTime inputOptionalDateTime(String prompt) {

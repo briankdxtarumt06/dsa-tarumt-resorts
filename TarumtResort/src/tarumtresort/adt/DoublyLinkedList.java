@@ -4,7 +4,7 @@ import java.util.Iterator;
 import tarumtresort.entity.Node;
 
 // Author: Brian Kam Ding Xian, Chai Chee Tong, Fong Wen Ling, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
-public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<T> {
+public class DoublyLinkedList<T extends Comparable<T>> implements ListInterface<T> {
 
     private Node<T> head;
     private Node<T> tail;
@@ -120,7 +120,7 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
 
     // combine 2 sorted list into 1 sorted list
     @Override
-    public boolean merge(LinkedListInterface<T> other) {
+    public boolean merge(ListInterface<T> other) {
         if (other == null || other.isEmpty() || !isSorted() || !other.isSorted()) {
             return false;
         }
@@ -159,8 +159,6 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
         }
         nodeAt(index).setData(element);
     }
-
-    // LIST END
 
     // HELPER
 
@@ -205,23 +203,6 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
     }
 
     @Override
-    public String toString() {
-        if (isEmpty()) {
-            return "[]";
-        }
-        StringBuilder sb = new StringBuilder("[");
-        Node<T> current = head;
-        while (current != null) {
-            sb.append(current.getData());
-            if (current.getNext() != null) {
-                sb.append(", ");
-            }
-            current = current.getNext();
-        }
-        return sb.append("]").toString();
-    }
-
-    @Override
     public int size() {
         return size;
     }
@@ -254,6 +235,24 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
         return current;
     }
 
+    // convert list to string
+    @Override
+    public String toString() {
+        if (isEmpty()) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder("[");
+        Node<T> current = head;
+        while (current != null) {
+            sb.append(current.getData());
+            if (current.getNext() != null) {
+                sb.append(", ");
+            }
+            current = current.getNext();
+        }
+        return sb.append("]").toString();
+    }
+
     // private helper method to remove node from list
     private T removeNode(Node<T> node) {
         if (size == 1) {
@@ -273,8 +272,7 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
         return node.getData();
     }
 
-    // HELPER END
-
+    // iterator to iterate through list
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {

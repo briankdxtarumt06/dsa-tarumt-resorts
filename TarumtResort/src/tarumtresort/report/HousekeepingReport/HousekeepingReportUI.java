@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
@@ -37,13 +37,15 @@ public class HousekeepingReportUI {
         1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000
     };
 
+    private static final boolean IS_NETBEANS = false;
+
     private final Scanner scanner;
 
     public HousekeepingReportUI(Scanner scanner) {
         this.scanner = scanner;
     }
 
-    // -------------------- date range input --------------------
+    // date range input
 
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
@@ -63,7 +65,7 @@ public class HousekeepingReportUI {
 
     private LocalDateTime[] readDateTimeRangeChoice(String fieldLabel) {
         while (true) {
-            System.out.print("Enter option (0-7) (blank = all time): ");
+            System.out.print("Enter option (blank = all time) (0-7): ");
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) {
                 System.out.println();
@@ -208,7 +210,7 @@ public class HousekeepingReportUI {
         ConsoleUtil.pressEnterToContinue(scanner);
     }
 
-    // -------------------- formal three-section document --------------------
+    // section headers
 
     public void printDocumentHeader(String reportTitle) {
         TablePrinter.printFullWidthLine('=');
@@ -227,7 +229,12 @@ public class HousekeepingReportUI {
     }
 
     public void printTableSection(String[][] table) {
-        if (table == null || table.length == 0) {
+        if (table == null || table.length <= 1) {
+            TablePrinter.printFullWidthLine('-');
+            TablePrinter.printCentered("No records found.");
+            TablePrinter.printFullWidthLine('-');
+            System.out.println();
+            TablePrinter.printFullWidthLine('=');
             return;
         }
         String[] header = table[0];
@@ -241,14 +248,19 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    public void printChartSection(String reportTitle, LinkedListInterface<ReportChart> charts) {
+    public void printChartSection(String reportTitle, ListInterface<ReportChart> charts) {
         System.out.println();
         TablePrinter.printCentered("GRAPHICAL REPRESENTATION OF " + reportTitle);
         System.out.println();
-        if (charts != null) {
-            for (int i = 0; i < charts.size(); i++) {
-                printCenteredChart(charts.get(i));
-            }
+        if (charts == null || charts.isEmpty()) {
+            TablePrinter.printCentered("No chart data.");
+            System.out.println();
+            TablePrinter.printFullWidthLine('=');
+            System.out.println();
+            return;
+        }
+        for (int i = 0; i < charts.size(); i++) {
+            printCenteredChart(charts.get(i));
         }
         TablePrinter.printFullWidthLine('=');
         System.out.println();
@@ -274,13 +286,13 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    // -------------------- centered ASCII bar chart --------------------
+    // center bar chart
 
     private void printCenteredChart(ReportChart chart) {
         if (chart == null || chart.isEmpty()) {
             return;
         }
-        LinkedListInterface<ReportChart.Bar> bars = chart.getBars();
+        ListInterface<ReportChart.Bar> bars = chart.getBars();
         int barCount = bars.size();
 
         double peak = 0;
@@ -327,7 +339,7 @@ public class HousekeepingReportUI {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < barCount; i++) {
             if (heights[i] >= y) {
-                sb.append(repeat(' ', pad)).append(" ██ ").append(repeat(' ', gap));
+                sb.append(repeat(' ', pad)).append(IS_NETBEANS ? "##" : Ansi.green(" ██ ")).append(repeat(' ', gap));
             } else {
                 sb.append(repeat(' ', pitch));
             }
@@ -355,7 +367,7 @@ public class HousekeepingReportUI {
         return text.substring(0, width);
     }
 
-    private String[][] labelLines(LinkedListInterface<ReportChart.Bar> bars, int barCount) {
+    private String[][] labelLines(ListInterface<ReportChart.Bar> bars, int barCount) {
         String[][] result = new String[barCount][];
         int maxRows = 0;
         for (int i = 0; i < barCount; i++) {
@@ -416,7 +428,7 @@ public class HousekeepingReportUI {
         return (int) Math.ceil(peak / step) * step;
     }
 
-    private int[] barHeights(LinkedListInterface<ReportChart.Bar> bars, int top, int rows) {
+    private int[] barHeights(ListInterface<ReportChart.Bar> bars, int top, int rows) {
         int n = bars.size();
         int[] heights = new int[n];
         double maxVal = 0;
@@ -442,7 +454,7 @@ public class HousekeepingReportUI {
         return padRight(repeat(' ', leftPad) + blockContent, DOC_WIDTH);
     }
 
-    // -------------------- width helpers --------------------
+    // report width helper functions
 
     private void printFullWidth(String text) {
         System.out.println(padRight(text, DOC_WIDTH));
@@ -476,14 +488,6 @@ public class HousekeepingReportUI {
         StringBuilder sb = new StringBuilder(count);
         for (int i = 0; i < count; i++) {
             sb.append(c);
-        }
-        return sb.toString();
-    }
-
-    private String repeat(String s, int count) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            sb.append(s);
         }
         return sb.toString();
     }

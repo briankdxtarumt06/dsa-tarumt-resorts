@@ -1,4 +1,4 @@
-package tarumtresort.report.InquiryReport;
+package tarumtresort.report.LoyaltyReport;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -9,29 +9,36 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
 import tarumtresort.adt.ListInterface;
+import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-// Author: Fong Wen Ling
-public class InquiryReportUI {
+/**
+ * Loyalty report UI - mirrors HousekeepingReportUI: date-range input
+ * (blank = All Time, 0 = Back), secondary filters, section-based formal document
+ * printing, and a self-contained centered ASCII bar-chart engine.
+ *
+ * @author Brian
+ */
+public class LoyaltyReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
 
     private static final String UNIVERSITY =
             "TUNKU ABDUL RAHMAN UNIVERSITY OF MANAGEMENT AND TECHNOLOGY";
-    private static final String SUBSYSTEM = "FRONT-DESK INQUIRY MODULE";
+    private static final String SUBSYSTEM = "LOYALTY & REWARDS MODULE SUBSYSTEM";
     private static final String CONFIDENTIAL =
             UNIVERSITY + " HIGHLY CONFIDENTIAL DOCUMENT";
-
-    private static final DateTimeFormatter TIMESTAMP_FMT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final String[] MONTHS = {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     };
+
+    private static final DateTimeFormatter TIMESTAMP_FMT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final int[] NICE_STEPS = {
         1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000
@@ -39,11 +46,11 @@ public class InquiryReportUI {
 
     private final Scanner scanner;
 
-    public InquiryReportUI(Scanner scanner) {
+    public LoyaltyReportUI(Scanner scanner) {
         this.scanner = scanner;
     }
 
-    // -------------------- filter prompts --------------------
+    // -------------------- date range input --------------------
 
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
@@ -55,20 +62,40 @@ public class InquiryReportUI {
         System.out.println("  4. This Week (Mon - Sun)");
         System.out.println("  5. Last 7 Days");
         System.out.println("  6. Today");
-        System.out.println("  7. All Time (no limit)");
-        System.out.println("  8. Custom Range (type manually)");
+        System.out.println("  7. Custom Range (type manually)");
+        System.out.println("  0. Back");
         System.out.println("========================================");
-        int choice = getIntInput("Enter option", 1, 8);
+        return readDateTimeRangeChoice(fieldLabel);
+    }
 
-        switch (choice) {
-            case 1: return rangeThisMonth();
-            case 2: return rangeLastMonth();
-            case 3: return rangeSpecificMonth();
-            case 4: return rangeThisWeek();
-            case 5: return rangeLast7Days();
-            case 6: return rangeToday();
-            case 7: return new LocalDateTime[] { null, null };
-            default: return rangeCustom(fieldLabel);
+    private LocalDateTime[] readDateTimeRangeChoice(String fieldLabel) {
+        while (true) {
+            System.out.print("Enter option (0-7) (blank = all time): ");
+            String line = scanner.nextLine().trim();
+            if (line.isEmpty()) {
+                System.out.println();
+                return new LocalDateTime[] { null, null };
+            }
+            try {
+                int value = Integer.parseInt(line);
+                if (value < 0 || value > 7) {
+                    ConsoleUtil.printError("Please enter a number between 0 and 7!");
+                    continue;
+                }
+                System.out.println();
+                switch (value) {
+                    case 0: return null;
+                    case 1: return rangeThisMonth();
+                    case 2: return rangeLastMonth();
+                    case 3: return rangeSpecificMonth();
+                    case 4: return rangeThisWeek();
+                    case 5: return rangeLast7Days();
+                    case 6: return rangeToday();
+                    default: return rangeCustom(fieldLabel);
+                }
+            } catch (NumberFormatException e) {
+                ConsoleUtil.printError("Please enter a number between 0 and 7!");
+            }
         }
     }
 
@@ -85,6 +112,58 @@ public class InquiryReportUI {
             return inputOptionalDateTime(prompt);
         }
     }
+
+    // -------------------- secondary filters (loyalty-specific) --------------------
+
+    /** Asks for a tier filter; returns null when "All tiers" is chosen. */
+    public Tier inputTierFilter() {
+        System.out.println("\n========================================");
+        System.out.println("  TIER FILTER");
+        System.out.println("========================================");
+        Tier[] tiers = Tier.values();
+        for (int i = 0; i < tiers.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + tiers[i].name());
+        }
+        System.out.println("  " + (tiers.length + 1) + ". All tiers");
+        System.out.println("========================================");
+        int choice = getIntInput("Enter tier", 1, tiers.length + 1);
+        if (choice == tiers.length + 1) {
+            return null;
+        }
+        return tiers[choice - 1];
+    }
+
+    /** Asks for a redemption-status filter; returns null when "All statuses" is chosen. */
+    public String inputStatusFilter() {
+        System.out.println("\n========================================");
+        System.out.println("  REDEMPTION STATUS FILTER");
+        System.out.println("========================================");
+        System.out.println("  1. PENDING");
+        System.out.println("  2. APPROVED");
+        System.out.println("  3. REJECTED");
+        System.out.println("  4. All statuses");
+        System.out.println("========================================");
+        int choice = getIntInput("Enter status", 1, 4);
+        switch (choice) {
+            case 1: return "PENDING";
+            case 2: return "APPROVED";
+            case 3: return "REJECTED";
+            default: return null;
+        }
+    }
+
+    /** Asks a yes/no question for boolean report options. */
+    public boolean inputYesNo(String prompt) {
+        System.out.print(prompt + " (y/n): ");
+        String line = scanner.nextLine().trim();
+        return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
+    }
+
+    public void pressEnterToContinue() {
+        ConsoleUtil.pressEnterToContinue(scanner);
+    }
+
+    // -------------------- range presets --------------------
 
     private LocalDateTime[] rangeThisMonth() {
         YearMonth ym = YearMonth.now();
@@ -184,10 +263,6 @@ public class InquiryReportUI {
         }
     }
 
-    public void pressEnterToContinue() {
-        ConsoleUtil.pressEnterToContinue(scanner);
-    }
-
     // -------------------- formal three-section document --------------------
 
     public void printDocumentHeader(String reportTitle) {
@@ -203,6 +278,16 @@ public class InquiryReportUI {
         TablePrinter.printFullWidthLine('-');
         System.out.println();
         TablePrinter.printCentered(CONFIDENTIAL);
+        System.out.println();
+    }
+
+    public void printCriteriaSection(String criteria) {
+        if (criteria == null || criteria.isEmpty()) {
+            return;
+        }
+        TablePrinter.printFullWidthLine('-');
+        TablePrinter.printCentered("Criteria: " + criteria);
+        TablePrinter.printFullWidthLine('-');
         System.out.println();
     }
 
@@ -242,6 +327,22 @@ public class InquiryReportUI {
                 if (line == null || line.isEmpty()) {
                     continue;
                 }
+                printFullWidth(" " + Ansi.strip(line));
+            }
+        }
+    }
+
+    /** Loyalty-specific: management callouts (top member, most-redeemed reward, expiry warnings). */
+    public void printCalloutsSection(ListInterface<String> callouts) {
+        if (callouts == null || callouts.isEmpty()) {
+            return;
+        }
+        System.out.println();
+        TablePrinter.printCentered("KEY INSIGHTS");
+        System.out.println();
+        for (int i = 0; i < callouts.size(); i++) {
+            String line = callouts.get(i);
+            if (line != null && !line.isEmpty()) {
                 printFullWidth(" " + Ansi.strip(line));
             }
         }
