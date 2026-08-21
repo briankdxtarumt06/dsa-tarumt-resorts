@@ -292,6 +292,10 @@ public class InquiryController {
 
         for (int i = 0; i < allReservations.size(); i++) {
             Reservation r = allReservations.get(i);
+            // skip soft-deleted reservations
+            if (r.isDeleted()) {
+                continue;
+            }
             if (r.getConfirmationNumber().equals(confirmationNumber)) {
                 return r;
             }
@@ -426,7 +430,8 @@ public class InquiryController {
 
     // Inquiry -> Reservation -> Room dependency chain
     private String buildRoomAvailabilityInfo(Reservation reservation) {
-        if (reservation.getStatus() == ReservationStatus.WAITING) {
+        if (reservation.getStatus() == ReservationStatus.WAITING
+                || reservation.getStatus() == ReservationStatus.BOOKED) {
             RoomType type = reservation.getRoomTypeRequested();
             LinkedListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
             int availableCount = 0;
