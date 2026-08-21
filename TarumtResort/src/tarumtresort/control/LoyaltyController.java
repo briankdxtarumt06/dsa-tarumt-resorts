@@ -260,18 +260,6 @@ public class LoyaltyController {
                         moduleUI.showMessage(removeMember(member.getMemberId()));
                     }
                     return; // member is gone; back to the list
-                case 3: // Set / Edit Promotion
-                    setPromotionFlow(member);
-                    break;
-                case 4: // Clear Promotion
-                    if (member.getPromotionName() != null) {
-                        if (moduleUI.confirm("Clear promotion for " + member.getMemberId() + "?")) {
-                            moduleUI.showMessage(clearPromotion(member.getMemberId()));
-                        }
-                    } else {
-                        moduleUI.showMessage("No promotion set for " + member.getMemberId() + ".");
-                    }
-                    break;
                 default:
                     break;
             }
@@ -281,62 +269,6 @@ public class LoyaltyController {
                 return;
             }
         }
-    }
-
-    /** Prompts for and applies a personalized promotion to a member. */
-    private void setPromotionFlow(Member member) {
-        String name = moduleUI.inputPromotionName();
-        if (name == null) {
-            return; // cancelled
-        }
-        int percent = moduleUI.inputPromotionPercent();
-        if (percent == 0) {
-            return; // cancelled
-        }
-        String expiryInput = moduleUI.inputPromotionExpiryString();
-        if (expiryInput == null) {
-            return; // cancelled
-        }
-        LocalDateTime expiry = expiryInput.isBlank()
-                ? null
-                : java.time.LocalDate.parse(expiryInput).atStartOfDay();
-        moduleUI.showMessage(setPromotion(member.getMemberId(), name, percent, expiry, LocalDateTime.now()));
-    }
-
-    /** Assigns a personalized promotion (percent off stays) to a member and notifies them. */
-    public String setPromotion(String memberId, String name, int percent, LocalDateTime expiry, LocalDateTime now) {
-        Member member = findMember(memberId);
-        if (member == null) {
-            return "Member not found: " + memberId;
-        }
-        if (name == null || name.isBlank() || percent <= 0 || percent > 100) {
-            return "Invalid promotion: a name and a discount percent between 1 and 100 are required.";
-        }
-        if (expiry != null && !expiry.isAfter(now)) {
-            return "Promotion expiry must be in the future.";
-        }
-        member.setPromotionName(name.trim());
-        member.setPromotionDiscountPercent(percent);
-        member.setPromotionExpiry(expiry);
-        persistMembers();
-        notifyMember(member, "PROMOTION_ASSIGNED",
-                "You have a special offer: " + name.trim() + " (" + percent + "% off stays)"
-                        + (expiry == null ? "." : " - expires " + expiry.toLocalDate() + "."), now);
-        return "Promotion set for " + memberId + ": " + name.trim() + " (" + percent + "% off stays)"
-                + (expiry == null ? "" : ", expires " + expiry.toLocalDate()) + ".";
-    }
-
-    /** Removes a member's personalized promotion. */
-    public String clearPromotion(String memberId) {
-        Member member = findMember(memberId);
-        if (member == null) {
-            return "Member not found: " + memberId;
-        }
-        member.setPromotionName(null);
-        member.setPromotionDiscountPercent(0);
-        member.setPromotionExpiry(null);
-        persistMembers();
-        return "Promotion cleared for " + memberId + ".";
     }
 
     public LinkedListInterface<Member> getMembersByTier(String tier) {
@@ -968,7 +900,7 @@ public class LoyaltyController {
                 rows[k] = new String[] {
                     String.valueOf(k + 1), n.getType(),
                     truncate(n.getMessage(), 48),
-                    n.getDate().format(NOTIF_DATE_FMT),
+                    n.getDate() == null ? "-" : n.getDate().format(NOTIF_DATE_FMT),
                     n.isRead() ? "READ" : "UNREAD"
                 };
             }

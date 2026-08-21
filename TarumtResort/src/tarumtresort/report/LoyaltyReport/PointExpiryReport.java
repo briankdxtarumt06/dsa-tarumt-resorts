@@ -104,21 +104,6 @@ public class PointExpiryReport {
         return sum;
     }
 
-    private int memberCountOfTier(Tier t) {
-        int c = 0;
-        for (int i = 0; i < memberList.size(); i++) if (!memberList.get(i).isDeleted() && memberList.get(i).getTier() == t) c++;
-        return c;
-    }
-
-    private int expiringOfTier(Tier t, int window, LocalDateTime now) {
-        int sum = 0;
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
-            if (!m.isDeleted() && m.getTier() == t) sum += expiringWithin(m, window, now);
-        }
-        return sum;
-    }
-
     private String[][] toTable(LinkedListInterface<Member> rows, int window, LocalDateTime now) {
         String[][] table = new String[rows.size() + 1][9];
         table[0] = new String[]{"No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Next Tier", "Pts to Next", "Expiring <= " + window + "d"};
@@ -147,11 +132,19 @@ public class PointExpiryReport {
 
     private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<Member> rows, int window, LocalDateTime now) {
         LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        int[] perTier = new int[Tier.values().length];
+        long[] expPerTier = new long[Tier.values().length];
+        for (int i = 0; i < rows.size(); i++) {
+            Member m = rows.get(i);
+            int idx = m.getTier() == null ? 0 : m.getTier().ordinal();
+            perTier[idx]++;
+            expPerTier[idx] += window > 0 ? expiringWithin(m, window, now) : 0;
+        }
         ReportChart byTier = new ReportChart("Members per Tier");
         ReportChart expTier = new ReportChart("Expiring Pts per Tier");
         for (Tier t : Tier.values()) {
-            byTier.addBar(t.name(), memberCountOfTier(t), memberCountOfTier(t) + " member(s)");
-            expTier.addBar(t.name(), expiringOfTier(t, window, now), "pts");
+            byTier.addBar(t.name(), perTier[t.ordinal()], perTier[t.ordinal()] + " member(s)");
+            expTier.addBar(t.name(), expPerTier[t.ordinal()], "pts");
         }
         charts.addBack(byTier);
         charts.addBack(expTier);

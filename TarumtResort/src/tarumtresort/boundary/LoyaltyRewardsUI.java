@@ -284,70 +284,9 @@ public class LoyaltyRewardsUI {
         printSection("Member Actions");
         System.out.println("  1. Update Member Tier");
         System.out.println("  2. Remove Member");
-        System.out.println("  3. Set / Edit Promotion");
-        System.out.println("  4. Clear Promotion");
         System.out.println("  0. Back to List");
         printSeparator();
-        return inputIntChoice("Enter choice", 0, 4);
-    }
-
-    public String inputPromotionName() {
-        while (true) {
-            System.out.print("Enter promotion name (0 to cancel): ");
-            String name = scanner.nextLine().trim();
-            if (name.equals("0")) {
-                System.out.println("Operation cancelled.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (!name.isEmpty()) {
-                return name;
-            }
-            ConsoleUtil.printError("Promotion name cannot be empty.");
-        }
-    }
-
-    public int inputPromotionPercent() {
-        while (true) {
-            System.out.print("Enter discount percent (1-100, 0 to cancel): ");
-            String line = scanner.nextLine().trim();
-            if (line.equals("0")) {
-                System.out.println("Operation cancelled.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return 0;
-            }
-            try {
-                int v = Integer.parseInt(line);
-                if (v >= 1 && v <= 100) {
-                    System.out.println();
-                    return v;
-                }
-            } catch (NumberFormatException e) {
-                // retry below
-            }
-            ConsoleUtil.printError("Please enter a number between 1 and 100 (or 0 to cancel).");
-        }
-    }
-
-    public String inputPromotionExpiryString() {
-        while (true) {
-            System.out.print("Enter expiry date (yyyy-mm-dd, blank = no expiry, 0 to cancel): ");
-            String line = scanner.nextLine().trim();
-            if (line.equals("0")) {
-                System.out.println("Operation cancelled.");
-                ConsoleUtil.pressEnterToContinue(scanner);
-                return null;
-            }
-            if (line.isEmpty()) {
-                return "";
-            }
-            try {
-                LocalDate.parse(line);
-                return line;
-            } catch (java.time.format.DateTimeParseException e) {
-                ConsoleUtil.printError("Invalid date format! Use YYYY-MM-DD.");
-            }
-        }
+        return inputIntChoice("Enter choice", 0, 2);
     }
 
     public String inputTierFilter() {
@@ -365,10 +304,6 @@ public class LoyaltyRewardsUI {
             System.out.println("Member not found.");
             return;
         }
-        LocalDateTime promoNow = LocalDateTime.now();
-        String promotion = m.hasActivePromotion(promoNow)
-                ? m.promotionLabel(promoNow)
-                : (m.getPromotionName() != null ? m.getPromotionName() + " (expired)" : "-");
         String[][] details = {
             {"Member ID", m.getMemberId()},
             {"Tier", m.getTier() == null ? "-" : m.getTier().name()},
@@ -380,8 +315,7 @@ public class LoyaltyRewardsUI {
             {"Phone", g == null ? "-" : g.getContactNumber()},
             {"Nationality", g == null ? "-" : g.getNationality()},
             {"Address", g == null ? "-" : g.getAddress()},
-            {"Enrolled", m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)},
-            {"Promotion", promotion}
+            {"Enrolled", m.getEnrollmentDate() == null ? "-" : m.getEnrollmentDate().format(DATE_FMT)}
         };
         printSection("Details");
         int keyWidth = 0;
@@ -544,9 +478,6 @@ public class LoyaltyRewardsUI {
     public void displayBalance(Member member, int balance) {
         System.out.printf("Member %s (Tier: %s) - Available balance: %d pts%n",
                 member.getMemberId(), member.getTier(), balance);
-        if (member != null && member.hasActivePromotion(LocalDateTime.now())) {
-            System.out.println("  Promotion: " + member.promotionLabel(LocalDateTime.now()));
-        }
     }
 
     public void displayTransactions(LinkedListInterface<PointTransaction> txs) {
@@ -583,7 +514,7 @@ public class LoyaltyRewardsUI {
             Notification n = list.get(i);
             System.out.printf(" %d. [%s] %s (%s)%n",
                     i + 1, n.isRead() ? "READ" : "UNREAD",
-                    n.getMessage(), n.getDate().format(DATE_FMT));
+                    n.getMessage(), n.getDate() == null ? "-" : n.getDate().format(DATE_FMT));
         }
     }
 

@@ -26,6 +26,8 @@ public class RedemptionVoucherReport {
         LinkedListInterface<RedemptionRecord> filtered = new LinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
+            // consistent soft-delete policy: skip removed members' records
+            if (m.isDeleted()) continue;
             var recs = m.getRedemptionRecordList();
             for (int j = 0; j < recs.size(); j++) {
                 RedemptionRecord r = recs.get(j);
@@ -84,20 +86,17 @@ public class RedemptionVoucherReport {
         return text.substring(0, width - 3) + "...";
     }
 
-    private int redemptionCountFor(String rewardId) {
+    private int countInRows(LinkedListInterface<RedemptionRecord> rows, String rewardId) {
         int c = 0;
-        for (int i = 0; i < memberList.size(); i++) {
-            var recs = memberList.get(i).getRedemptionRecordList();
-            for (int j = 0; j < recs.size(); j++) if (rewardId.equals(recs.get(j).getRewardId())) c++;
-        }
+        for (int i = 0; i < rows.size(); i++) if (rewardId.equals(rows.get(i).getRewardId())) c++;
         return c;
     }
 
-    private String mostRedeemedReward() {
+    private String mostRedeemedReward(LinkedListInterface<RedemptionRecord> rows) {
         String best = null; int bestCount = 0;
         for (int i = 0; i < rewardList.size(); i++) {
             Reward r = rewardList.get(i);
-            int cnt = redemptionCountFor(r.getRewardId());
+            int cnt = countInRows(rows, r.getRewardId());
             if (cnt > bestCount) { bestCount = cnt; best = r.getName(); }
         }
         return bestCount == 0 ? null : best;
@@ -144,7 +143,7 @@ public class RedemptionVoucherReport {
         ReportChart byReward = new ReportChart("Redemptions per Reward");
         for (int i = 0; i < rewardList.size(); i++) {
             Reward reward = rewardList.get(i);
-            int cnt = redemptionCountFor(reward.getRewardId());
+            int cnt = countInRows(rows, reward.getRewardId());
             if (cnt > 0) byReward.addBar(truncateName(reward.getName(), 8), cnt, cnt + " time(s)");
         }
         charts.addBack(byReward);
@@ -179,7 +178,7 @@ public class RedemptionVoucherReport {
 
     private LinkedListInterface<String> buildCallouts(LinkedListInterface<RedemptionRecord> rows) {
         LinkedListInterface<String> callouts = new LinkedList<>();
-        String most = mostRedeemedReward();
+        String most = mostRedeemedReward(rows);
         if (most != null) callouts.addBack("Most redeemed reward: " + most);
         return callouts;
     }

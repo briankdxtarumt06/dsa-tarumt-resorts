@@ -87,24 +87,7 @@ public class MembershipPerformanceReport {
         return g == null || g.getName() == null ? "-" : g.getName();
     }
 
-    private String promoText(Member m, LocalDateTime now) {
-        if (m.hasActivePromotion(now)) return m.promotionLabel(now);
-        if (m.getPromotionName() != null) return m.getPromotionName() + " (expired)";
-        return "-";
-    }
-
     private int getCumulativeEarned(String memberId) {
-        int total = 0;
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
-            if (!m.getMemberId().equals(memberId)) continue;
-            var txs = m.getPointTransactionList();
-            for (int j = 0; j < txs.size(); j++) {
-                int change = txs.get(j).getPointChange();
-                if (change > 0) total += change;
-            }
-        }
-        // also check direct member lookup
         for (int i = 0; i < memberList.size(); i++) {
             if (memberList.get(i).getMemberId().equals(memberId)) {
                 var txs = memberList.get(i).getPointTransactionList();
@@ -113,27 +96,12 @@ public class MembershipPerformanceReport {
                 return t;
             }
         }
-        return total;
-    }
-
-    private double balanceSumOfTier(Tier t) {
-        double sum = 0;
-        for (int i = 0; i < memberList.size(); i++) {
-            Member m = memberList.get(i);
-            if (m.getTier() == t && !m.isDeleted()) sum += m.getPoints();
-        }
-        return sum;
-    }
-
-    private int memberCountOfTier(Tier t) {
-        int c = 0;
-        for (int i = 0; i < memberList.size(); i++) if (!memberList.get(i).isDeleted() && memberList.get(i).getTier() == t) c++;
-        return c;
+        return 0;
     }
 
     private String[][] toTable(LinkedListInterface<Member> rows, LocalDateTime now) {
-        String[][] table = new String[rows.size() + 1][10];
-        table[0] = new String[]{"No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Txns", "Redemptions", "Promotion", "Status"};
+        String[][] table = new String[rows.size() + 1][9];
+        table[0] = new String[]{"No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Txns", "Redemptions", "Status"};
         int[] perTier = new int[Tier.values().length];
         double balanceSum = 0;
         long cumSum = 0;
@@ -150,7 +118,6 @@ public class MembershipPerformanceReport {
                 String.valueOf(cumulative),
                 String.valueOf(m.getPointTransactionList().size()),
                 String.valueOf(m.getRedemptionRecordList().size()),
-                promoText(m, now),
                 m.isDeleted() ? "DELETED" : "ACTIVE"
             };
         }
@@ -160,15 +127,19 @@ public class MembershipPerformanceReport {
     private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<Member> rows) {
         LinkedListInterface<ReportChart> charts = new LinkedList<>();
         int[] perTier = new int[Tier.values().length];
-        for (int i = 0; i < rows.size(); i++) perTier[rows.get(i).getTier() == null ? 0 : rows.get(i).getTier().ordinal()]++;
+        long[] balancePerTier = new long[Tier.values().length];
+        for (int i = 0; i < rows.size(); i++) {
+            Member m = rows.get(i);
+            int idx = m.getTier() == null ? 0 : m.getTier().ordinal();
+            perTier[idx]++;
+            balancePerTier[idx] += m.getPoints();
+        }
         ReportChart byTier = new ReportChart("Members per Tier");
         ReportChart avgByTier = new ReportChart("Avg Balance per Tier");
-        double totalBalance = 0;
-        for (int i = 0; i < rows.size(); i++) totalBalance += rows.get(i).getPoints();
         for (Tier t : Tier.values()) {
-            byTier.addBar(t.name(), perTier[t.ordinal()], perTier[t.ordinal()] + " member(s)");
-            int count = memberCountOfTier(t);
-            avgByTier.addBar(t.name(), count == 0 ? 0 : Math.round(balanceSumOfTier(t) / count), count == 0 ? "0" : String.valueOf(count));
+            int count = perTier[t.ordinal()];
+            byTier.addBar(t.name(), count, count + " member(s)");
+            avgByTier.addBar(t.name(), count == 0 ? 0 : Math.round(balancePerTier[t.ordinal()] / count), count == 0 ? "0" : String.valueOf(count));
         }
         charts.addBack(byTier);
         charts.addBack(avgByTier);
@@ -178,20 +149,16 @@ public class MembershipPerformanceReport {
     private String[] buildSummary(LinkedListInterface<Member> rows) {
         double balanceSum = 0;
         long cumSum = 0;
-        int withPromo = 0;
-        LocalDateTime now = LocalDateTime.now();
         for (int i = 0; i < rows.size(); i++) {
             Member m = rows.get(i);
             balanceSum += m.getPoints();
             cumSum += getCumulativeEarned(m.getMemberId());
-            if (m.hasActivePromotion(now)) withPromo++;
         }
         long avg = rows.size() == 0 ? 0 : Math.round(balanceSum / rows.size());
         return new String[]{
             "TOTAL MEMBERS: " + rows.size(),
             "AVG BALANCE: " + avg + " pts",
-            "TOTAL PTS IN CIRCULATION: " + Math.round(balanceSum),
-            "MEMBERS WITH ACTIVE PROMOTION: " + withPromo
+            "TOTAL PTS IN CIRCULATION: " + Math.round(balanceSum)
         };
     }
 
