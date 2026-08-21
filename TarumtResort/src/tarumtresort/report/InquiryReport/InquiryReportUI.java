@@ -1,10 +1,5 @@
 package tarumtresort.report.InquiryReport;
 
-import tarumtresort.adt.ListInterface;
-import tarumtresort.report.ReportChart;
-import tarumtresort.utility.Ansi;
-import tarumtresort.utility.ConsoleUtil;
-import tarumtresort.utility.TablePrinter;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,12 +8,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
+import tarumtresort.adt.ListInterface;
+import tarumtresort.report.ReportChart;
+import tarumtresort.utility.Ansi;
+import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.TablePrinter;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class InquiryReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;

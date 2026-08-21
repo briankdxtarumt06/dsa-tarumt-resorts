@@ -22,10 +22,7 @@ import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.InquiryReport.InquiryReportController;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class InquiryController {
 
     private static final int PAGE_SIZE = 20;

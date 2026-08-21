@@ -11,11 +11,7 @@ import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class RoomTypeInquiryDistributionReport {
 
     private final ListInterface<Inquiry> inquiryList;

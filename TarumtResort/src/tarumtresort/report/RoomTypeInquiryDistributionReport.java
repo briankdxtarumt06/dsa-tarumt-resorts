@@ -7,11 +7,7 @@ import tarumtresort.entity.Reservation;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.RoomType;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class RoomTypeInquiryDistributionReport {
 
     private final ListInterface<Inquiry> inquiryList;

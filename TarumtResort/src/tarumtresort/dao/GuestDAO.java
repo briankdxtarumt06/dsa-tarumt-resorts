@@ -20,7 +20,6 @@ public class GuestDAO {
         }
     }
 
-    /** Loads guests into the given list, replacing its current contents. */
     public void loadFromFile(ListInterface<Guest> list) {
         list.clear();
         try {

@@ -12,11 +12,7 @@ import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class PendingInquiryReport {
 
     private final ListInterface<Inquiry> inquiryList;

@@ -14,11 +14,7 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class InquiryUI {
 
     private Scanner scanner = new Scanner(System.in);

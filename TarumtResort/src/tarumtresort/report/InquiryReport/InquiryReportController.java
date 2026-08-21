@@ -12,11 +12,7 @@ import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Reservation;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class InquiryReportController {
 
     private final InquiryDAO inquiryDAO = new InquiryDAO();

@@ -1,7 +1,6 @@
 package tarumtresort.report.ReservationReport;
 
 import java.time.LocalDateTime;
-
 import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
@@ -11,7 +10,6 @@ import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
 // Author: Chai Chee Tong
-
 public class NationalityReport {
 
     private final ListInterface<Guest> guestList;
@@ -22,10 +20,6 @@ public class NationalityReport {
         this.reservationList = reservationList == null ? new DoublyLinkedList<>() : reservationList;
     }
 
-    /**
-     * Generates the report. from/to may be null (unbounded range);
-     * statusFilter may be null (all statuses).
-     */
     public Result generate(LocalDateTime from, LocalDateTime to, ReservationStatus statusFilter) {
         ListInterface<NationalityRow> rows = new DoublyLinkedList<>();
         int totalCounted = 0;
