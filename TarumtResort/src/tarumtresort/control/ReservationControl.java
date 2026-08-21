@@ -2427,6 +2427,7 @@ public class ReservationControl {
 
             for (int i = 0; i < reservations.size(); i++) {
                 payment.addConfirmationNumber(reservations.get(i).getConfirmationNumber());
+                payment.addReservationId(reservations.get(i).getReservationId());
             }
 
             // vouchers are only consumed once the payment is recorded

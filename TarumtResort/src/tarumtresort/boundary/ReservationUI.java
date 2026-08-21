@@ -840,24 +840,30 @@ public class ReservationUI {
             return;
         }
 
-        String[] header = { "Payment ID", "Conf. No.(s)", "Total (RM)", "Refunded (RM)", "Refund At", "Status" };
+        String[] header = { "Payment ID", "Reservation ID(s)", "Total (RM)", "Refunded (RM)", "Refund At", "Status" };
         String[][] rows = new String[payments.size()][6];
         for (int i = 0; i < payments.size(); i++) {
             Payment p = payments.get(i);
 
-            StringBuilder confs = new StringBuilder(p.getReservationID() == null ? "-" : p.getReservationID());
-            LinkedListInterface<String> numbers = p.getConfirmationNumbers();
-            if (numbers != null) {
-                for (int j = 0; j < numbers.size(); j++) {
-                    if (numbers.get(j) != null && !numbers.get(j).equals(p.getReservationID())) {
-                        confs.append(", ").append(numbers.get(j));
+            StringBuilder ids = new StringBuilder();
+            LinkedListInterface<String> resIds = p.getReservationIds();
+            if (resIds != null) {
+                for (int j = 0; j < resIds.size(); j++) {
+                    if (resIds.get(j) != null) {
+                        if (ids.length() > 0) {
+                            ids.append(", ");
+                        }
+                        ids.append(resIds.get(j));
                     }
                 }
+            }
+            if (ids.length() == 0) {
+                ids.append("-");
             }
 
             rows[i] = new String[] {
                     p.getPaymentID(),
-                    confs.toString(),
+                    ids.toString(),
                     String.format("%.2f", p.getTotalAmount()),
                     String.format("%.2f", p.getRefundedAmount()),
                     p.getRefundDateTime() != null ? p.getRefundDateTime().toString() : "-",
