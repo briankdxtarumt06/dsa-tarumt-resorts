@@ -835,23 +835,14 @@ public class ReservationUI {
         for (int i = 0; i < payments.size(); i++) {
             Payment p = payments.get(i);
 
-            StringBuilder ids = new StringBuilder();
-            ListInterface<String> resIds = p.getReservationIds();
-            if (resIds != null) {
-                for (int j = 0; j < resIds.size(); j++) {
-                    if (resIds.get(j) != null) {
-                        if (ids.length() > 0) {
-                            ids.append(", ");
-                        }
-                        ids.append(resIds.get(j));
+            StringBuilder confs = new StringBuilder(p.getReservationID() == null ? "-" : p.getReservationID());
+            ListInterface<String> numbers = p.getConfirmationNumbers();
+            if (numbers != null) {
+                for (int j = 0; j < numbers.size(); j++) {
+                    if (numbers.get(j) != null && !numbers.get(j).equals(p.getReservationID())) {
+                        confs.append(", ").append(numbers.get(j));
                     }
                 }
-            }
-            if (ids.length() == 0) {
-                ids.append("-");
-            }
-            if (ids.length() == 0) {
-                ids.append("-");
             }
 
             rows[i] = new String[] {

@@ -4,10 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-
-import java.util.Scanner;
-
 import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.ReservationUI;
@@ -30,10 +26,9 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-// import tarumtresort.report.NationalityReport;
-import tarumtresort.report.ReportResult;
-//import tarumtresort.report.ReportUI;
-// import tarumtresort.report.RoomTypeReport;
+import tarumtresort.report.ReservationReport.ReservationReportController;
+
+// Author: Chai Chee Tong, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
 
 public class ReservationControl {
 
@@ -79,9 +74,8 @@ public class ReservationControl {
     private LoyaltyController loyaltyController = new LoyaltyController();
     private HousekeepingController housekeepingController = new HousekeepingController();
 
-    // payment state (moved out of the nested PaymentControl into the outer class)
-    private final ListInterface<Payment> paymentList = new DoublyLinkedList<>();
-    private final PaymentDAO paymentDAO = new PaymentDAO();
+    // Reports - all report calculation lives in the report package
+    private ReservationReportController reservationReportController = new ReservationReportController(reservationUI.getScanner());
 
     // Constructors
     public ReservationControl() {
@@ -195,7 +189,8 @@ public class ReservationControl {
                 case 3:
                     runRoomManagement();
                     break;
-                case 4: // generateReport();
+                case 4:
+                    generateReport();
                     break;
                 default:
                     break;
@@ -1481,62 +1476,24 @@ public class ReservationControl {
     }
 
     // ===== REPORTS =====
-    // public void generateReport() {
-    // ReportUI reportUI = new ReportUI(reservationUI.getScanner());
+    public void generateReport() {
+        int choice;
+        do {
+            System.out.println("\n========================================");
+            System.out.println("  RESERVATION REPORTS");
+            System.out.println("========================================");
+            System.out.println("  1. Nationality Demand Report");
+            System.out.println("  2. Room Type Demand Report");
+            System.out.println("  0. Back");
+            System.out.println("========================================");
+            choice = reservationUI.inputListIndex("report option", 2);
 
-    // int choice;
-    // do {
-    // System.out.println("\n========================================");
-    // System.out.println(" RESERVATION REPORTS");
-    // System.out.println("========================================");
-    // System.out.println(" 1. Nationality Demand Report");
-    // System.out.println(" 2. Room Type Demand Report");
-    // System.out.println(" 0. Back");
-    // System.out.println("========================================");
-    // choice = reservationUI.inputListIndex("report option", 2);
-
-    // if (choice == 1) {
-    // LinkedListInterface<Guest> reportGuests = new LinkedList<>();
-    // guestDAO.loadFromFile(reportGuests);
-    // LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-    // reservationDAO.loadAllReservations(reportReservations);
-
-    // LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration
-    // timestamp");
-    // ReservationStatus status = inputReportStatusFilter();
-    // ReportResult result = new NationalityReport(reportGuests, reportReservations)
-    // .generate(range[0], range[1], status);
-    // reportUI.printReport(result, "NATIONALITY DEMAND REPORT");
-    // reportUI.pressEnterToContinue();
-    // } else if (choice == 2) {
-    // LinkedListInterface<Room> reportRooms = new LinkedList<>();
-    // roomDAO.loadFromFile(reportRooms);
-    // LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-    // reservationDAO.loadAllReservations(reportReservations);
-
-    // LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration
-    // timestamp");
-    // ReservationStatus status = inputReportStatusFilter();
-    // ReportResult result = new RoomTypeReport(reportRooms, reportReservations)
-    // .generate(range[0], range[1], status);
-    // reportUI.printReport(result, "ROOM TYPE DEMAND REPORT");
-    // reportUI.pressEnterToContinue();
-    // }
-    // } while (choice != 0);
-    // }
-
-    private ReservationStatus inputReportStatusFilter() {
-        ReservationStatus[] values = ReservationStatus.values();
-        System.out.println("\nFilter by reservation status:");
-        System.out.println("  0. All statuses (no filter)");
-        for (int i = 0; i < values.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + values[i]);
-        }
-        int choice = reservationUI.inputListIndex("status option", values.length);
-        if (choice == 0) {
-            return null;
-        }
-        return values[choice - 1];
+            if (choice == 1) {
+                reservationReportController.generateNationalityDemandReport();
+            } else if (choice == 2) {
+                reservationReportController.generateRoomTypeDemandReport();
+            }
+        } while (choice != 0);
     }
 
     // ===== HELPERS =====
@@ -2289,56 +2246,67 @@ public class ReservationControl {
         }
     }
 
-    // called from bookRoom() - one combined payment for the whole booking session
-    public Payment processBookingPayment(ListInterface<Reservation> reservations,
-            Member member, LoyaltyController loyaltyController) {
-        if (reservations == null || reservations.size() == 0) {
-            return null;
-        }
-        double totalRoomCharge = 0;
-        for (int i = 0; i < reservations.size(); i++) {
-            Reservation r = reservations.get(i);
-            double pricePerNight = getPriceByRoomType(r.getRoomTypeRequested());
-            totalRoomCharge += pricePerNight * r.getNumberOfNights();
+    // ------------------------------------------------------------------
+    // PaymentControl (nested)
+    // ------------------------------------------------------------------
+    private static class PaymentControl {
+        private final ListInterface<Payment> paymentList = new DoublyLinkedList<>();
+        private final PaymentDAO paymentDAO = new PaymentDAO();
+
+        public PaymentControl() {
+            paymentDAO.loadFromFile(paymentList);
         }
 
-        // ---- vouchers: each voucher offsets its own room type's subtotal (capped);
-        // generic vouchers (null room type) offset the remaining session charge.
-        ListInterface<RedemptionRecord> appliedVouchers = new DoublyLinkedList<>();
-        ListInterface<Double> appliedDeductions = new DoublyLinkedList<>();
-        if (member != null) {
-            double[] poolByType = new double[RoomType.values().length];
+        // called from bookRoom() - one combined payment for the whole booking session
+        public Payment processBookingPayment(ListInterface<Reservation> reservations,
+                ReservationControl reservationControl, Member member, LoyaltyController loyaltyController) {
+            if (reservations == null || reservations.size() == 0) {
+                return null;
+            }
+            double totalRoomCharge = 0;
             for (int i = 0; i < reservations.size(); i++) {
                 Reservation r = reservations.get(i);
-                RoomType rt = r.getRoomTypeRequested();
-                if (rt != null) {
-                    poolByType[rt.ordinal()]
-                            += getPriceByRoomType(rt) * r.getNumberOfNights();
-                }
+                double pricePerNight = reservationControl.getPriceByRoomType(r.getRoomTypeRequested());
+                totalRoomCharge += pricePerNight * r.getNumberOfNights();
             }
-            double genericPool = totalRoomCharge;
 
-            while (true) {
-                ListInterface<RedemptionRecord> available =
-                        loyaltyController.getAvailableVouchers(member.getMemberId());
-                ListInterface<RedemptionRecord> applicable = new DoublyLinkedList<>();
-                for (int i = 0; i < available.size(); i++) {
-                    RedemptionRecord v = available.get(i);
-                    if (isVoucherApplied(appliedVouchers, v.getRedemptionId())) {
-                        continue;
-                    }
-                    double pool = v.getRoomType() == null
-                            ? genericPool
-                            : poolByType[v.getRoomType().ordinal()];
-                    boolean isVoucher = (v.getVoucherValue() != null && v.getVoucherValue() > 0)
-                            || (v.getDiscountPercent() != null && v.getDiscountPercent() > 0);
-                    if (pool > 0.005 && isVoucher) {
-                        applicable.addBack(v);
+            // ---- vouchers: each voucher offsets its own room type's subtotal (capped);
+            // generic vouchers (null room type) offset the remaining session charge.
+            ListInterface<RedemptionRecord> appliedVouchers = new DoublyLinkedList<>();
+            ListInterface<Double> appliedDeductions = new DoublyLinkedList<>();
+            if (member != null) {
+                double[] poolByType = new double[RoomType.values().length];
+                for (int i = 0; i < reservations.size(); i++) {
+                    Reservation r = reservations.get(i);
+                    RoomType rt = r.getRoomTypeRequested();
+                    if (rt != null) {
+                        poolByType[rt.ordinal()]
+                                += reservationControl.getPriceByRoomType(rt) * r.getNumberOfNights();
                     }
                 }
-                if (applicable.isEmpty()) {
-                    break;
-                }
+                double genericPool = totalRoomCharge;
+
+                while (true) {
+                    ListInterface<RedemptionRecord> available =
+                            loyaltyController.getAvailableVouchers(member.getMemberId());
+                    ListInterface<RedemptionRecord> applicable = new DoublyLinkedList<>();
+                    for (int i = 0; i < available.size(); i++) {
+                        RedemptionRecord v = available.get(i);
+                        if (isVoucherApplied(appliedVouchers, v.getRedemptionId())) {
+                            continue;
+                        }
+                        double pool = v.getRoomType() == null
+                                ? genericPool
+                                : poolByType[v.getRoomType().ordinal()];
+                        boolean isVoucher = (v.getVoucherValue() != null && v.getVoucherValue() > 0)
+                                || (v.getDiscountPercent() != null && v.getDiscountPercent() > 0);
+                        if (pool > 0.005 && isVoucher) {
+                            applicable.addBack(v);
+                        }
+                    }
+                    if (applicable.isEmpty()) {
+                        break;
+                    }
 
                     String redemptionId = reservationControl.getReservationUI().selectVoucher(applicable);
                     if (redemptionId == null) {
@@ -2372,23 +2340,23 @@ public class ReservationControl {
                 }
             }
 
-        double voucherTotal = 0;
-        String[] voucherLabels = new String[appliedVouchers.size()];
-        double[] voucherValues = new double[appliedVouchers.size()];
-        for (int i = 0; i < appliedVouchers.size(); i++) {
-            RedemptionRecord v = appliedVouchers.get(i);
-            if (v.getDiscountPercent() != null) {
-                String room = v.getRoomType() == null ? "Any Room" : v.getRoomType().name();
-                voucherLabels[i] = "Voucher Applied (" + v.getDiscountPercent() + "% OFF " + room + ")";
-            } else if (v.getRoomType() == null) {
-                voucherLabels[i] = "Voucher Applied";
-            } else {
-                voucherLabels[i] = "Voucher Applied (" + v.getRoomType() + ")";
+            double voucherTotal = 0;
+            String[] voucherLabels = new String[appliedVouchers.size()];
+            double[] voucherValues = new double[appliedVouchers.size()];
+            for (int i = 0; i < appliedVouchers.size(); i++) {
+                RedemptionRecord v = appliedVouchers.get(i);
+                if (v.getDiscountPercent() != null) {
+                    String room = v.getRoomType() == null ? "Any Room" : v.getRoomType().name();
+                    voucherLabels[i] = "Voucher Applied (" + v.getDiscountPercent() + "% OFF " + room + ")";
+                } else if (v.getRoomType() == null) {
+                    voucherLabels[i] = "Voucher Applied";
+                } else {
+                    voucherLabels[i] = "Voucher Applied (" + v.getRoomType() + ")";
+                }
+                voucherValues[i] = appliedDeductions.get(i);
+                voucherTotal += appliedDeductions.get(i);
             }
-            voucherValues[i] = appliedDeductions.get(i);
-            voucherTotal += appliedDeductions.get(i);
-        }
-        double chargeAfterVouchers = Math.max(0.0, totalRoomCharge - voucherTotal);
+            double chargeAfterVouchers = Math.max(0.0, totalRoomCharge - voucherTotal);
 
             // member tier discount (after vouchers, before SC & tax)
             int discountPercent = member == null ? 0 : member.getTier().getDiscountPercent();
@@ -2422,11 +2390,11 @@ public class ReservationControl {
                 payment.addConfirmationNumber(reservations.get(i).getConfirmationNumber());
             }
 
-        // vouchers are only consumed once the payment is recorded
-        for (int i = 0; i < appliedVouchers.size(); i++) {
-            loyaltyController.useVoucher(member.getMemberId(),
-                    appliedVouchers.get(i).getRedemptionId());
-        }
+            // vouchers are only consumed once the payment is recorded
+            for (int i = 0; i < appliedVouchers.size(); i++) {
+                loyaltyController.useVoucher(member.getMemberId(),
+                        appliedVouchers.get(i).getRedemptionId());
+            }
 
             paymentList.addBack(payment);
             paymentDAO.saveToFile(paymentList);
@@ -2440,23 +2408,23 @@ public class ReservationControl {
             return payment;
         }
 
-    private boolean isVoucherApplied(ListInterface<RedemptionRecord> applied, String redemptionId) {
-        for (int i = 0; i < applied.size(); i++) {
-            if (applied.get(i).getRedemptionId().equals(redemptionId)) {
-                return true;
+        private boolean isVoucherApplied(ListInterface<RedemptionRecord> applied, String redemptionId) {
+            for (int i = 0; i < applied.size(); i++) {
+                if (applied.get(i).getRedemptionId().equals(redemptionId)) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
-    }
 
-    private RedemptionRecord findVoucher(ListInterface<RedemptionRecord> list, String redemptionId) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getRedemptionId().equals(redemptionId)) {
-                return list.get(i);
+        private RedemptionRecord findVoucher(ListInterface<RedemptionRecord> list, String redemptionId) {
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getRedemptionId().equals(redemptionId)) {
+                    return list.get(i);
+                }
             }
+            return null;
         }
-        return null;
-    }
 
         // refund policy: 100% refund if cancelled at least 24 hours before the
         // 12pm check-in moment; 0% refund if cancelled within the last 24 hours.
@@ -2510,62 +2478,70 @@ public class ReservationControl {
             return findPaymentByConfirmationNumber(confirmationNumber) != null;
         }
 
-    private Payment findPaymentByConfirmationNumber(String confirmationNumber) {
-        for (int i = 0; i < paymentList.size(); i++) {
-            Payment p = paymentList.get(i);
-            ListInterface<String> numbers = p.getConfirmationNumbers();
-            if (numbers != null) {
-                for (int j = 0; j < numbers.size(); j++) {
-                    if (confirmationNumber.equals(numbers.get(j))) {
-                        return p;
+        private Payment findPaymentByConfirmationNumber(String confirmationNumber) {
+            for (int i = 0; i < paymentList.size(); i++) {
+                Payment p = paymentList.get(i);
+                if (confirmationNumber.equals(p.getReservationID())) {
+                    return p;
+                }
+                ListInterface<String> numbers = p.getConfirmationNumbers();
+                if (numbers != null) {
+                    for (int j = 0; j < numbers.size(); j++) {
+                        if (confirmationNumber.equals(numbers.get(j))) {
+                            return p;
+                        }
                     }
                 }
             }
+            return null;
         }
-        return null;
-    }
 
-    public ListInterface<Payment> getPaymentList() {
-        return paymentList;
-    }
-
-    public PaymentMethod askPaymentMethod(ReservationUI reservationUI) {
-        String[][] methodOptions = {
-                { "1", "Cash" },
-                { "2", "Credit Card" },
-                { "3", "Debit Card" },
-                { "4", "E-Wallet" },
-                { "5", "Online Banking" },
-                { "0", "Cancel" }
-        };
-        int methodChoice = reservationUI.showSubMenu("Select Payment Method:", methodOptions);
-        switch (methodChoice) {
-            case 1:
-                return PaymentMethod.CASH;
-            case 2:
-                return PaymentMethod.CREDIT_CARD;
-            case 3:
-                return PaymentMethod.DEBIT_CARD;
-            case 4:
-                return PaymentMethod.E_WALLET;
-            case 5:
-                return PaymentMethod.ONLINE_BANKING;
-            default:
-                return null;
+        public void displayPaymentRecords(ReservationUI ui) {
+            ui.printPaymentRecords(paymentList);
         }
-    }
 
-    private String generatePaymentId() {
-        int max = 0;
-        for (int i = 0; i < paymentList.size(); i++) {
-            String id = paymentList.get(i).getPaymentID();
-            if (id != null && id.startsWith("PAY")) {
-                try {
-                    max = Math.max(max, Integer.parseInt(id.substring(3)));
-                } catch (NumberFormatException ignored) {
-                }
+        public ListInterface<Payment> getPaymentList() {
+            return paymentList;
+        }
+
+        public PaymentMethod askPaymentMethod(ReservationUI reservationUI) {
+            String[][] methodOptions = {
+                    { "1", "Cash" },
+                    { "2", "Credit Card" },
+                    { "3", "Debit Card" },
+                    { "4", "E-Wallet" },
+                    { "5", "Online Banking" },
+                    { "0", "Cancel" }
+            };
+            int methodChoice = reservationUI.showSubMenu("Select Payment Method:", methodOptions);
+            switch (methodChoice) {
+                case 1:
+                    return PaymentMethod.CASH;
+                case 2:
+                    return PaymentMethod.CREDIT_CARD;
+                case 3:
+                    return PaymentMethod.DEBIT_CARD;
+                case 4:
+                    return PaymentMethod.E_WALLET;
+                case 5:
+                    return PaymentMethod.ONLINE_BANKING;
+                default:
+                    return null;
             }
         }
-        return String.format("PAY%03d", max + 1);
+
+        private String generatePaymentId() {
+            int max = 0;
+            for (int i = 0; i < paymentList.size(); i++) {
+                String id = paymentList.get(i).getPaymentID();
+                if (id != null && id.startsWith("PAY")) {
+                    try {
+                        max = Math.max(max, Integer.parseInt(id.substring(3)));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+            return String.format("PAY%03d", max + 1);
+        }
     }
 }
