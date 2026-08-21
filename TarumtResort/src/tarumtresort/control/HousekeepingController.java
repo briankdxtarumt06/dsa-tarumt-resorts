@@ -1410,7 +1410,7 @@ public class HousekeepingController {
                 max = number;
             }
         }
-        return String.format("TSK%012d", max + 1);
+        return String.format("TSK%04d", max + 1);
     }
 
     private String generateStaffId() {
@@ -1421,7 +1421,7 @@ public class HousekeepingController {
                 max = number;
             }
         }
-        return String.format("STF%012d", max + 1);
+        return String.format("STF%04d", max + 1);
     }
 
     private String generateAssignmentId() {
@@ -1432,7 +1432,7 @@ public class HousekeepingController {
                 max = number;
             }
         }
-        return String.format("ASG%012d", max + 1);
+        return String.format("ASG%04d", max + 1);
     }
 
     private String generateChangeId() {
@@ -1443,7 +1443,7 @@ public class HousekeepingController {
                 max = number;
             }
         }
-        return String.format("CHG%012d", max + 1);
+        return String.format("CHG%04d", max + 1);
     }
 
     private int parseIdSuffix(String id) {
