@@ -27,10 +27,7 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-import tarumtresort.report.NationalityReport;
-import tarumtresort.report.ReportResult;
-import tarumtresort.report.ReportUI;
-import tarumtresort.report.RoomTypeReport;
+import tarumtresort.report.ReservationReport.ReservationReportController;
 
 public class ReservationControl {
 
@@ -68,6 +65,9 @@ public class ReservationControl {
     // Controller
     private PaymentControl paymentControl = new PaymentControl();
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
+
+    // Reports - all report calculation lives in the report package
+    private ReservationReportController reservationReportController = new ReservationReportController(reservationUI.getScanner());
 
     // Constructors
     public ReservationControl() {
@@ -1312,8 +1312,6 @@ public class ReservationControl {
 
     // ===== REPORTS =====
     public void generateReport() {
-        ReportUI reportUI = new ReportUI(reservationUI.getScanner());
-
         int choice;
         do {
             System.out.println("\n========================================");
@@ -1326,45 +1324,11 @@ public class ReservationControl {
             choice = reservationUI.inputListIndex("report option", 2);
 
             if (choice == 1) {
-                LinkedListInterface<Guest> reportGuests = new LinkedList<>();
-                guestDAO.loadFromFile(reportGuests);
-                LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-                reservationDAO.loadAllReservations(reportReservations);
-
-                LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration timestamp");
-                ReservationStatus status = inputReportStatusFilter();
-                ReportResult result = new NationalityReport(reportGuests, reportReservations)
-                        .generate(range[0], range[1], status);
-                reportUI.printReport(result, "NATIONALITY DEMAND REPORT");
-                reportUI.pressEnterToContinue();
+                reservationReportController.generateNationalityDemandReport();
             } else if (choice == 2) {
-                LinkedListInterface<Room> reportRooms = new LinkedList<>();
-                roomDAO.loadFromFile(reportRooms);
-                LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-                reservationDAO.loadAllReservations(reportReservations);
-
-                LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration timestamp");
-                ReservationStatus status = inputReportStatusFilter();
-                ReportResult result = new RoomTypeReport(reportRooms, reportReservations)
-                        .generate(range[0], range[1], status);
-                reportUI.printReport(result, "ROOM TYPE DEMAND REPORT");
-                reportUI.pressEnterToContinue();
+                reservationReportController.generateRoomTypeDemandReport();
             }
         } while (choice != 0);
-    }
-
-    private ReservationStatus inputReportStatusFilter() {
-        ReservationStatus[] values = ReservationStatus.values();
-        System.out.println("\nFilter by reservation status:");
-        System.out.println("  0. All statuses (no filter)");
-        for (int i = 0; i < values.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + values[i]);
-        }
-        int choice = reservationUI.inputListIndex("status option", values.length);
-        if (choice == 0) {
-            return null;
-        }
-        return values[choice - 1];
     }
 
     // ===== HELPERS =====

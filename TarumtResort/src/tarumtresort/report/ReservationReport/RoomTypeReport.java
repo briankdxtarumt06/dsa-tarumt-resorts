@@ -1,31 +1,15 @@
-package tarumtresort.report;
+package tarumtresort.report.ReservationReport;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomType;
+import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
-/**
- *
- * Room Type Demand Report: which room type is reserved the most / fewest
- * times.
- *
- * Dependencies: Room (room type inventory), Reservation (roomTypeRequested,
- * status, registration timestamp). Filters: date range (registration
- * timestamp), reservation status.
- *
- * Report data (aggregation, search, sort) uses only LinkedListInterface - no
- * java.util collection framework. Row lookup is a hand-written linear search
- * (find-or-create), final ordering is a hand-written selection sort - no
- * addSorted()/Collections.sort(). java.util.List is only used at the very end
- * to satisfy ReportChart/ReportResult's existing constructor signatures.
- */
 public class RoomTypeReport {
 
     private final LinkedListInterface<Room> roomList;
@@ -40,7 +24,7 @@ public class RoomTypeReport {
      * Generates the report. from/to may be null (unbounded range);
      * statusFilter may be null (all statuses).
      */
-    public ReportResult generate(LocalDateTime from, LocalDateTime to, ReservationStatus statusFilter) {
+    public Result generate(LocalDateTime from, LocalDateTime to, ReservationStatus statusFilter) {
         LinkedListInterface<RoomTypeRow> rows = new LinkedList<>();
         int totalCounted = 0;
 
@@ -78,7 +62,7 @@ public class RoomTypeReport {
 
         sortByReservationCountDescending(rows);
 
-        return new ReportResult(toTable(rows, totalCounted), summary(rows, totalCounted), buildCharts(rows), null);
+        return new Result(toTable(rows, totalCounted), buildCharts(rows), summary(rows, totalCounted));
     }
 
     // -------------------- search helpers --------------------
@@ -138,8 +122,8 @@ public class RoomTypeReport {
 
     // -------------------- charts --------------------
 
-    private List<ReportChart> buildCharts(LinkedListInterface<RoomTypeRow> rows) {
-        List<ReportChart> charts = new ArrayList<>();
+    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<RoomTypeRow> rows) {
+        LinkedListInterface<ReportChart> charts = new LinkedList<>();
 
         ReportChart reservationsChart = new ReportChart("Reservations by Room Type");
         for (int i = 0; i < rows.size(); i++) {
@@ -147,7 +131,7 @@ public class RoomTypeReport {
             reservationsChart.addBar(row.roomType.name(), row.reservationCount,
                     "(" + row.reservationCount + " reservation" + (row.reservationCount == 1 ? "" : "s") + ")");
         }
-        charts.add(reservationsChart);
+        charts.addBack(reservationsChart);
 
         ReportChart inventoryChart = new ReportChart("Room Inventory by Type");
         for (int i = 0; i < rows.size(); i++) {
@@ -155,7 +139,7 @@ public class RoomTypeReport {
             inventoryChart.addBar(row.roomType.name(), row.totalRoomsOfType,
                     "(" + row.totalRoomsOfType + " room" + (row.totalRoomsOfType == 1 ? "" : "s") + ")");
         }
-        charts.add(inventoryChart);
+        charts.addBack(inventoryChart);
 
         return charts;
     }
@@ -208,6 +192,34 @@ public class RoomTypeReport {
         @Override
         public int compareTo(RoomTypeRow other) {
             return this.roomType.name().compareToIgnoreCase(other.roomType.name());
+        }
+    }
+
+    public static class Result {
+        private final String[][] table;
+        private final LinkedListInterface<ReportChart> charts;
+        private final String[] summary;
+
+        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary) {
+            this.table = table;
+            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.summary = summary;
+        }
+
+        public String[][] getTable() {
+            return table;
+        }
+
+        public LinkedListInterface<ReportChart> getCharts() {
+            return charts;
+        }
+
+        public String[] getSummary() {
+            return summary;
+        }
+
+        public boolean isEmpty() {
+            return table == null || table.length <= 1;
         }
     }
 }
