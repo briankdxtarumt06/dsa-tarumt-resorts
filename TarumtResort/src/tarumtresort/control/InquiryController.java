@@ -1,6 +1,7 @@
 package tarumtresort.control;
 
 import java.time.LocalDateTime;
+import java.util.Scanner;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.InquiryUI;
@@ -20,9 +21,7 @@ import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-import tarumtresort.report.PendingInquiryReport;
-import tarumtresort.report.ReportResult;
-import tarumtresort.report.RoomTypeInquiryDistributionReport;
+import tarumtresort.report.InquiryReport.InquiryReportController;
 
 /**
  *
@@ -34,7 +33,6 @@ public class InquiryController {
     private ReservationControl reservationControl = new ReservationControl();
     private HousekeepingController housekeepingController = new HousekeepingController();
 
-    // list declaration
     private LinkedListInterface<Inquiry> inquiryList = new LinkedList<>();
 
     // dao
@@ -44,8 +42,12 @@ public class InquiryController {
     private static final PaymentDAO paymentDAO = new PaymentDAO();
 
     // ui
-    private InquiryUI ui = new InquiryUI();
+    private final Scanner scanner = new Scanner(System.in);
+    private InquiryUI ui = new InquiryUI(scanner);
     private ReservationUI reservationUI = new ReservationUI();
+
+    // report generation
+    private InquiryReportController inquiryReportController = new InquiryReportController(scanner);
 
     private int inquiryCounter;
 
@@ -196,6 +198,7 @@ public class InquiryController {
             return;
         }
 
+        // status updated
         target.setStatus(InquiryStatus.CANCELLED);
         target.setResolvedTime(LocalDateTime.now());
 
@@ -214,27 +217,12 @@ public class InquiryController {
     public void generateReport() {
         int choice = ui.getReportMenuChoice();
         switch (choice) {
-            case 1: {
-                InquiryType filterType = ui.inputInquiryTypeFilter();
-
-                LinkedListInterface<Guest> guestList = new LinkedList<>();
-                guestDAO.loadFromFile(guestList);
-
-                ReportResult result = new PendingInquiryReport(inquiryList, guestList).generate(filterType);
-                ui.printReport(result);
+            case 1:
+                inquiryReportController.generatePendingInquiryReport();
                 break;
-            }
-            case 2: {
-                RoomType filterType = ui.inputRoomTypeFilter();
-
-                LinkedListInterface<Reservation> reservations = new LinkedList<>();
-                reservationDAO.loadAllReservations(reservations);
-
-                ReportResult result = new RoomTypeInquiryDistributionReport(inquiryList, reservations)
-                        .generate(filterType);
-                ui.printReport(result);
+            case 2:
+                inquiryReportController.generateRoomTypeInquiryDistributionReport();
                 break;
-            }
             case 0:
             default:
                 break;
@@ -328,7 +316,7 @@ public class InquiryController {
         return null;
     }
 
-    // first PENDING inquiry in list order == earliest priority/createdTime
+    // first PENDING inquiry in list order
     private Inquiry getNextPendingInquiry() {
         for (int i = 0; i < inquiryList.size(); i++) {
             Inquiry inq = inquiryList.get(i);
