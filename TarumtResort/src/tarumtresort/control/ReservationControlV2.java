@@ -53,8 +53,7 @@ public class ReservationControlV2 {
     // ui declaration
     private ReservationUI reservationUI = new ReservationUI();
 
-    // List declaration - reservations is the single source of truth;
-    // booking/queue/vip/assigned views are filtered from it on demand, not stored separately
+    // List declaration
     private LinkedListInterface<Reservation> reservations = new LinkedList<>();
     private LinkedListInterface<Guest> guestList = new LinkedList<>();
     private LinkedListInterface<String> customNationalities = new LinkedList<>();
@@ -89,7 +88,6 @@ public class ReservationControlV2 {
     // list declaration
     public LinkedListInterface<Reservation> getReservations() { return reservations; }
 
-    // views below are filtered from `reservations` on every call, not stored separately
     public LinkedListInterface<Reservation> getBookingList() {
         LinkedListInterface<Reservation> result = new LinkedList<>();
         for (int i = 0; i < reservations.size(); i++) {
@@ -171,8 +169,6 @@ public class ReservationControlV2 {
                 case 4: generateReport(); break;
                 default: break;
             }
-            // saves every time control returns to this top menu (leaving any
-            // submenu, or exiting), not just once at the very end
             saveAll();
         } while (choice != 0);
     }
@@ -974,7 +970,7 @@ public class ReservationControlV2 {
         }
     }
 
-    // case 8 - show one guest's queue position
+    // case 8 
     public void checkQueuePosition() {
         LinkedListInterface<Guest> queuedGuests = buildQueuedGuestList();
 
@@ -1037,7 +1033,6 @@ public class ReservationControlV2 {
         return queuedGuests;
     }
 
-    // table of one guest's queued reservations, with each row's real position in guestQueue
     private String[][] buildGuestQueuePositionTableData(LinkedListInterface<Reservation> guestReservations) {
         LinkedListInterface<Reservation> guestQueue = getGuestQueue();
         String[][] data = new String[guestReservations.size() + 1][6];
@@ -1331,8 +1326,6 @@ public class ReservationControlV2 {
             choice = reservationUI.inputListIndex("report option", 2);
 
             if (choice == 1) {
-                // reload fresh from file, same as ReportMenu does for the housekeeping reports -
-                // not the live guestList/reservations fields
                 LinkedListInterface<Guest> reportGuests = new LinkedList<>();
                 guestDAO.loadFromFile(reportGuests);
                 LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
@@ -1360,7 +1353,6 @@ public class ReservationControlV2 {
         } while (choice != 0);
     }
 
-    // status filter prompt for the reports above; 0 = no filter (all statuses)
     private ReservationStatus inputReportStatusFilter() {
         ReservationStatus[] values = ReservationStatus.values();
         System.out.println("\nFilter by reservation status:");
