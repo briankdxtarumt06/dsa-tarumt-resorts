@@ -49,13 +49,13 @@ public class MainMenuUI {
                 }
 
                 System.out.printf(
-                    "  ✗ Please enter a number between %d and %d!%n",
+                    " ?! Please enter a number between %d and %d!%n !?",
                     min, max
                 );
 
             } catch (NumberFormatException e) {
                 System.out.println(
-                    "  ✗ Invalid input! Please enter a valid number."
+                    " ?! Invalid input !? Please enter a valid number."
                 );
             }
         }
@@ -66,7 +66,7 @@ public class MainMenuUI {
     }
 
     public void printInvalidChoice() {
-        System.out.println("\n  ✗ Invalid choice! Please try again.");
+        System.out.println("\n  ?! Invalid choice !? Please try again.");
     }
 
     public void pressEnterToContinue() {
