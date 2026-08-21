@@ -1010,10 +1010,9 @@ public class LoyaltyRewardsUI {
         printBanner("LOYALTY & REWARDS REPORTS");
         System.out.println("  1. Membership & Tier Performance Report");
         System.out.println("  2. Redemption & Voucher Report");
-        System.out.println("  3. Point Expiry & Tier Progression Report");
         System.out.println("  0. Back");
         printSeparator();
-        return inputIntChoice("Enter choice", 0, 3);
+        return inputIntChoice("Enter choice", 0, 2);
     }
 
     public int inputListIndex(String entityLabel, int max) {

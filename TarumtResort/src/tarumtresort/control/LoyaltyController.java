@@ -705,9 +705,6 @@ public class LoyaltyController {
                 case 2:
                     reportController.generateRedemptionVoucherReport();
                     break;
-                case 3:
-                    reportController.generatePointExpiryReport();
-                    break;
                 default:
                     break;
             }

@@ -62,24 +62,6 @@ public class LoyaltyReportController {
         ui().pressEnterToContinue();
     }
 
-    public void generatePointExpiryReport() {
-        LocalDateTime[] range = ui().inputOptionalDateTimeRange("transaction");
-        if (range == null) {
-            return;
-        }
-        Tier tierFilter = ui().inputTierFilter();
-        boolean expiringOnly = ui().inputYesNo("Show only members with points expiring within the window?");
-
-        LinkedListInterface<Member> members = memberDAO.retrieveFromFile();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
-        guestDAO.loadFromFile(guests);
-
-        PointExpiryReport.Result result = new PointExpiryReport(members, guests)
-                .generate(range[0], range[1], tierFilter, expiringOnly);
-        new PointExpiryUI(ui()).render(result);
-        ui().pressEnterToContinue();
-    }
-
     private ReportUI ui() {
         return new ReportUI(scanner);
     }
