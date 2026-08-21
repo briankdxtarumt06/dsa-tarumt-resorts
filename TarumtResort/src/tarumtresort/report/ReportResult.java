@@ -1,33 +1,33 @@
 package tarumtresort.report;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 
 // Author: Brian Kam Ding Xian
 public class ReportResult {
 
     private final String[][] table;
     private final String[] summary;
-    private final LinkedListInterface<ReportChart> charts;
-    private final LinkedListInterface<String> callouts;
+    private final ListInterface<ReportChart> charts;
+    private final ListInterface<String> callouts;
     private final String criteria;
 
     public ReportResult(String[][] table, String[] summary) {
-        this(table, summary, (LinkedListInterface<ReportChart>) null, null, null);
+        this(table, summary, (ListInterface<ReportChart>) null, null, null);
     }
 
     public ReportResult(String[][] table, String[] summary,
-            LinkedListInterface<ReportChart> charts, LinkedListInterface<String> callouts) {
+            ListInterface<ReportChart> charts, ListInterface<String> callouts) {
         this(table, summary, charts, callouts, null);
     }
 
     public ReportResult(String[][] table, String[] summary,
-            LinkedListInterface<ReportChart> charts, LinkedListInterface<String> callouts,
+            ListInterface<ReportChart> charts, ListInterface<String> callouts,
             String criteria) {
         this.table = table;
         this.summary = summary == null ? new String[0] : summary;
-        this.charts = charts == null ? new LinkedList<>() : charts;
-        this.callouts = callouts == null ? new LinkedList<>() : callouts;
+        this.charts = charts == null ? new DoublyLinkedList<>() : charts;
+        this.callouts = callouts == null ? new DoublyLinkedList<>() : callouts;
         this.criteria = criteria;
     }
 
@@ -39,11 +39,11 @@ public class ReportResult {
         return summary;
     }
 
-    public LinkedListInterface<ReportChart> getCharts() {
+    public ListInterface<ReportChart> getCharts() {
         return charts;
     }
 
-    public LinkedListInterface<String> getCallouts() {
+    public ListInterface<String> getCallouts() {
         return callouts;
     }
 

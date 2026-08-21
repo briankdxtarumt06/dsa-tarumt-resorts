@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.function.Function;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Notification;
@@ -203,7 +203,7 @@ public class LoyaltyRewardsUI {
     // ==================================================================
     // MEMBER MANAGEMENT
     // ==================================================================
-    public int printMemberListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+    public int printMemberListMenu(ListInterface<Member> pageList, int page, int pageCount,
             boolean hasFilter, boolean hasDeleted, Function<String, Guest> guestResolver) {
         clearScreen();
         printBanner("MEMBER MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -245,7 +245,7 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int printDeletedMembersMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+    public int printDeletedMembersMenu(ListInterface<Member> pageList, int page, int pageCount,
             Function<String, Guest> guestResolver) {
         clearScreen();
         printBanner("DELETED MEMBERS (Page " + (page + 1) + " of " + pageCount + ")");
@@ -355,7 +355,7 @@ public class LoyaltyRewardsUI {
     // ==================================================================
     // POINTS & REDEMPTION MANAGEMENT
     // ==================================================================
-    public int printPointsListMenu(LinkedListInterface<Member> pageList, int page, int pageCount,
+    public int printPointsListMenu(ListInterface<Member> pageList, int page, int pageCount,
             boolean hasFilter, Function<String, Guest> guestResolver,
             Function<Member, Integer> balanceResolver) {
         clearScreen();
@@ -411,7 +411,7 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, 4);
     }
 
-    public String selectReward(LinkedListInterface<Reward> rewards) {
+    public String selectReward(ListInterface<Reward> rewards) {
         if (rewards.isEmpty()) {
             System.out.println("No rewards available for this member's tier.");
             ConsoleUtil.pressEnterToContinue(scanner);
@@ -480,7 +480,7 @@ public class LoyaltyRewardsUI {
                 member.getMemberId(), member.getTier(), balance);
     }
 
-    public void displayTransactions(LinkedListInterface<PointTransaction> txs) {
+    public void displayTransactions(ListInterface<PointTransaction> txs) {
         if (txs.isEmpty()) {
             System.out.println("No transactions found.");
             return;
@@ -504,7 +504,7 @@ public class LoyaltyRewardsUI {
                 rows);
     }
 
-    public void displayNotifications(LinkedListInterface<Notification> list) {
+    public void displayNotifications(ListInterface<Notification> list) {
         if (list.isEmpty()) {
             System.out.println("No notifications for this member.");
             return;
@@ -524,7 +524,7 @@ public class LoyaltyRewardsUI {
         return scanner.nextLine().trim().equalsIgnoreCase("y");
     }
 
-    public String selectPendingRequest(LinkedListInterface<RedemptionRecord> pending) {
+    public String selectPendingRequest(ListInterface<RedemptionRecord> pending) {
         if (pending.isEmpty()) {
             System.out.println("No pending redemption requests.");
             ConsoleUtil.pressEnterToContinue(scanner);
@@ -578,7 +578,7 @@ public class LoyaltyRewardsUI {
     // ==================================================================
     // REWARD MANAGEMENT
     // ==================================================================
-    public int printRewardListMenu(LinkedListInterface<Reward> pageList, int page, int pageCount,
+    public int printRewardListMenu(ListInterface<Reward> pageList, int page, int pageCount,
             boolean hasFilter, boolean hasDeleted, String sortLabel) {
         clearScreen();
         printBanner("REWARD MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -626,7 +626,7 @@ public class LoyaltyRewardsUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int printDeletedRewardsMenu(LinkedListInterface<Reward> pageList, int page, int pageCount) {
+    public int printDeletedRewardsMenu(ListInterface<Reward> pageList, int page, int pageCount) {
         clearScreen();
         printBanner("DELETED REWARDS (Page " + (page + 1) + " of " + pageCount + ")");
         if (pageList.isEmpty()) {

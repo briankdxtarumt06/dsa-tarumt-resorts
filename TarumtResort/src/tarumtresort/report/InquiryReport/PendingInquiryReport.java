@@ -2,8 +2,8 @@ package tarumtresort.report.InquiryReport;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.enums.InquiryPriority;
@@ -19,18 +19,18 @@ import tarumtresort.utility.Ansi;
  */
 public class PendingInquiryReport {
 
-    private final LinkedListInterface<Inquiry> inquiryList;
-    private final LinkedListInterface<Guest> guestList;
+    private final ListInterface<Inquiry> inquiryList;
+    private final ListInterface<Guest> guestList;
 
-    public PendingInquiryReport(LinkedListInterface<Inquiry> inquiryList, LinkedListInterface<Guest> guestList) {
-        this.inquiryList = inquiryList == null ? new LinkedList<>() : inquiryList;
-        this.guestList = guestList == null ? new LinkedList<>() : guestList;
+    public PendingInquiryReport(ListInterface<Inquiry> inquiryList, ListInterface<Guest> guestList) {
+        this.inquiryList = inquiryList == null ? new DoublyLinkedList<>() : inquiryList;
+        this.guestList = guestList == null ? new DoublyLinkedList<>() : guestList;
     }
 
     public Result generate(InquiryType filterType) {
 
         // collect + sort matching pending inquiries
-        LinkedListInterface<Inquiry> pending = new LinkedList<>();
+        ListInterface<Inquiry> pending = new DoublyLinkedList<>();
         for (int i = 0; i < inquiryList.size(); i++) {
             Inquiry inq = inquiryList.get(i);
             if (inq.getStatus() != InquiryStatus.PENDING) {
@@ -79,7 +79,7 @@ public class PendingInquiryReport {
         for (InquiryPriority p : InquiryPriority.values()) {
             chart.addBar(p.name(), countPerPriority[p.ordinal()], countPerPriority[p.ordinal()] + " inquiries");
         }
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         charts.addBack(chart);
 
         String[] summary = buildSummary(pending.size(), countPerPriority, countPerType, longestWaiting, longestWait);
@@ -138,12 +138,12 @@ public class PendingInquiryReport {
 
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
         }
 
@@ -151,7 +151,7 @@ public class PendingInquiryReport {
             return table;
         }
 
-        public LinkedListInterface<ReportChart> getCharts() {
+        public ListInterface<ReportChart> getCharts() {
             return charts;
         }
 

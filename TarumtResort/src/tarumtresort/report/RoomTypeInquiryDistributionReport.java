@@ -1,7 +1,7 @@
 package tarumtresort.report;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.enums.InquiryStatus;
@@ -14,13 +14,13 @@ import tarumtresort.entity.enums.RoomType;
  */
 public class RoomTypeInquiryDistributionReport {
 
-    private final LinkedListInterface<Inquiry> inquiryList;
-    private final LinkedListInterface<Reservation> reservationList;
+    private final ListInterface<Inquiry> inquiryList;
+    private final ListInterface<Reservation> reservationList;
 
-    public RoomTypeInquiryDistributionReport(LinkedListInterface<Inquiry> inquiryList,
-            LinkedListInterface<Reservation> reservationList) {
-        this.inquiryList = inquiryList == null ? new LinkedList<>() : inquiryList;
-        this.reservationList = reservationList == null ? new LinkedList<>() : reservationList;
+    public RoomTypeInquiryDistributionReport(ListInterface<Inquiry> inquiryList,
+            ListInterface<Reservation> reservationList) {
+        this.inquiryList = inquiryList == null ? new DoublyLinkedList<>() : inquiryList;
+        this.reservationList = reservationList == null ? new DoublyLinkedList<>() : reservationList;
     }
 
     public ReportResult generate(RoomType filterType) {
@@ -106,7 +106,7 @@ public class RoomTypeInquiryDistributionReport {
 
         String[] summary = {"Total resolved inquiries counted: " + grandTotal};
 
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         charts.addBack(chart);
 
         return new ReportResult(table, summary, charts, null);

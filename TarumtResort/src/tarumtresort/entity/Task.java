@@ -2,8 +2,8 @@ package tarumtresort.entity;
 
 //imports
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
@@ -19,8 +19,8 @@ public class Task implements Comparable<Task> {
     private LocalDateTime endDateTime;
     private String roomId;
     private boolean isDeleted;
-    private LinkedListInterface<TaskAssignment> taskAssignments;
-    private LinkedListInterface<TaskStatusChange> statusHistory;
+    private ListInterface<TaskAssignment> taskAssignments;
+    private ListInterface<TaskStatusChange> statusHistory;
     // update task status -> push (addFront)
     // rollback task status -> pop (removeFront)
     // get current status -> peek (getFront)
@@ -111,14 +111,14 @@ public class Task implements Comparable<Task> {
         this.roomId = roomId;
     }
 
-    public LinkedListInterface<TaskAssignment> getTaskAssignments() {
+    public ListInterface<TaskAssignment> getTaskAssignments() {
         if (taskAssignments == null) {
-            taskAssignments = new LinkedList<>();
+            taskAssignments = new DoublyLinkedList<>();
         }
         return taskAssignments;
     }
 
-    public void setTaskAssignments(LinkedListInterface<TaskAssignment> taskAssignments) {
+    public void setTaskAssignments(ListInterface<TaskAssignment> taskAssignments) {
         this.taskAssignments = taskAssignments;
     }
 
@@ -127,7 +127,7 @@ public class Task implements Comparable<Task> {
             return;
         }
         if (taskAssignments == null) {
-            taskAssignments = new LinkedList<>();
+            taskAssignments = new DoublyLinkedList<>();
         }
         if (taskAssignments.contains(taskAssignment)) {
             return; // duplicate assignment id
@@ -142,14 +142,14 @@ public class Task implements Comparable<Task> {
         return taskAssignments != null && taskAssignments.removeElement(taskAssignment);
     }
 
-    public LinkedListInterface<TaskStatusChange> getStatusHistory() {
+    public ListInterface<TaskStatusChange> getStatusHistory() {
         if (statusHistory == null) {
-            statusHistory = new LinkedList<>();
+            statusHistory = new DoublyLinkedList<>();
         }
         return statusHistory;
     }
 
-    public void setStatusHistory(LinkedListInterface<TaskStatusChange> statusHistory) {
+    public void setStatusHistory(ListInterface<TaskStatusChange> statusHistory) {
         this.statusHistory = statusHistory;
     }
 

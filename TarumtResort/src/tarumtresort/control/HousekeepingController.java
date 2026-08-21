@@ -1,8 +1,8 @@
 package tarumtresort.control;
 
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.HousekeepingUI;
 import tarumtresort.dao.RoomDAO;
 import tarumtresort.dao.StaffDAO;
@@ -37,10 +37,10 @@ public class HousekeepingController {
     private HousekeepingUI ui;
 
     // ADT declaration
-    private final LinkedListInterface<Task> taskList = new LinkedList<>();
-    private final LinkedListInterface<Staff> staffList = new LinkedList<>();
-    private final LinkedListInterface<TaskAssignment> taskAssignmentList = new LinkedList<>();
-    private final LinkedListInterface<TaskAssignmentChange> taskAssignmentChangeList = new LinkedList<>();
+    private final ListInterface<Task> taskList = new DoublyLinkedList<>();
+    private final ListInterface<Staff> staffList = new DoublyLinkedList<>();
+    private final ListInterface<TaskAssignment> taskAssignmentList = new DoublyLinkedList<>();
+    private final ListInterface<TaskAssignmentChange> taskAssignmentChangeList = new DoublyLinkedList<>();
 
     // DAO declaration
     private final TaskDAO taskDAO = new TaskDAO();
@@ -50,19 +50,19 @@ public class HousekeepingController {
     private final RoomDAO roomDAO = new RoomDAO();
 
     public HousekeepingController() {
-        LinkedList<Task> tasks = taskDAO.retrieveTaskList();
+        DoublyLinkedList<Task> tasks = taskDAO.retrieveTaskList();
         for (int i = 0; i < tasks.size(); i++) {
             taskList.addBack(tasks.get(i));
         }
-        LinkedList<Staff> staff = staffDAO.retrieveStaffList();
+        DoublyLinkedList<Staff> staff = staffDAO.retrieveStaffList();
         for (int i = 0; i < staff.size(); i++) {
             staffList.addBack(staff.get(i));
         }
-        LinkedList<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
+        DoublyLinkedList<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
         for (int i = 0; i < assignments.size(); i++) {
             taskAssignmentList.addBack(assignments.get(i));
         }
-        LinkedList<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        DoublyLinkedList<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
         for (int i = 0; i < changes.size(); i++) {
             taskAssignmentChangeList.addBack(changes.get(i));
         }
@@ -75,7 +75,7 @@ public class HousekeepingController {
 
     private void refreshTaskAssignments() {
         taskAssignmentList.clear();
-        LinkedList<TaskAssignment> loaded = taskAssignmentDAO.retrieveTaskAssignmentList();
+        DoublyLinkedList<TaskAssignment> loaded = taskAssignmentDAO.retrieveTaskAssignmentList();
         for (int i = 0; i < loaded.size(); i++) {
             taskAssignmentList.addBack(loaded.get(i));
         }
@@ -83,7 +83,7 @@ public class HousekeepingController {
 
     private void refreshTaskAssignmentChanges() {
         taskAssignmentChangeList.clear();
-        LinkedList<TaskAssignmentChange> loaded = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        DoublyLinkedList<TaskAssignmentChange> loaded = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
         for (int i = 0; i < loaded.size(); i++) {
             taskAssignmentChangeList.addBack(loaded.get(i));
         }
@@ -116,7 +116,7 @@ public class HousekeepingController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Task> display = getAllTasks();
+            ListInterface<Task> display = getAllTasks();
             if (statusFilter != null) {
                 display = getTasksByStatus(statusFilter);
             } else if (priorityFilter != null) {
@@ -133,7 +133,7 @@ public class HousekeepingController {
                 page = pageCount - 1;
             }
 
-            LinkedListInterface<Task> pageList = pageOf(display, page);
+            ListInterface<Task> pageList = pageOf(display, page);
             int choice = ui.printTaskListMenu(pageList, page, pageCount, statusFilter, priorityFilter, searchTerm);
 
             if (choice == 0) {
@@ -210,7 +210,7 @@ public class HousekeepingController {
         }
     }
 
-    private void viewTask(LinkedListInterface<Task> pageList) {
+    private void viewTask(ListInterface<Task> pageList) {
         int index = ui.inputListIndex("task", pageList.size());
         if (index == 0) {
             return;
@@ -422,7 +422,7 @@ public class HousekeepingController {
             }
             result = createAssignment(task, staff);
         } else {
-            LinkedListInterface<Staff> eligible = getEligibleStaffByRole(task.getTaskType());
+            ListInterface<Staff> eligible = getEligibleStaffByRole(task.getTaskType());
             if (eligible.isEmpty()) {
                 ui.printNoStaffFreeForTask();
                 return;
@@ -448,7 +448,7 @@ public class HousekeepingController {
     }
 
     private void viewStaffAssignedMenu(Task task) {
-        LinkedListInterface<TaskAssignment> filtered = new LinkedList<>();
+        ListInterface<TaskAssignment> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < task.getTaskAssignments().size(); i++) {
             TaskAssignment assignment = task.getTaskAssignments().get(i);
             if (!assignment.isDeleted()) {
@@ -533,7 +533,7 @@ public class HousekeepingController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Staff> display = getAllStaffs();
+            ListInterface<Staff> display = getAllStaffs();
             if (departmentFilter != null) {
                 display = getStaffsByDepartment(departmentFilter);
             } else if (roleFilter != null) {
@@ -550,7 +550,7 @@ public class HousekeepingController {
                 page = pageCount - 1;
             }
 
-            LinkedListInterface<Staff> pageList = pageOfStaff(display, page);
+            ListInterface<Staff> pageList = pageOfStaff(display, page);
             int choice = ui.printStaffListMenu(pageList, page, pageCount, departmentFilter, roleFilter, searchTerm);
 
             if (choice == 0) {
@@ -617,7 +617,7 @@ public class HousekeepingController {
         }
     }
 
-    private void viewStaff(LinkedListInterface<Staff> pageList) {
+    private void viewStaff(ListInterface<Staff> pageList) {
         int index = ui.inputListIndex("staff", pageList.size());
         if (index == 0) {
             return;
@@ -758,7 +758,7 @@ public class HousekeepingController {
     }
 
     private void viewStaffAssignmentHistory(Staff staff) {
-        LinkedListInterface<TaskAssignment> filtered = new LinkedList<>();
+        ListInterface<TaskAssignment> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < staff.getTaskAssignments().size(); i++) {
             TaskAssignment assignment = staff.getTaskAssignments().get(i);
             if (!assignment.isDeleted()) {
@@ -774,8 +774,8 @@ public class HousekeepingController {
         ui.pressEnterToContinue();
     }
 
-    private LinkedListInterface<TaskAssignment> getStaffTaskQueue(Staff staff) {
-        LinkedListInterface<TaskAssignment> queue = new LinkedList<>();
+    private ListInterface<TaskAssignment> getStaffTaskQueue(Staff staff) {
+        ListInterface<TaskAssignment> queue = new DoublyLinkedList<>();
         if (staff == null || staff.getStaffId() == null) {
             return queue;
         }
@@ -792,7 +792,7 @@ public class HousekeepingController {
     }
 
     private void startFirstTaskMenu(Staff staff) {
-        LinkedListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
+        ListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
         if (queue.isEmpty()) {
             ui.printNoTasksInQueue();
             return;
@@ -822,7 +822,7 @@ public class HousekeepingController {
         if (staff == null || staff.getStaffId() == null) {
             return "NO_STAFF";
         }
-        LinkedListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
+        ListInterface<TaskAssignment> queue = getStaffTaskQueue(staff);
         if (queue.isEmpty()) {
             return "EMPTY_QUEUE";
         }
@@ -850,8 +850,8 @@ public class HousekeepingController {
 
     // =============== task queries ===============
 
-    private LinkedListInterface<Task> getTasksByStatus(TaskStatus status) {
-        LinkedListInterface<Task> filtered = new LinkedList<>();
+    private ListInterface<Task> getTasksByStatus(TaskStatus status) {
+        ListInterface<Task> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < taskList.size(); i++) {
             Task task = taskList.get(i);
             if (!task.isDeleted() && task.getTaskStatus() == status) {
@@ -861,8 +861,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<Task> getTasksByPriority(TaskPriority priority) {
-        LinkedListInterface<Task> filtered = new LinkedList<>();
+    private ListInterface<Task> getTasksByPriority(TaskPriority priority) {
+        ListInterface<Task> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < taskList.size(); i++) {
             Task task = taskList.get(i);
             if (!task.isDeleted() && task.getTaskPriority() == priority) {
@@ -872,8 +872,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<Task> searchTasks(LinkedListInterface<Task> source, String searchTerm) {
-        LinkedListInterface<Task> filtered = new LinkedList<>();
+    private ListInterface<Task> searchTasks(ListInterface<Task> source, String searchTerm) {
+        ListInterface<Task> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < source.size(); i++) {
             Task task = source.get(i);
             if (task.getTaskName() != null
@@ -884,8 +884,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<Task> getAllTasks() {
-        LinkedListInterface<Task> all = new LinkedList<>();
+    private ListInterface<Task> getAllTasks() {
+        ListInterface<Task> all = new DoublyLinkedList<>();
         for (int i = 0; i < taskList.size(); i++) {
             Task task = taskList.get(i);
             if (!task.isDeleted()) {
@@ -897,8 +897,8 @@ public class HousekeepingController {
 
     // =============== staff queries ===============
 
-    private LinkedListInterface<Staff> getStaffsByDepartment(Department department) {
-        LinkedListInterface<Staff> filtered = new LinkedList<>();
+    private ListInterface<Staff> getStaffsByDepartment(Department department) {
+        ListInterface<Staff> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
             if (!staff.isDeleted()
@@ -910,8 +910,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<Staff> getStaffsByRole(StaffRole role) {
-        LinkedListInterface<Staff> filtered = new LinkedList<>();
+    private ListInterface<Staff> getStaffsByRole(StaffRole role) {
+        ListInterface<Staff> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
             if (!staff.isDeleted() && staff.getStaffRole() == role) {
@@ -921,8 +921,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<Staff> searchStaffs(LinkedListInterface<Staff> source, String searchTerm) {
-        LinkedListInterface<Staff> filtered = new LinkedList<>();
+    private ListInterface<Staff> searchStaffs(ListInterface<Staff> source, String searchTerm) {
+        ListInterface<Staff> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < source.size(); i++) {
             Staff staff = source.get(i);
             boolean matches = (staff.getStaffName() != null
@@ -936,8 +936,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<Staff> getAllStaffs() {
-        LinkedListInterface<Staff> all = new LinkedList<>();
+    private ListInterface<Staff> getAllStaffs() {
+        ListInterface<Staff> all = new DoublyLinkedList<>();
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
             if (!staff.isDeleted()) {
@@ -1160,7 +1160,7 @@ public class HousekeepingController {
         if (task == null) {
             return "NO_PREVIOUS";
         }
-        LinkedListInterface<TaskStatusChange> stack = task.getStatusHistory();
+        ListInterface<TaskStatusChange> stack = task.getStatusHistory();
         if (stack.isEmpty()) {
             return "NO_PREVIOUS";
         }
@@ -1187,7 +1187,7 @@ public class HousekeepingController {
     // =============== assignment / rotation ===============
 
     public Staff findEarliestAvailableStaff(TaskType taskType) {
-        LinkedListInterface<Staff> eligible = getEligibleStaffByRole(taskType);
+        ListInterface<Staff> eligible = getEligibleStaffByRole(taskType);
         Staff best = null;
         LocalDateTime bestEnd = null;
         for (int i = 0; i < eligible.size(); i++) {
@@ -1210,8 +1210,8 @@ public class HousekeepingController {
         return best;
     }
 
-    public LinkedListInterface<Staff> getEligibleStaffByRole(TaskType taskType) {
-        LinkedListInterface<Staff> eligible = new LinkedList<>();
+    public ListInterface<Staff> getEligibleStaffByRole(TaskType taskType) {
+        ListInterface<Staff> eligible = new DoublyLinkedList<>();
         StaffRole requiredRole = switch (taskType) {
             case CHECKOUT_CLEAN, ROOM_SERVICE, MAINTENANCE -> StaffRole.CLEANER;
             case INSPECTION -> StaffRole.SUPERVISOR;
@@ -1322,7 +1322,7 @@ public class HousekeepingController {
         if (roomId == null || roomId.isBlank()) {
             return;
         }
-        LinkedListInterface<Room> rooms = new LinkedList<>();
+        ListInterface<Room> rooms = new DoublyLinkedList<>();
         roomDAO.loadFromFile(rooms);
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
@@ -1482,8 +1482,8 @@ public class HousekeepingController {
 
     // =============== pagination ===============
 
-    private LinkedListInterface<Task> pageOf(LinkedListInterface<Task> source, int page) {
-        LinkedListInterface<Task> pageList = new LinkedList<>();
+    private ListInterface<Task> pageOf(ListInterface<Task> source, int page) {
+        ListInterface<Task> pageList = new DoublyLinkedList<>();
         int start = page * PAGE_SIZE;
         int end = Math.min(start + PAGE_SIZE, source.size());
         for (int i = start; i < end; i++) {
@@ -1492,8 +1492,8 @@ public class HousekeepingController {
         return pageList;
     }
 
-    private LinkedListInterface<Staff> pageOfStaff(LinkedListInterface<Staff> source, int page) {
-        LinkedListInterface<Staff> pageList = new LinkedList<>();
+    private ListInterface<Staff> pageOfStaff(ListInterface<Staff> source, int page) {
+        ListInterface<Staff> pageList = new DoublyLinkedList<>();
         int start = page * PAGE_SIZE;
         int end = Math.min(start + PAGE_SIZE, source.size());
         for (int i = start; i < end; i++) {
@@ -1534,8 +1534,8 @@ public class HousekeepingController {
         return change;
     }
 
-    private LinkedListInterface<TaskAssignmentChange> getChangesByTask(String taskId) {
-        LinkedListInterface<TaskAssignmentChange> filtered = new LinkedList<>();
+    private ListInterface<TaskAssignmentChange> getChangesByTask(String taskId) {
+        ListInterface<TaskAssignmentChange> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < taskAssignmentChangeList.size(); i++) {
             TaskAssignmentChange change = taskAssignmentChangeList.get(i);
             if (change.getTaskId() != null && change.getTaskId().equals(taskId)) {
@@ -1545,8 +1545,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<TaskAssignmentChange> getChangesByStaff(String staffId) {
-        LinkedListInterface<TaskAssignmentChange> filtered = new LinkedList<>();
+    private ListInterface<TaskAssignmentChange> getChangesByStaff(String staffId) {
+        ListInterface<TaskAssignmentChange> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < taskAssignmentChangeList.size(); i++) {
             TaskAssignmentChange change = taskAssignmentChangeList.get(i);
             if (change.getStaffId() != null && change.getStaffId().equals(staffId)) {
@@ -1556,8 +1556,8 @@ public class HousekeepingController {
         return filtered;
     }
 
-    private LinkedListInterface<TaskAssignmentChange> getChangesByAssignment(String taskAssignmentId) {
-        LinkedListInterface<TaskAssignmentChange> filtered = new LinkedList<>();
+    private ListInterface<TaskAssignmentChange> getChangesByAssignment(String taskAssignmentId) {
+        ListInterface<TaskAssignmentChange> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < taskAssignmentChangeList.size(); i++) {
             TaskAssignmentChange change = taskAssignmentChangeList.get(i);
             if (change.getTaskAssignmentId() != null && change.getTaskAssignmentId().equals(taskAssignmentId)) {
@@ -1569,7 +1569,7 @@ public class HousekeepingController {
 
     // =============== table rendering ===============
 
-    private String[][] assignmentListToTable(LinkedListInterface<TaskAssignment> assignmentList) {
+    private String[][] assignmentListToTable(ListInterface<TaskAssignment> assignmentList) {
         String[][] data = new String[assignmentList.size() + 1][6];
         data[0] = new String[] { "Assignment ID", "Staff", "Task", "Status", "Started At", "Ended At" };
         for (int i = 0; i < assignmentList.size(); i++) {
@@ -1589,7 +1589,7 @@ public class HousekeepingController {
         return data;
     }
 
-    private String[][] changeListToTable(LinkedListInterface<TaskAssignmentChange> changeList) {
+    private String[][] changeListToTable(ListInterface<TaskAssignmentChange> changeList) {
         String[][] data = new String[changeList.size() + 1][6];
         data[0] = new String[] { "Change ID", "Task", "Assignment", "Status", "Staff", "Changed At" };
         for (int i = 0; i < changeList.size(); i++) {

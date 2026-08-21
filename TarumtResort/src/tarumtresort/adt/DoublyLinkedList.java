@@ -4,7 +4,7 @@ import java.util.Iterator;
 import tarumtresort.entity.Node;
 
 // Author: Brian Kam Ding Xian, Chai Chee Tong, Fong Wen Ling, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
-public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<T> {
+public class DoublyLinkedList<T extends Comparable<T>> implements ListInterface<T> {
 
     private Node<T> head;
     private Node<T> tail;
@@ -120,7 +120,7 @@ public class LinkedList<T extends Comparable<T>> implements LinkedListInterface<
 
     // combine 2 sorted list into 1 sorted list
     @Override
-    public boolean merge(LinkedListInterface<T> other) {
+    public boolean merge(ListInterface<T> other) {
         if (other == null || other.isEmpty() || !isSorted() || !other.isSorted()) {
             return false;
         }

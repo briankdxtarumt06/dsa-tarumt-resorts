@@ -2,8 +2,8 @@ package tarumtresort.report.HousekeepingReport;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.RoomDAO;
 import tarumtresort.dao.StaffDAO;
 import tarumtresort.dao.TaskAssignmentChangeDAO;
@@ -36,10 +36,10 @@ public class HousekeepingReportController {
             return;
         }
 
-        LinkedListInterface<Room> rooms = new LinkedList<>();
+        ListInterface<Room> rooms = new DoublyLinkedList<>();
         roomDAO.loadFromFile(rooms);
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        ListInterface<Task> tasks = taskDAO.retrieveTaskList();
+        ListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
 
         RoomCleaningPerformanceReport.Result result = new RoomCleaningPerformanceReport(
                 rooms, tasks, changes).generate(range[0], range[1]);
@@ -53,10 +53,10 @@ public class HousekeepingReportController {
             return;
         }
 
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
-        LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        ListInterface<Staff> staffs = staffDAO.retrieveStaffList();
+        ListInterface<Task> tasks = taskDAO.retrieveTaskList();
+        ListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
+        ListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
 
         StaffProductivityReport.Result result = new StaffProductivityReport(
                 staffs, tasks, assignments, changes).generate(range[0], range[1]);

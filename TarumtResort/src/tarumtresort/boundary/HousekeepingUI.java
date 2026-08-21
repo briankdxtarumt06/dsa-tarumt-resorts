@@ -6,7 +6,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
@@ -89,7 +89,7 @@ public class HousekeepingUI {
         return inputIntChoice("Enter choice", 0, 4);
     }
 
-    public int printTaskListMenu(LinkedListInterface<Task> pageList, int page, int pageCount, TaskStatus statusFilter,
+    public int printTaskListMenu(ListInterface<Task> pageList, int page, int pageCount, TaskStatus statusFilter,
             TaskPriority priorityFilter, String searchTerm) {
         clearScreen();
         printBanner("TASK MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -147,7 +147,7 @@ public class HousekeepingUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int printStaffListMenu(LinkedListInterface<Staff> pageList, int page, int pageCount,
+    public int printStaffListMenu(ListInterface<Staff> pageList, int page, int pageCount,
             Department departmentFilter, StaffRole roleFilter, String searchTerm) {
         clearScreen();
         printBanner("STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -420,7 +420,7 @@ public int getStaffActionChoice() {
         return inputIntChoice("Enter choice", 0, 2);
     }
 
-    public int selectStaff(LinkedListInterface<Staff> staffList) {
+    public int selectStaff(ListInterface<Staff> staffList) {
         printSection("Select Staff to Assign");
         if (staffList.isEmpty()) {
             System.out.println("  (no eligible staff)");

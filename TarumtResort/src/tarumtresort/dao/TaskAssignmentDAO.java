@@ -2,8 +2,8 @@ package tarumtresort.dao;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
 import tarumtresort.utility.JsonFileHandler;
@@ -15,7 +15,7 @@ public class TaskAssignmentDAO {
 
     private static final TaskAssignmentChangeDAO CHANGE_DAO = new TaskAssignmentChangeDAO();
 
-    public void saveTaskAssignmentList(LinkedListInterface<TaskAssignment> taskAssignmentList) {
+    public void saveTaskAssignmentList(ListInterface<TaskAssignment> taskAssignmentList) {
         try {
             JsonFileHandler.saveListWithNestedIds(
                     taskAssignmentList, FILE, "changes",
@@ -26,7 +26,7 @@ public class TaskAssignmentDAO {
         }
     }
 
-    public LinkedList<TaskAssignment> retrieveTaskAssignmentList() {
+    public DoublyLinkedList<TaskAssignment> retrieveTaskAssignmentList() {
         try {
             return JsonFileHandler.loadListWithNestedIds(
                     FILE, TaskAssignment.class, "changes",
@@ -34,12 +34,12 @@ public class TaskAssignmentDAO {
                     TaskAssignment::setChanges);
         } catch (IOException e) {
             System.err.println("  ✗ Failed to load assignment data: " + e.getMessage());
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
     }
 
     public TaskAssignment getTaskAssignmentById(String taskAssignmentId) {
-        LinkedListInterface<TaskAssignment> assignmentList = retrieveTaskAssignmentList();
+        ListInterface<TaskAssignment> assignmentList = retrieveTaskAssignmentList();
         for (int i = 0; i < assignmentList.size(); i++) {
             if (assignmentList.get(i).getTaskAssignmentId().equals(taskAssignmentId)) {
                 return assignmentList.get(i);

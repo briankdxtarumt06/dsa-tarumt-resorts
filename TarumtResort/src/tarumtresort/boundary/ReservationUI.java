@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Payment;
 import tarumtresort.entity.RedemptionRecord;
@@ -46,7 +46,7 @@ public class ReservationUI {
     }
 
     // ===== GUEST =====
-    public int printGuestListMenu(LinkedListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter,
+    public int printGuestListMenu(ListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter,
             java.util.function.Function<String, String> memberResolver,
             java.util.function.Function<String, Integer> unreadResolver) {
         ConsoleUtil.clearScreen();
@@ -106,7 +106,7 @@ public class ReservationUI {
      * Prints a guest's notifications (newest last; deleted ones are already
      * filtered out).
      */
-    public void printGuestNotifications(LinkedListInterface<tarumtresort.entity.Notification> list) {
+    public void printGuestNotifications(ListInterface<tarumtresort.entity.Notification> list) {
         if (list.size() == 0) {
             ConsoleUtil.printWarning("\nNo notifications for this guest.");
             return;
@@ -128,7 +128,7 @@ public class ReservationUI {
         TablePrinter.displayTable(header, rows);
     }
 
-    public void printGuestReservationHistory(LinkedListInterface<Reservation> reservations) {
+    public void printGuestReservationHistory(ListInterface<Reservation> reservations) {
         if (reservations.size() == 0) {
             ConsoleUtil.printWarning("\nNo reservations found.");
             return;
@@ -353,7 +353,7 @@ public class ReservationUI {
         TablePrinter.displayTable(header, rows);
     }
 
-    public void printReservationDetails(LinkedListInterface<Reservation> reservations) {
+    public void printReservationDetails(ListInterface<Reservation> reservations) {
         if (reservations.size() == 0) {
             ConsoleUtil.printWarning("\nNo reservations found.");
             return;
@@ -529,7 +529,7 @@ public class ReservationUI {
     }
 
     // ===== ROOM =====
-    public int printRoomListMenu(LinkedListInterface<Room> pageList, int page, int pageCount, boolean hasFilter) {
+    public int printRoomListMenu(ListInterface<Room> pageList, int page, int pageCount, boolean hasFilter) {
         ConsoleUtil.clearScreen();
         System.out.println("\n==============================");
         System.out.println("  ROOM MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -788,7 +788,7 @@ public class ReservationUI {
      * Lists the applicable vouchers and returns the chosen redemption id,
      * or null when the staff picks 0 (no more vouchers).
      */
-    public String selectVoucher(LinkedListInterface<RedemptionRecord> vouchers) {
+    public String selectVoucher(ListInterface<RedemptionRecord> vouchers) {
         System.out.println();
         String[] header = { "#", "Voucher", "Room Type", "Value" };
         String[][] rows = new String[vouchers.size()][4];
@@ -834,7 +834,7 @@ public class ReservationUI {
         }
     }
 
-    public void printPaymentRecords(LinkedListInterface<Payment> payments) {
+    public void printPaymentRecords(ListInterface<Payment> payments) {
         if (payments == null || payments.size() == 0) {
             System.out.println("\nNo payment records found.");
             return;
@@ -846,7 +846,7 @@ public class ReservationUI {
             Payment p = payments.get(i);
 
             StringBuilder confs = new StringBuilder(p.getReservationID() == null ? "-" : p.getReservationID());
-            LinkedListInterface<String> numbers = p.getConfirmationNumbers();
+            ListInterface<String> numbers = p.getConfirmationNumbers();
             if (numbers != null) {
                 for (int j = 0; j < numbers.size(); j++) {
                     if (numbers.get(j) != null && !numbers.get(j).equals(p.getReservationID())) {

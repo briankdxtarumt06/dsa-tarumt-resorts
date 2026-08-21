@@ -1,7 +1,7 @@
 package tarumtresort.control;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.PriorityReservationUI;
 import tarumtresort.entity.*;
 import tarumtresort.entity.enums.*;
@@ -16,8 +16,8 @@ public class PriorityReservationController {
     private static final int PAGE_SIZE = 20;
 
     // ADT declaration
-    private LinkedListInterface<PriorityReservation> priorityReservations = new LinkedList<>();
-    private LinkedListInterface<Reservation> vipQueue = new LinkedList<>();
+    private ListInterface<PriorityReservation> priorityReservations = new DoublyLinkedList<>();
+    private ListInterface<Reservation> vipQueue = new DoublyLinkedList<>();
 
     // DAO
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
@@ -92,8 +92,8 @@ public class PriorityReservationController {
         return null;
     }
 
-    public LinkedListInterface<PriorityReservation> filterByLevel(PriorityLevel level) {
-        LinkedListInterface<PriorityReservation> result = new LinkedList<>();
+    public ListInterface<PriorityReservation> filterByLevel(PriorityLevel level) {
+        ListInterface<PriorityReservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < priorityReservations.size(); i++) {
             PriorityReservation pr = priorityReservations.get(i);
             if (!pr.isDeleted() && pr.getPriorityLevel() == level) {
@@ -103,8 +103,8 @@ public class PriorityReservationController {
         return result;
     }
 
-    public LinkedListInterface<Reservation> generateVIPQueue(LinkedListInterface<Reservation> reservations) {
-        vipQueue = new LinkedList<>();
+    public ListInterface<Reservation> generateVIPQueue(ListInterface<Reservation> reservations) {
+        vipQueue = new DoublyLinkedList<>();
         int n = priorityReservations.size();
         boolean[] used = new boolean[n];
 
@@ -163,7 +163,7 @@ public class PriorityReservationController {
         return vipQueue;
     }
 
-    private Reservation getReservation(LinkedListInterface<Reservation> source, String reservationId) {
+    private Reservation getReservation(ListInterface<Reservation> source, String reservationId) {
         for (int i = 0; i < source.size(); i++) {
             if (source.get(i).getReservationId().equals(reservationId)) {
                 return source.get(i);
@@ -172,7 +172,7 @@ public class PriorityReservationController {
         return null;
     }
 
-    private LocalDateTime getTimestamp(LinkedListInterface<Reservation> source, PriorityReservation pr) {
+    private LocalDateTime getTimestamp(ListInterface<Reservation> source, PriorityReservation pr) {
         Reservation reservation = getReservation(source, pr.getReservationId());
         if (reservation == null || reservation.getTimestamps() == null) {
             return null;
@@ -194,9 +194,9 @@ public class PriorityReservationController {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Reservation> history = loadHistory();
+            ListInterface<Reservation> history = loadHistory();
 
-            LinkedListInterface<PriorityReservation> display = (levelFilter == null) ? activePriorityReservations()
+            ListInterface<PriorityReservation> display = (levelFilter == null) ? activePriorityReservations()
                     : filterByLevel(levelFilter);
             boolean hasFilter = levelFilter != null;
 
@@ -204,7 +204,7 @@ public class PriorityReservationController {
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<PriorityReservation> pageList = pageOf(display, page);
+            ListInterface<PriorityReservation> pageList = pageOf(display, page);
 
             int choice = priorityReservationUI.printPriorityListMenu(
                     buildPriorityRows(pageList, history), page, pageCount, hasFilter);
@@ -259,7 +259,7 @@ public class PriorityReservationController {
         }
     }
 
-    private void viewPriority(LinkedListInterface<PriorityReservation> pageList) {
+    private void viewPriority(ListInterface<PriorityReservation> pageList) {
         if (pageList.isEmpty()) {
             priorityReservationUI.showMessage("No priority reservations to view.");
             return;
@@ -331,9 +331,9 @@ public class PriorityReservationController {
     }
 
     // non-member waiting reservations = WAITING, not deleted, and no priority record yet
-    private LinkedListInterface<Reservation> nonMemberWaiting() {
-        LinkedListInterface<Reservation> history = loadHistory();
-        LinkedListInterface<Reservation> result = new LinkedList<>();
+    private ListInterface<Reservation> nonMemberWaiting() {
+        ListInterface<Reservation> history = loadHistory();
+        ListInterface<Reservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < history.size(); i++) {
             Reservation r = history.get(i);
             if (!r.isDeleted() && r.getStatus() == ReservationStatus.WAITING
@@ -344,7 +344,7 @@ public class PriorityReservationController {
         return result;
     }
 
-    private void deletePriorityFlow(LinkedListInterface<PriorityReservation> pageList) {
+    private void deletePriorityFlow(ListInterface<PriorityReservation> pageList) {
         if (pageList.isEmpty()) {
             priorityReservationUI.showMessage("No priority reservations to delete.");
             return;
@@ -374,8 +374,8 @@ public class PriorityReservationController {
     }
 
     private void viewQueuePosition(String reservationId) {
-        LinkedListInterface<Reservation> waiting = waitingReservations();
-        LinkedListInterface<Reservation> queue = generateVIPQueue(waiting);
+        ListInterface<Reservation> waiting = waitingReservations();
+        ListInterface<Reservation> queue = generateVIPQueue(waiting);
         int position = -1;
         for (int i = 0; i < queue.size(); i++) {
             if (queue.get(i).getReservationId().equals(reservationId)) {
@@ -428,16 +428,16 @@ public class PriorityReservationController {
     }
 
     // ===== UI HELPERS =====
-    private LinkedListInterface<Reservation> loadHistory() {
-        LinkedListInterface<Reservation> history = new LinkedList<>();
+    private ListInterface<Reservation> loadHistory() {
+        ListInterface<Reservation> history = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(history);
         return history;
     }
 
     // only WAITING (and not soft-deleted) reservations are eligible for the VIP queue
-    private LinkedListInterface<Reservation> waitingReservations() {
-        LinkedListInterface<Reservation> history = loadHistory();
-        LinkedListInterface<Reservation> waiting = new LinkedList<>();
+    private ListInterface<Reservation> waitingReservations() {
+        ListInterface<Reservation> history = loadHistory();
+        ListInterface<Reservation> waiting = new DoublyLinkedList<>();
         for (int i = 0; i < history.size(); i++) {
             Reservation r = history.get(i);
             if (!r.isDeleted() && r.getStatus() == ReservationStatus.WAITING) {
@@ -448,8 +448,8 @@ public class PriorityReservationController {
     }
 
     // active (not soft-deleted) priority records - the landing list hides deleted ones
-    private LinkedListInterface<PriorityReservation> activePriorityReservations() {
-        LinkedListInterface<PriorityReservation> result = new LinkedList<>();
+    private ListInterface<PriorityReservation> activePriorityReservations() {
+        ListInterface<PriorityReservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < priorityReservations.size(); i++) {
             PriorityReservation pr = priorityReservations.get(i);
             if (!pr.isDeleted()) {
@@ -459,8 +459,8 @@ public class PriorityReservationController {
         return result;
     }
 
-    private LinkedList<PriorityReservation> pageOf(LinkedListInterface<PriorityReservation> list, int page) {
-        LinkedList<PriorityReservation> result = new LinkedList<>();
+    private DoublyLinkedList<PriorityReservation> pageOf(ListInterface<PriorityReservation> list, int page) {
+        DoublyLinkedList<PriorityReservation> result = new DoublyLinkedList<>();
         int start = page * PAGE_SIZE;
         int end = Math.min(list.size(), start + PAGE_SIZE);
         for (int i = start; i < end; i++) {
@@ -469,8 +469,8 @@ public class PriorityReservationController {
         return result;
     }
 
-    private String[][] buildPriorityRows(LinkedListInterface<PriorityReservation> list,
-            LinkedListInterface<Reservation> history) {
+    private String[][] buildPriorityRows(ListInterface<PriorityReservation> list,
+            ListInterface<Reservation> history) {
         String[][] data = new String[list.size() + 1][7];
         data[0] = new String[] { "No.", "Reservation ID", "Guest ID", "Priority", "Rank", "Status", "Overridden By" };
         for (int i = 0; i < list.size(); i++) {

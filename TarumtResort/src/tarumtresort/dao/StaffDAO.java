@@ -2,8 +2,8 @@ package tarumtresort.dao;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.utility.JsonFileHandler;
@@ -15,7 +15,7 @@ public class StaffDAO {
 
     private static final TaskAssignmentDAO TASK_ASSIGNMENT_DAO = new TaskAssignmentDAO();
 
-    public void saveStaffList(LinkedListInterface<Staff> staffList) {
+    public void saveStaffList(ListInterface<Staff> staffList) {
         try {
             JsonFileHandler.saveListWithNestedIds(
                     staffList, FILE, "taskAssignments",
@@ -26,7 +26,7 @@ public class StaffDAO {
         }
     }
 
-    public LinkedList<Staff> retrieveStaffList() {
+    public DoublyLinkedList<Staff> retrieveStaffList() {
         try {
             return JsonFileHandler.loadListWithNestedIds(
                     FILE, Staff.class, "taskAssignments",
@@ -34,7 +34,7 @@ public class StaffDAO {
                     Staff::setTaskAssignments);
         } catch (IOException e) {
             System.err.println("  ✗ Failed to load staff data: " + e.getMessage());
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
     }
 }

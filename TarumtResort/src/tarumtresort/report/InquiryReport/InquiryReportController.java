@@ -1,8 +1,8 @@
 package tarumtresort.report.InquiryReport;
 
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.InquiryDAO;
 import tarumtresort.dao.ReservationDAO;
@@ -33,8 +33,8 @@ public class InquiryReportController {
     public void generatePendingInquiryReport() {
         InquiryType filterType = ui().inputInquiryTypeFilter();
 
-        LinkedListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
         PendingInquiryReport.Result result = new PendingInquiryReport(inquiries, guests).generate(filterType);
@@ -53,8 +53,8 @@ public class InquiryReportController {
     public void generateRoomTypeInquiryDistributionReport() {
         RoomType filterType = ui().inputRoomTypeFilter();
 
-        LinkedListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
-        LinkedListInterface<Reservation> reservations = new LinkedList<>();
+        ListInterface<Inquiry> inquiries = inquiryDAO.retrieveInquiryList();
+        ListInterface<Reservation> reservations = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(reservations);
 
         RoomTypeInquiryDistributionReport.Result result =
