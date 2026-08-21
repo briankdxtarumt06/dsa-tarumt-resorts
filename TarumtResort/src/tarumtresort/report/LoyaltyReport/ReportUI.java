@@ -14,13 +14,7 @@ import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.ReportGraph;
 import tarumtresort.utility.TablePrinter;
 
-/**
- *
- * @author Brian
- *
- * Loyalty report UI: date-range input, secondary filters, and formal report printing.
- * Lives beside the loyalty report classes (mirrors HousekeepingReport/HousekeepingReportUI).
- */
+// Author: Imam Mahdi Ali Ang Attuko
 public class ReportUI {
 
     private static final String UNIVERSITY =
@@ -33,7 +27,6 @@ public class ReportUI {
         this(scanner, DEFAULT_SUBSYSTEM);
     }
 
-    /** Builds a report UI with the given subsystem banner (e.g. loyalty reports). */
     public ReportUI(Scanner scanner, String subsystem) {
         this.scanner = scanner;
         this.subsystem = subsystem == null ? DEFAULT_SUBSYSTEM : subsystem;
@@ -126,7 +119,6 @@ public class ReportUI {
         return tiers[choice - 1];
     }
 
-    /** Asks for a redemption-status filter; returns null when "All statuses" is chosen. */
     public String inputStatusFilter() {
         System.out.println("\n========================================");
         System.out.println("  REDEMPTION STATUS FILTER");
@@ -145,14 +137,11 @@ public class ReportUI {
         }
     }
 
-    /** Asks a yes/no question for boolean report options. */
     public boolean inputYesNo(String prompt) {
         System.out.print(prompt + " (y/n): ");
         String line = scanner.nextLine().trim();
         return !line.isEmpty() && Character.toLowerCase(line.charAt(0)) == 'y';
     }
-
-    // -------------------- RANGE PRESETS --------------------
 
     private LocalDateTime[] rangeThisMonth() {
         YearMonth ym = YearMonth.now();

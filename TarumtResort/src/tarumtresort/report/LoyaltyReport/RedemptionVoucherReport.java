@@ -9,6 +9,7 @@ import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
 import tarumtresort.report.ReportChart;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class RedemptionVoucherReport {
 
     private final LinkedListInterface<Member> memberList;

@@ -9,8 +9,7 @@ import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
-// Author: Brian - extracted from LoyaltyController for Housekeeping-style reports
-// Simplified to date-range-only filter (like Housekeeping) - no tier/minPoints/status/promo/keyword/sort
+// Author: Imam Mahdi Ali Ang Attuko
 public class MembershipPerformanceReport {
 
     private final LinkedListInterface<Member> memberList;
@@ -28,11 +27,9 @@ public class MembershipPerformanceReport {
 
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
-            // skip soft-deleted members so removed records don't pollute management summary
             if (m.isDeleted()) {
                 continue;
             }
-            // multiple criteria: date range AND tier filter
             if (tierFilter != null && (m.getTier() == null || m.getTier() != tierFilter)) {
                 continue;
             }
@@ -44,8 +41,6 @@ public class MembershipPerformanceReport {
             filtered.addBack(m);
         }
 
-        // sort by memberId via addSorted (Member implements Comparable by memberId)
-        // Use LinkedList addSorted to keep sorted order like RoomCleaning does
         LinkedListInterface<Member> sorted = new LinkedList<>();
         for (int i = 0; i < filtered.size(); i++) {
             sorted.addSorted(filtered.get(i));

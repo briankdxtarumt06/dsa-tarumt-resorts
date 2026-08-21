@@ -8,7 +8,7 @@ import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.ReportChart;
 
-// Housekeeping-style: date-range-only; window derived from range (if no range, no expiry filter)
+// Author: Imam Mahdi Ali Ang Attuko
 public class PointExpiryReport {
 
     private static final int[] TIER_THRESHOLDS = {0, 1000, 3000, 6000};
@@ -27,7 +27,6 @@ public class PointExpiryReport {
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             if (m.isDeleted()) continue;
-            // multiple criteria: date range AND tier filter AND (optionally) expiring-only
             if (tierFilter != null && (m.getTier() == null || m.getTier() != tierFilter)) continue;
             if (from != null || to != null) {
                 boolean hasTx = false;
@@ -43,14 +42,12 @@ public class PointExpiryReport {
         LinkedListInterface<Member> sorted = new LinkedList<>();
         for (int i = 0; i < filtered.size(); i++) sorted.addSorted(filtered.get(i));
 
-        // For expiry, derive window from date range: if range provided, window = days between from/to, else use 30 as default for chart
         int windowForChart = 30;
         if (from != null && to != null) {
             windowForChart = (int) java.time.Duration.between(from, to).toDays();
             if (windowForChart <= 0) windowForChart = 30;
         }
 
-        // expiring-only: keep members that actually have points expiring within the window
         if (expiringOnly) {
             LinkedListInterface<Member> expiring = new LinkedList<>();
             for (int i = 0; i < sorted.size(); i++) {

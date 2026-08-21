@@ -13,7 +13,7 @@ import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.ReportResult;
 
-// Housekeeping-style facade for loyalty reports - date-range-only, Current header (ReportUI)
+// Author: Imam Mahdi Ali Ang Attuko
 public class LoyaltyReportController {
 
     private final MemberDAO memberDAO = new MemberDAO();

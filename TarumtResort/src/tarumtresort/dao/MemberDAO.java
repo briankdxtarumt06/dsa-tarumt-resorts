@@ -7,6 +7,7 @@ import tarumtresort.entity.Member;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class MemberDAO {
     private final String FILE_NAME = "data/members.json";
 

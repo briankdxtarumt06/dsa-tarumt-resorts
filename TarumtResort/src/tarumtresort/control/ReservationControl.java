@@ -2535,10 +2535,6 @@ public class ReservationControl {
             return null;
         }
 
-        public void displayPaymentRecords(ReservationUI ui) {
-            ui.printPaymentRecords(paymentList);
-        }
-
         public LinkedListInterface<Payment> getPaymentList() {
             return paymentList;
         }

@@ -7,6 +7,7 @@ import tarumtresort.entity.Reward;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class RewardDAO {
     private final String FILE_NAME = "data/rewards.json";
 

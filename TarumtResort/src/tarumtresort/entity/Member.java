@@ -5,6 +5,7 @@ import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.enums.*;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class Member implements Comparable<Member> {
     private String memberId;
     private int points;
@@ -74,10 +75,6 @@ public class Member implements Comparable<Member> {
         this.guestId = guestId;
     }
 
-    /**
-     * Soft-delete flag: the record stays for history/audit but is hidden from
-     * active views.
-     */
     public boolean isDeleted() {
         return isDeleted;
     }
