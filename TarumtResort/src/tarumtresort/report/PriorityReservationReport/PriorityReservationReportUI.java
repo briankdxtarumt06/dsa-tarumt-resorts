@@ -1,4 +1,4 @@
-package tarumtresort.report.HousekeepingReport;
+package tarumtresort.report.PriorityReservationReport;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -9,19 +9,29 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.enums.PriorityLevel;
+import tarumtresort.entity.enums.ReservationStatus;
+import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-// Author: Brian Kam Ding Xian
-public class HousekeepingReportUI {
+// Author: Lee Boon Yew
+/**
+ * Report boundary for the Priority Reservation module: filter prompts, the
+ * formal document sections, and the ASCII chart renderer.
+ *
+ * Structure mirrors HousekeepingReportUI so both modules produce the same
+ * document shape; only the subsystem line and the filter prompts differ.
+ */
+public class PriorityReservationReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
 
     private static final String UNIVERSITY =
             "TUNKU ABDUL RAHMAN UNIVERSITY OF MANAGEMENT AND TECHNOLOGY";
-    private static final String SUBSYSTEM = "HOUSEKEEPING TASK AND LOG";
+    private static final String SUBSYSTEM = "PRIORITY RESERVATION MANAGEMENT";
     private static final String CONFIDENTIAL =
             UNIVERSITY + " HIGHLY CONFIDENTIAL DOCUMENT";
 
@@ -39,11 +49,11 @@ public class HousekeepingReportUI {
 
     private final Scanner scanner;
 
-    public HousekeepingReportUI(Scanner scanner) {
+    public PriorityReservationReportUI(Scanner scanner) {
         this.scanner = scanner;
     }
 
-    // -------------------- date range input --------------------
+    // -------------------- filter prompts --------------------
 
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
@@ -55,41 +65,82 @@ public class HousekeepingReportUI {
         System.out.println("  4. This Week (Mon - Sun)");
         System.out.println("  5. Last 7 Days");
         System.out.println("  6. Today");
-        System.out.println("  7. Custom Range (type manually)");
-        System.out.println("  0. Back");
+        System.out.println("  7. All Time (no limit)");
+        System.out.println("  8. Custom Range (type manually)");
         System.out.println("========================================");
-        return readDateTimeRangeChoice(fieldLabel);
+        int choice = getIntInput("Enter option", 1, 8);
+
+        switch (choice) {
+            case 1: return rangeThisMonth();
+            case 2: return rangeLastMonth();
+            case 3: return rangeSpecificMonth();
+            case 4: return rangeThisWeek();
+            case 5: return rangeLast7Days();
+            case 6: return rangeToday();
+            case 7: return new LocalDateTime[] { null, null };
+            default: return rangeCustom(fieldLabel);
+        }
     }
 
-    private LocalDateTime[] readDateTimeRangeChoice(String fieldLabel) {
-        while (true) {
-            System.out.print("Enter option (0-7) (blank = all time): ");
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty()) {
-                System.out.println();
-                return new LocalDateTime[] { null, null };
-            }
-            try {
-                int value = Integer.parseInt(line);
-                if (value < 0 || value > 7) {
-                    ConsoleUtil.printError("Please enter a number between 0 and 7!");
-                    continue;
-                }
-                System.out.println();
-                switch (value) {
-                    case 0: return null;
-                    case 1: return rangeThisMonth();
-                    case 2: return rangeLastMonth();
-                    case 3: return rangeSpecificMonth();
-                    case 4: return rangeThisWeek();
-                    case 5: return rangeLast7Days();
-                    case 6: return rangeToday();
-                    default: return rangeCustom(fieldLabel);
-                }
-            } catch (NumberFormatException e) {
-                ConsoleUtil.printError("Please enter a number between 0 and 7!");
-            }
+    /** Reservation status filter. Returns null for "all statuses". */
+    public ReservationStatus selectStatusFilter() {
+        ReservationStatus[] values = ReservationStatus.values();
+        System.out.println("\n========================================");
+        System.out.println("  FILTER BY RESERVATION STATUS");
+        System.out.println("========================================");
+        System.out.println("  0. All Statuses (no filter)");
+        for (int i = 0; i < values.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + values[i].name());
         }
+        System.out.println("========================================");
+        int choice = getIntInput("Enter option", 0, values.length);
+        return choice == 0 ? null : values[choice - 1];
+    }
+
+    /** Room type filter. Returns null for "all room types". */
+    public RoomType selectRoomTypeFilter() {
+        RoomType[] values = RoomType.values();
+        System.out.println("\n========================================");
+        System.out.println("  FILTER BY ROOM TYPE REQUESTED");
+        System.out.println("========================================");
+        System.out.println("  0. All Room Types (no filter)");
+        for (int i = 0; i < values.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + values[i].name());
+        }
+        System.out.println("========================================");
+        int choice = getIntInput("Enter option", 0, values.length);
+        return choice == 0 ? null : values[choice - 1];
+    }
+
+    /**
+     * Minimum priority level - a rank threshold, e.g. "GOLD and above".
+     * Returns null for no threshold.
+     */
+    public PriorityLevel selectMinimumPriorityLevel() {
+        PriorityLevel[] values = PriorityLevel.values();
+        System.out.println("\n========================================");
+        System.out.println("  MINIMUM PRIORITY LEVEL");
+        System.out.println("========================================");
+        System.out.println("  0. All Levels (no threshold)");
+        for (int i = 0; i < values.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + values[i].name()
+                    + " and above (rank " + values[i].getRank() + "+)");
+        }
+        System.out.println("========================================");
+        int choice = getIntInput("Enter option", 0, values.length);
+        return choice == 0 ? null : values[choice - 1];
+    }
+
+    /** Override scope: 0 = all records, 1 = overridden only, 2 = non-overridden only. */
+    public int selectOverrideScope() {
+        System.out.println("\n========================================");
+        System.out.println("  OVERRIDE SCOPE");
+        System.out.println("========================================");
+        System.out.println("  0. All Records");
+        System.out.println("  1. Staff-Overridden Records Only");
+        System.out.println("  2. Loyalty-Tier Records Only (not overridden)");
+        System.out.println("========================================");
+        return getIntInput("Enter option", 0, 2);
     }
 
     private LocalDateTime inputOptionalDateTime(String prompt) {
@@ -208,7 +259,7 @@ public class HousekeepingReportUI {
         ConsoleUtil.pressEnterToContinue(scanner);
     }
 
-    // -------------------- formal three-section document --------------------
+    // -------------------- formal document sections --------------------
 
     public void printDocumentHeader(String reportTitle) {
         TablePrinter.printFullWidthLine('=');
@@ -223,6 +274,25 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('-');
         System.out.println();
         TablePrinter.printCentered(CONFIDENTIAL);
+        System.out.println();
+    }
+
+    /**
+     * States the filters the figures were produced under. A management report
+     * that does not say what it excluded cannot be acted on.
+     */
+    public void printFilterSection(String[] lines) {
+        if (lines == null || lines.length == 0) {
+            return;
+        }
+        TablePrinter.printFullWidthLine('-');
+        System.out.println(" FILTERS APPLIED");
+        for (String line : lines) {
+            if (line == null || line.isEmpty()) {
+                continue;
+            }
+            System.out.println("   " + Ansi.strip(line));
+        }
         System.out.println();
     }
 
@@ -241,17 +311,34 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    public void printChartSection(String reportTitle, LinkedListInterface<ReportChart> charts) {
+    /**
+     * Charts are laid out two to a row, side by side, separated by a vertical
+     * rule - the standard layout for this subsystem's report documents.
+     *
+     * @param axisLabels caption printed after the arrow on each chart's x-axis,
+     *                   one per chart; may be null or short, missing entries
+     *                   simply render without a caption
+     */
+    public void printChartSection(String reportTitle, LinkedListInterface<ReportChart> charts,
+            String[] axisLabels) {
         System.out.println();
         TablePrinter.printCentered("GRAPHICAL REPRESENTATION OF " + reportTitle);
         System.out.println();
+
         if (charts != null) {
-            for (int i = 0; i < charts.size(); i++) {
-                printCenteredChart(charts.get(i));
+            for (int i = 0; i < charts.size(); i += 2) {
+                ReportChart left = charts.get(i);
+                ReportChart right = (i + 1 < charts.size()) ? charts.get(i + 1) : null;
+                printChartPair(left, axisLabel(axisLabels, i), right, axisLabel(axisLabels, i + 1));
+                System.out.println();
             }
         }
         TablePrinter.printFullWidthLine('=');
         System.out.println();
+    }
+
+    private String axisLabel(String[] labels, int index) {
+        return (labels == null || index >= labels.length || labels[index] == null) ? "" : labels[index];
     }
 
     public void printSummarySection(String[] lines) {
@@ -274,12 +361,92 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    // -------------------- centered ASCII bar chart --------------------
+    /** Shown instead of a document when no record survives the filters. */
+    public void printNoData(String reportTitle) {
+        TablePrinter.printFullWidthLine('=');
+        TablePrinter.printCentered(UNIVERSITY);
+        TablePrinter.printCentered(SUBSYSTEM);
+        System.out.println();
+        TablePrinter.printCentered(reportTitle);
+        TablePrinter.printFullWidthLine('=');
+        System.out.println();
+        ConsoleUtil.printError("No priority reservation records match the selected filters.");
+        System.out.println(" Try widening the date range, or choose \"All\" for status and room type.");
+        System.out.println();
+        TablePrinter.printFullWidthLine('=');
+    }
 
-    private void printCenteredChart(ReportChart chart) {
-        if (chart == null || chart.isEmpty()) {
+    // -------------------- side-by-side ASCII bar charts --------------------
+
+    // two blocks plus the " | " rule between them must fit DOC_WIDTH
+    private static final String CHART_GAP = " | ";
+    private static final int BLOCK_WIDTH = (DOC_WIDTH - CHART_GAP.length()) / 2;
+
+    /**
+     * Renders one or two charts as a single side-by-side pair. Each chart is
+     * built into an equal-height block of fixed width, so the vertical rule
+     * between them lines up on every row.
+     */
+    private void printChartPair(ReportChart left, String leftAxis,
+            ReportChart right, String rightAxis) {
+        if (left == null || left.isEmpty()) {
             return;
         }
+        ChartBlock leftBlock = buildChartBlock(left, leftAxis);
+        ChartBlock rightBlock = (right == null || right.isEmpty())
+                ? null : buildChartBlock(right, rightAxis);
+
+        // the two charts scale independently, so one may need more rows than
+        // the other. Pad the shorter one above its caret to bring both axes
+        // down onto the same baseline.
+        int tallest = rightBlock == null ? leftBlock.scaleRows
+                : Math.max(leftBlock.scaleRows, rightBlock.scaleRows);
+        String[] leftLines = leftBlock.alignedTo(tallest);
+        String[] rightLines = rightBlock == null ? null : rightBlock.alignedTo(tallest);
+
+        int lines = rightLines == null ? leftLines.length
+                : Math.max(leftLines.length, rightLines.length);
+
+        for (int i = 0; i < lines; i++) {
+            String leftLine = i < leftLines.length ? leftLines[i] : "";
+            if (rightLines == null) {
+                System.out.println(padRight(leftLine, BLOCK_WIDTH));
+                continue;
+            }
+            String rightLine = i < rightLines.length ? rightLines[i] : "";
+            System.out.println(padRight(padRight(leftLine, BLOCK_WIDTH)
+                    + CHART_GAP + rightLine, DOC_WIDTH));
+        }
+    }
+
+    /** A rendered chart plus the number of scale rows, used to align baselines. */
+    private final class ChartBlock {
+        private final String[] lines;
+        private final int scaleRows;
+
+        ChartBlock(String[] lines, int scaleRows) {
+            this.lines = lines;
+            this.scaleRows = scaleRows;
+        }
+
+        /** Inserts blank rows between the title and the caret to match a taller chart. */
+        String[] alignedTo(int targetRows) {
+            int shortfall = targetRows - scaleRows;
+            if (shortfall <= 0) {
+                return lines;
+            }
+            String[] padded = new String[lines.length + shortfall];
+            padded[0] = lines[0];
+            for (int i = 0; i < shortfall; i++) {
+                padded[1 + i] = repeat(' ', BLOCK_WIDTH);
+            }
+            System.arraycopy(lines, 1, padded, 1 + shortfall, lines.length - 1);
+            return padded;
+        }
+    }
+
+    /** One chart rendered into fixed-width lines: title, scale, bars, axis, labels. */
+    private ChartBlock buildChartBlock(ReportChart chart, String axisCaption) {
         LinkedListInterface<ReportChart.Bar> bars = chart.getBars();
         int barCount = bars.size();
 
@@ -290,30 +457,43 @@ public class HousekeepingReportUI {
         int step = niceStep(peak);
         int top = niceTop(peak, step);
         int rows = top / step;
-
         int[] heights = barHeights(bars, top, rows);
 
-        int pitch = Math.max(6, Math.min(18, (DOC_WIDTH - 6) / barCount));
         int scaleWidth = String.valueOf(top).length() + 1;
-        int blockWidth = scaleWidth + barCount * pitch;
-        int leftPad = (DOC_WIDTH - blockWidth) / 2;
-
-        System.out.println(padCenter(chart.getTitle(), DOC_WIDTH));
-        System.out.println();
-        System.out.println();
-
-        for (int rowY = rows; rowY >= 1; rowY--) {
-            int value = rowY * step;
-            System.out.println(emitRow(scaleLabel(value, scaleWidth) + barRow(heights, rowY, barCount, pitch), leftPad, blockWidth));
-        }
-
-        System.out.println(emitRow(axisRow(scaleWidth, barCount, pitch), leftPad, blockWidth));
+        // capped so a chart with only two or three bars does not sprawl across
+        // the whole block with the bars marooned far apart
+        int pitch = Math.max(4,
+                Math.min(12, (BLOCK_WIDTH - scaleWidth - 2) / Math.max(1, barCount)));
 
         String[][] labels = labelLines(bars, barCount);
-        for (int row = 0; row < labels[0].length; row++) {
-            System.out.println(emitRow(labelRow(labels, row, barCount, pitch), leftPad, blockWidth));
+        int labelRows = labels.length == 0 ? 0 : labels[0].length;
+
+        // title + caret + scale rows + axis + label rows
+        String[] block = new String[1 + 1 + rows + 1 + labelRows];
+        int line = 0;
+
+        block[line++] = truncate(chart.getTitle(), BLOCK_WIDTH);
+        block[line++] = repeat(' ', scaleWidth - 1) + "^";
+
+        for (int rowY = rows; rowY >= 1; rowY--) {
+            block[line++] = scaleLabel(rowY * step, scaleWidth)
+                    + barRow(heights, rowY, barCount, pitch);
         }
-        System.out.println();
+
+        // keep the dash run short enough that the arrow and its caption survive
+        String caption = (axisCaption == null || axisCaption.isEmpty()) ? "" : " " + axisCaption;
+        int dashBudget = BLOCK_WIDTH - scaleWidth - 1 - caption.length();
+        int dashes = Math.max(1, Math.min(barCount * pitch, dashBudget));
+        block[line++] = repeat(' ', scaleWidth - 1) + "+" + repeat('-', dashes) + ">" + caption;
+
+        for (int row = 0; row < labelRows; row++) {
+            block[line++] = labelRow(labels, row, barCount, pitch);
+        }
+
+        for (int i = 0; i < block.length; i++) {
+            block[i] = truncate(padRight(block[i], BLOCK_WIDTH), BLOCK_WIDTH);
+        }
+        return new ChartBlock(block, rows);
     }
 
     private String scaleLabel(int y, int scaleWidth) {
@@ -343,16 +523,16 @@ public class HousekeepingReportUI {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < barCount; i++) {
             String part = row < labels[i].length ? labels[i][row] : "";
-            sb.append(padCenter(truncate(part, pitch - 2), pitch));
+            sb.append(padCenter(truncate(part, pitch), pitch));
         }
         return sb.toString();
     }
 
     private String truncate(String text, int width) {
-        if (text == null || text.length() <= width) {
-            return text == null ? "" : text;
+        if (text == null) {
+            return "";
         }
-        return text.substring(0, width);
+        return text.length() <= width ? text : text.substring(0, width);
     }
 
     private String[][] labelLines(LinkedListInterface<ReportChart.Bar> bars, int barCount) {
@@ -438,9 +618,6 @@ public class HousekeepingReportUI {
         return heights;
     }
 
-    private String emitRow(String blockContent, int leftPad, int blockWidth) {
-        return padRight(repeat(' ', leftPad) + blockContent, DOC_WIDTH);
-    }
 
     // -------------------- width helpers --------------------
 
@@ -473,17 +650,9 @@ public class HousekeepingReportUI {
     }
 
     private String repeat(char c, int count) {
-        StringBuilder sb = new StringBuilder(count);
+        StringBuilder sb = new StringBuilder(Math.max(0, count));
         for (int i = 0; i < count; i++) {
             sb.append(c);
-        }
-        return sb.toString();
-    }
-
-    private String repeat(String s, int count) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            sb.append(s);
         }
         return sb.toString();
     }

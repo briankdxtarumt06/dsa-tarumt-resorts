@@ -32,6 +32,9 @@ public class HousekeepingReportController {
 
     public void generateRoomCleaningPerformanceReport() {
         LocalDateTime[] range = ui().inputOptionalDateTimeRange("task start");
+        if (range == null) {
+            return;
+        }
 
         LinkedListInterface<Room> rooms = new LinkedList<>();
         roomDAO.loadFromFile(rooms);
@@ -46,6 +49,9 @@ public class HousekeepingReportController {
 
     public void generateStaffProductivityReport() {
         LocalDateTime[] range = ui().inputOptionalDateTimeRange("date & time assigned");
+        if (range == null) {
+            return;
+        }
 
         LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
         LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
