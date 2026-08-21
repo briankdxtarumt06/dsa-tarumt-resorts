@@ -55,20 +55,40 @@ public class HousekeepingReportUI {
         System.out.println("  4. This Week (Mon - Sun)");
         System.out.println("  5. Last 7 Days");
         System.out.println("  6. Today");
-        System.out.println("  7. All Time (no limit)");
-        System.out.println("  8. Custom Range (type manually)");
+        System.out.println("  7. Custom Range (type manually)");
+        System.out.println("  0. Back");
         System.out.println("========================================");
-        int choice = getIntInput("Enter option", 1, 8);
+        return readDateTimeRangeChoice(fieldLabel);
+    }
 
-        switch (choice) {
-            case 1: return rangeThisMonth();
-            case 2: return rangeLastMonth();
-            case 3: return rangeSpecificMonth();
-            case 4: return rangeThisWeek();
-            case 5: return rangeLast7Days();
-            case 6: return rangeToday();
-            case 7: return new LocalDateTime[] { null, null };
-            default: return rangeCustom(fieldLabel);
+    private LocalDateTime[] readDateTimeRangeChoice(String fieldLabel) {
+        while (true) {
+            System.out.print("Enter option (0-7) (blank = all time): ");
+            String line = scanner.nextLine().trim();
+            if (line.isEmpty()) {
+                System.out.println();
+                return new LocalDateTime[] { null, null };
+            }
+            try {
+                int value = Integer.parseInt(line);
+                if (value < 0 || value > 7) {
+                    ConsoleUtil.printError("Please enter a number between 0 and 7!");
+                    continue;
+                }
+                System.out.println();
+                switch (value) {
+                    case 0: return null;
+                    case 1: return rangeThisMonth();
+                    case 2: return rangeLastMonth();
+                    case 3: return rangeSpecificMonth();
+                    case 4: return rangeThisWeek();
+                    case 5: return rangeLast7Days();
+                    case 6: return rangeToday();
+                    default: return rangeCustom(fieldLabel);
+                }
+            } catch (NumberFormatException e) {
+                ConsoleUtil.printError("Please enter a number between 0 and 7!");
+            }
         }
     }
 
