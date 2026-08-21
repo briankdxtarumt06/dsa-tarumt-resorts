@@ -43,8 +43,6 @@ public class MembershipPerformanceReport {
             filtered.addBack(m);
         }
 
-        // sort by memberId via addSorted (Member implements Comparable by memberId)
-        // Use DoublyLinkedList addSorted to keep sorted order like RoomCleaning does
         ListInterface<Member> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < filtered.size(); i++) {
             sorted.addSorted(filtered.get(i));

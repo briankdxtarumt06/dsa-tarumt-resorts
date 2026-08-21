@@ -29,8 +29,12 @@ public class LoyaltyReportController {
     }
 
     public void generateMembershipPerformanceReport() {
-        LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("transaction");
-        Tier tierFilter = reportUI.inputTierFilter();
+        LocalDateTime[] range = ui().inputOptionalDateTimeRange("transaction");
+        if (range == null) {
+            return;
+        }
+        Tier tierFilter = ui().inputTierFilter();
+
         ListInterface<Member> members = memberDAO.retrieveFromFile();
         ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
@@ -41,28 +45,24 @@ public class LoyaltyReportController {
     }
 
     public void generateRedemptionVoucherReport() {
-        LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("redemption");
-        String statusFilter = reportUI.inputStatusFilter();
+        LocalDateTime[] range = ui().inputOptionalDateTimeRange("redemption");
+        if (range == null) {
+            return;
+        }
+        String statusFilter = ui().inputStatusFilter();
+
         ListInterface<Member> members = memberDAO.retrieveFromFile();
         ListInterface<Reward> rewards = rewardDAO.retrieveFromFile();
         ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
-        RedemptionVoucherReport.Result result = new RedemptionVoucherReport(members, rewards, guests).generate(range[0], range[1], statusFilter);
-        reportUI.printReport(new ReportResult(result.getTable(), result.getSummary(), result.getCharts(), result.getCallouts(), result.getCriteria()), "REDEMPTION & VOUCHER REPORT");
-        reportUI.pressEnterToContinue();
+        RedemptionVoucherReport.Result result = new RedemptionVoucherReport(members, rewards, guests)
+                .generate(range[0], range[1], statusFilter);
+        new RedemptionVoucherUI(ui()).render(result);
+        ui().pressEnterToContinue();
     }
 
-    public void generatePointExpiryReport() {
-        LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("transaction");
-        Tier tierFilter = reportUI.inputTierFilter();
-        boolean expiringOnly = reportUI.inputYesNo("Show only members with points expiring within the window?");
-        ListInterface<Member> members = memberDAO.retrieveFromFile();
-        ListInterface<Guest> guests = new DoublyLinkedList<>();
-        guestDAO.loadFromFile(guests);
-
-        PointExpiryReport.Result result = new PointExpiryReport(members, guests).generate(range[0], range[1], tierFilter, expiringOnly);
-        reportUI.printReport(new ReportResult(result.getTable(), result.getSummary(), result.getCharts(), result.getCallouts(), result.getCriteria()), "POINT EXPIRY & TIER PROGRESSION REPORT");
-        reportUI.pressEnterToContinue();
+    private ReportUI ui() {
+        return new ReportUI(scanner);
     }
 }

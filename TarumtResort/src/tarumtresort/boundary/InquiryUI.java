@@ -161,7 +161,22 @@ public class InquiryUI {
         } else if (extra instanceof Payment) {
             Payment payment = (Payment) extra;
             System.out.println("Payment ID     : " + payment.getPaymentID());
-            System.out.println("Reservation ID : " + payment.getReservationID());
+            StringBuilder resIds = new StringBuilder();
+            ListInterface<String> paymentResIds = payment.getReservationIds();
+            if (paymentResIds != null) {
+                for (int j = 0; j < paymentResIds.size(); j++) {
+                    if (paymentResIds.get(j) != null) {
+                        if (resIds.length() > 0) {
+                            resIds.append(", ");
+                        }
+                        resIds.append(paymentResIds.get(j));
+                    }
+                }
+            }
+            if (resIds.length() == 0) {
+                resIds.append("-");
+            }
+            System.out.println("Reservation ID : " + resIds);
             System.out.println("Room Charge    : RM " + String.format("%.2f", payment.getRoomCharge()));
             System.out.println("Service Charge : RM " + String.format("%.2f", payment.getServiceCharge()));
             System.out.println("Tax            : RM " + String.format("%.2f", payment.getTax()));

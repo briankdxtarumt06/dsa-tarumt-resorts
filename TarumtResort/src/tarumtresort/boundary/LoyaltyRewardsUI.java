@@ -199,9 +199,6 @@ public class LoyaltyRewardsUI {
         return text.substring(0, width - 3) + "...";
     }
 
-    // ==================================================================
-    // MEMBER MANAGEMENT
-    // ==================================================================
     public int printMemberListMenu(ListInterface<Member> pageList, int page, int pageCount,
             boolean hasFilter, boolean hasDeleted, Function<String, Guest> guestResolver) {
         clearScreen();
@@ -351,9 +348,6 @@ public class LoyaltyRewardsUI {
         return tiers[index];
     }
 
-    // ==================================================================
-    // POINTS & REDEMPTION MANAGEMENT
-    // ==================================================================
     public int printPointsListMenu(ListInterface<Member> pageList, int page, int pageCount,
             boolean hasFilter, Function<String, Guest> guestResolver,
             Function<Member, Integer> balanceResolver) {
@@ -574,9 +568,6 @@ public class LoyaltyRewardsUI {
         return "VALID";
     }
 
-    // ==================================================================
-    // REWARD MANAGEMENT
-    // ==================================================================
     public int printRewardListMenu(ListInterface<Reward> pageList, int page, int pageCount,
             boolean hasFilter, boolean hasDeleted, String sortLabel) {
         clearScreen();
