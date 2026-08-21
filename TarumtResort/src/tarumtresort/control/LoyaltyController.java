@@ -794,6 +794,47 @@ public class LoyaltyController {
         return count;
     }
 
+    /** Unread notification count for ONE guest (guest management column). */
+    public int getUnreadNotificationCountByGuest(String guestId) {
+        if (guestId == null) {
+            return 0;
+        }
+        Guest guest = findGuest(guestId);
+        if (guest == null) {
+            return 0;
+        }
+        int count = 0;
+        LinkedListInterface<Notification> list = guest.getNotificationList();
+        for (int i = 0; i < list.size(); i++) {
+            Notification n = list.get(i);
+            if (!n.isRead() && !n.isDeleted()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Marks ONE guest's notifications as read; returns how many were flipped. */
+    public int markGuestNotificationsRead(String guestId) {
+        Guest guest = findGuest(guestId);
+        if (guest == null) {
+            return 0;
+        }
+        int count = 0;
+        LinkedListInterface<Notification> list = guest.getNotificationList();
+        for (int i = 0; i < list.size(); i++) {
+            Notification n = list.get(i);
+            if (!n.isRead() && !n.isDeleted()) {
+                n.setRead(true);
+                count++;
+            }
+        }
+        if (count > 0) {
+            guestDAO.saveToFile(guestList);
+        }
+        return count;
+    }
+
     /** Marks one member's notifications as read; returns how many were flipped. */
     public int markMemberNotificationsRead(String memberId) {
         Member member = findMember(memberId);

@@ -1,10 +1,11 @@
 package tarumtresort.entity;
 
 import java.time.LocalDateTime;
+import tarumtresort.entity.enums.NotificationType;
 
 public class Notification implements Comparable<Notification> {
     private String notificationId;
-    private String type;
+    private NotificationType type;
     private String message;
     private LocalDateTime date;
     private boolean isRead;
@@ -13,7 +14,7 @@ public class Notification implements Comparable<Notification> {
     public Notification() {
     }
 
-    public Notification(String notificationId, String type, String message,
+    public Notification(String notificationId, NotificationType type, String message,
             LocalDateTime date, boolean isRead) {
         this.notificationId = notificationId;
         this.type = type;
@@ -31,11 +32,11 @@ public class Notification implements Comparable<Notification> {
         this.notificationId = notificationId;
     }
 
-    public String getType() {
+    public NotificationType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(NotificationType type) {
         this.type = type;
     }
 

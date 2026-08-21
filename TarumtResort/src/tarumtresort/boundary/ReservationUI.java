@@ -46,7 +46,8 @@ public class ReservationUI {
 
     // ===== GUEST =====
     public int printGuestListMenu(LinkedListInterface<Guest> pageList, int page, int pageCount, boolean hasFilter,
-            java.util.function.Function<String, String> memberResolver) {
+            java.util.function.Function<String, String> memberResolver,
+            java.util.function.Function<String, Integer> unreadResolver) {
         ConsoleUtil.clearScreen();
         System.out.println("\n==============================");
         System.out.println("  GUEST MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -54,14 +55,16 @@ public class ReservationUI {
         if (pageList.isEmpty()) {
             System.out.println("  (No guest records)");
         } else {
-            String[] header = {"No.", "Guest ID", "Name", "Nationality", "Contact", "Member"};
-            String[][] rows = new String[pageList.size()][6];
+            String[] header = {"No.", "Guest ID", "Name", "Nationality", "Contact", "Member", "Notifs"};
+            String[][] rows = new String[pageList.size()][7];
             for (int i = 0; i < pageList.size(); i++) {
                 Guest g = pageList.get(i);
+                Integer unread = unreadResolver == null ? null : unreadResolver.apply(g.getGuestId());
                 rows[i] = new String[]{
                     String.valueOf(i + 1), g.getGuestId(), g.getName(),
                     g.getNationality(), g.getContactNumber(),
-                    memberResolver == null ? "-" : memberResolver.apply(g.getGuestId())
+                    memberResolver == null ? "-" : memberResolver.apply(g.getGuestId()),
+                    unread == null ? "-" : String.valueOf(unread)
                 };
             }
             TablePrinter.displayTable(header, rows);
@@ -92,9 +95,33 @@ public class ReservationUI {
         System.err.println();
         System.out.print("==========Actions==========");
         System.out.println("\n  1. View Reservation History");
+        System.out.println("  2. View Notifications");
         System.out.println("  0. Back to List");
         System.out.println("===========================");
-        return inputIntChoice("Enter choice", 0, 1);
+        return inputIntChoice("Enter choice", 0, 2);
+    }
+
+    /** Prints a guest's notifications (newest last; deleted ones are already filtered out). */
+    public void printGuestNotifications(LinkedListInterface<tarumtresort.entity.Notification> list) {
+        if (list.size() == 0) {
+            ConsoleUtil.printWarning("\nNo notifications for this guest.");
+            return;
+        }
+        java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String[] header = {"No.", "ID", "Type", "Message", "Date", "Status"};
+        String[][] rows = new String[list.size()][6];
+        for (int i = 0; i < list.size(); i++) {
+            tarumtresort.entity.Notification n = list.get(i);
+            rows[i] = new String[]{
+                String.valueOf(i + 1),
+                n.getNotificationId(),
+                n.getType(),
+                n.getMessage(),
+                n.getDate() == null ? "-" : n.getDate().format(fmt),
+                n.isRead() ? "READ" : "UNREAD"
+            };
+        }
+        TablePrinter.displayTable(header, rows);
     }
 
     public void printGuestReservationHistory(LinkedListInterface<Reservation> reservations) {
@@ -186,7 +213,7 @@ public class ReservationUI {
         ConsoleUtil.printError(message + "\n");
     }
 
-    public void printGuestDetails(Guest guest, String memberInfo) {
+    public void printGuestDetails(Guest guest, String memberInfo, int unreadNotifications) {
         String[] header = {"Field", "Value"};
         String[][] rows = {
             {"Guest ID", guest.getGuestId()},
@@ -195,7 +222,8 @@ public class ReservationUI {
             {"Contact", guest.getContactNumber()},
             {"Nationality", guest.getNationality()},
             {"Address", guest.getAddress()},
-            {"Membership", memberInfo == null ? "-" : memberInfo}
+            {"Membership", memberInfo == null ? "-" : memberInfo},
+            {"Unread Notifications", String.valueOf(unreadNotifications)}
         };
         TablePrinter.displayTable(header, rows);
     }

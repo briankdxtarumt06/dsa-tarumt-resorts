@@ -133,7 +133,7 @@ public class ReservationControl {
             }
 
             LinkedListInterface<Guest> pageList = pageOfGuests(display, page);
-            int choice = reservationUI.printGuestListMenu(pageList, page, pageCount, hasFilter, this::memberIdOf);
+            int choice = reservationUI.printGuestListMenu(pageList, page, pageCount, hasFilter, this::memberIdOf, this::unreadOf);
 
             if (choice == 0) {
                 break;
@@ -193,7 +193,8 @@ public class ReservationControl {
     // select-entity action loop: details -> action -> details, until Back
     private void handleGuestActions(Guest guest) {
         while (true) {
-            reservationUI.printGuestDetails(guest, membershipOf(guest.getGuestId()));
+            reservationUI.printGuestDetails(guest, membershipOf(guest.getGuestId()),
+                    loyaltyController.getUnreadNotificationCountByGuest(guest.getGuestId()));
 
             int action = reservationUI.getGuestActionChoice();
             if (action == 0) {
@@ -205,6 +206,15 @@ public class ReservationControl {
                     reservationUI.printGuestReservationHistory(guest.getReservations());
                     reservationUI.pressEnterToContinue();
                     System.err.println();
+                    break;
+                case 2: // View Notifications (viewing marks them all as read)
+                    reservationUI.printGuestNotifications(
+                            loyaltyController.getNotifications(guest.getGuestId()));
+                    int marked = loyaltyController.markGuestNotificationsRead(guest.getGuestId());
+                    if (marked > 0) {
+                        System.out.println("  " + marked + " notification(s) marked as read.");
+                    }
+                    reservationUI.pressEnterToContinue();
                     break;
                 default:
                     break;
@@ -249,10 +259,15 @@ public class ReservationControl {
         return m == null ? "-" : m.getMemberId();
     }
 
+    // unread notification count shown in the guest list "Notifs" column
+    private Integer unreadOf(String guestId) {
+        return loyaltyController.getUnreadNotificationCountByGuest(guestId);
+    }
+
     // membership summary shown in guest details ("-" when not a member)
     private String membershipOf(String guestId) {
         Member m = loyaltyController.findMemberByGuestId(guestId);
-        return m == null ? "-" : m.getMemberId() + " (" + m.getTier() + ")";
+        return m == null ? "-" : m.getMemberId() + " (" + m.getTier() + ") - " + m.getPoints() + " pts";
     }
 
     // case 1: register a new guest - continue with menu/ room booking
@@ -290,7 +305,7 @@ public class ReservationControl {
         guestList.addBack(guest);
         guestDAO.saveToFile(guestList);
 
-        reservationUI.printGuestDetails(guest, "-");
+        reservationUI.printGuestDetails(guest, "-", 0);
         reservationUI.printSuccess();
         reservationUI.pressEnterToContinue();
 
