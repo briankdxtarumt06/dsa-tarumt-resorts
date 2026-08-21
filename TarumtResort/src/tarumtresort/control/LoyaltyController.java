@@ -91,7 +91,7 @@ public class LoyaltyController {
                         System.out.println("\n  Returning to main menu...");
                         break;
                     default:
-                        System.out.println("\n  ✗ Invalid choice! Please try again.");
+                        System.out.println("\n ?! Invalid choice! Please try again.");
                 }
             } while (choice != 0);
         } catch (Exception e) {

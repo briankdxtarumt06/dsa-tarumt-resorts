@@ -22,7 +22,7 @@ public class TaskAssignmentDAO {
                     TaskAssignment::getChanges,
                     TaskAssignmentChange::getChangeId);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to save assignment data: " + e.getMessage());
+            System.err.println(" ?! Failed to save assignment data !? : " + e.getMessage());
         }
     }
 
@@ -33,7 +33,7 @@ public class TaskAssignmentDAO {
                     CHANGE_DAO::getTaskAssignmentChangeById,
                     TaskAssignment::setChanges);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to load assignment data: " + e.getMessage());
+            System.err.println(" ?! Failed to load assignment data !? : " + e.getMessage());
             return new LinkedList<>();
         }
     }
