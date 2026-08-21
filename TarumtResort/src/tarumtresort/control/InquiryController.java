@@ -82,6 +82,9 @@ public class InquiryController {
                         viewAllInquiries();
                         break;
                     case 6:
+                        searchInquiry();
+                        break;
+                    case 7:
                         generateReport();
                         break;
                     case 0:
@@ -198,7 +201,6 @@ public class InquiryController {
             return;
         }
 
-        // status updated
         target.setStatus(InquiryStatus.CANCELLED);
         target.setResolvedTime(LocalDateTime.now());
 
@@ -227,6 +229,60 @@ public class InquiryController {
             default:
                 break;
         }
+    }
+
+    // case 6 
+    public void searchInquiry() {
+        int choice = ui.getSearchMenuChoice();
+        switch (choice) {
+            case 1: {
+                String inquiryId = ui.inputInquiryId();
+                Inquiry found = searchInquiryById(inquiryId);
+                if (found == null) {
+                    ui.printNotFound();
+                    return;
+                }
+                LinkedListInterface<Inquiry> result = new LinkedList<>();
+                result.addBack(found);
+                ui.listAllInquiries(buildInquiryTableData(result));
+                break;
+            }
+            case 2: {
+                String confirmationNumber = ui.inputConfirmationNumber();
+                LinkedListInterface<Inquiry> matches = searchInquiriesByConfirmationNumber(confirmationNumber);
+                if (matches.isEmpty()) {
+                    ui.printNotFound();
+                    return;
+                }
+                ui.listAllInquiries(buildInquiryTableData(matches));
+                break;
+            }
+            case 0:
+            default:
+                break;
+        }
+    }
+
+    // matches any status (PENDING / IN_PROGRESS / RESOLVED / CANCELLED)
+    public Inquiry searchInquiryById(String inquiryId) {
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getInquiryId().equals(inquiryId)) {
+                return inq;
+            }
+        }
+        return null;
+    }
+
+    public LinkedListInterface<Inquiry> searchInquiriesByConfirmationNumber(String confirmationNumber) {
+        LinkedListInterface<Inquiry> matches = new LinkedList<>();
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getConfirmationNumber().equals(confirmationNumber)) {
+                matches.addSorted(inq);
+            }
+        }
+        return matches;
     }
 
     // Searching
@@ -316,7 +372,7 @@ public class InquiryController {
         return null;
     }
 
-    // first PENDING inquiry in list order
+    // first PENDING inquiry in list order == earliest priority/createdTime,
     private Inquiry getNextPendingInquiry() {
         for (int i = 0; i < inquiryList.size(); i++) {
             Inquiry inq = inquiryList.get(i);

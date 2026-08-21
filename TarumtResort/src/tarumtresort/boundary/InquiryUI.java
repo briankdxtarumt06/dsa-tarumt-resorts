@@ -37,11 +37,20 @@ public class InquiryUI {
         System.out.println("  3. View Pending Queue");
         System.out.println("  4. Cancel Inquiry");
         System.out.println("  5. View All Inquiries");
-        System.out.println("  6. Generate Report");
+        System.out.println("  6. Search Inquiry");
+        System.out.println("  7. Generate Report");
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
-        return readIntInRange("Enter choice (0-6): ", 0, 6);
+        return readIntInRange("Enter choice (0-7): ", 0, 7);
 }
+
+    public int getSearchMenuChoice() {
+        System.out.println("\n--- Search Inquiry ---");
+        System.out.println("  1. By Inquiry ID");
+        System.out.println("  2. By Confirmation Number");
+        System.out.println("  0. Back");
+        return readIntInRange("Enter choice (0-2): ", 0, 2);
+    }
 
     public int getReportMenuChoice() {
         System.out.println("\n--- Reports ---");
