@@ -83,7 +83,6 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         this.assignedTaskId = assignedTaskId;
     }
 
-    /** True when the assignment is still active (not completed / cancelled). */
     public boolean isActive() {
         return status != TaskStatus.COMPLETED && status != TaskStatus.CANCELLED;
     }

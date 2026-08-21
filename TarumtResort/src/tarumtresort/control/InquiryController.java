@@ -32,6 +32,12 @@ public class InquiryController {
     private ReservationControl reservationControl = new ReservationControl();
     private HousekeepingController housekeepingController = new HousekeepingController();
 
+    // ui
+    private final Scanner scanner = new Scanner(System.in);
+    private InquiryUI ui = new InquiryUI(scanner);
+    private ReservationUI reservationUI = new ReservationUI();
+
+    // adt
     private LinkedListInterface<Inquiry> inquiryList = new LinkedList<>();
 
     // dao
@@ -39,11 +45,6 @@ public class InquiryController {
     private static final ReservationDAO reservationDAO = new ReservationDAO();
     private static final GuestDAO guestDAO = new GuestDAO();
     private static final PaymentDAO paymentDAO = new PaymentDAO();
-
-    // ui
-    private final Scanner scanner = new Scanner(System.in);
-    private InquiryUI ui = new InquiryUI(scanner);
-    private ReservationUI reservationUI = new ReservationUI();
 
     // report generation
     private InquiryReportController inquiryReportController = new InquiryReportController(scanner);
