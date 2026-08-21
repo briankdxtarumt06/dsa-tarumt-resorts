@@ -12,24 +12,6 @@ import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
 // Author: Lee Boon Yew
-/**
- * PRIORITY LEVEL EFFECTIVENESS REPORT
- *
- * Management question: is the priority level actually buying the guest faster
- * service, or is the ranking cosmetic?
- *
- * One row per priority level, measured on the things that only exist because
- * this module exists - where the tier lands in the VIP queue, how often it is
- * overtaken by later arrivals, and whether its service-level promise held.
- *
- * Queue positions are computed over the FULL active queue and the filters
- * then select which records are reported on. That is deliberate: a tier's
- * average position is only meaningful relative to the real queue, not
- * relative to a filtered subset of it.
- *
- * Dependencies: PriorityReservation + Reservation + ReservationTimestamps.
- * Filters: registration date range, reservation status, room type requested.
- */
 public class PriorityLevelEffectivenessReport {
 
     private final ListInterface<PriorityReservation> priorityList;
@@ -44,17 +26,14 @@ public class PriorityLevelEffectivenessReport {
     public Result generate(LocalDateTime from, LocalDateTime to,
             ReservationStatus statusFilter, RoomType roomTypeFilter) {
 
-        // SORT: index the reservations by id so the join below can binary search
         PriorityReportSupport.ReservationIndex index = new PriorityReportSupport.ReservationIndex(reservationList);
 
-        // SORT: build the full VIP queue by rank desc, then FIFO within a tier
         ListInterface<PriorityReportSupport.QueueEntry> queue = new DoublyLinkedList<>();
         for (int i = 0; i < priorityList.size(); i++) {
             PriorityReservation priority = priorityList.get(i);
             if (priority == null || priority.isDeleted()) {
                 continue;
             }
-            // SEARCH: binary search the sorted index instead of a linear scan
             Reservation reservation = index.find(priority.getReservationId());
             if (reservation == null || reservation.isDeleted()) {
                 continue;
@@ -63,7 +42,6 @@ public class PriorityLevelEffectivenessReport {
         }
         PriorityReportSupport.assignPositionsAndDisplacement(queue);
 
-        // aggregate the filtered records into one bucket per tier
         TierRow[] buckets = new TierRow[PriorityLevel.values().length];
         int totalRecords = 0;
         int totalOverridden = 0;
@@ -103,7 +81,6 @@ public class PriorityLevelEffectivenessReport {
             }
         }
 
-        // SORT: tier rows by rank descending, via compareTo + addSorted
         ListInterface<TierRow> rows = new DoublyLinkedList<>();
         for (TierRow bucket : buckets) {
             if (bucket != null) {
@@ -153,7 +130,6 @@ public class PriorityLevelEffectivenessReport {
 
     private String[][] toTable(ListInterface<TierRow> rows) {
         String[][] table = new String[rows.size() + 1][10];
-        // headers kept short so the rendered table stays inside DOC_WIDTH (132)
         table[0] = new String[] { "Tier", "Rank", "Records", "Avg Q.Pos",
                 "Best/Wst", "Avg Serve", "Waiting Now", "Overtaken", "Breaches",
                 "Tier/Ovr" };
@@ -180,8 +156,6 @@ public class PriorityLevelEffectivenessReport {
     private ListInterface<ReportChart> buildCharts(ListInterface<TierRow> rows) {
         ListInterface<ReportChart> charts = new DoublyLinkedList<>();
 
-        // Both charts should slope upward from the top tier down. Any tier
-        // that breaks the slope is the finding management needs to see.
         ReportChart positions = new ReportChart("Average Queue Position by Priority Tier (lower is better)");
         for (int i = 0; i < rows.size(); i++) {
             TierRow row = rows.get(i);
@@ -190,8 +164,6 @@ public class PriorityLevelEffectivenessReport {
         }
         charts.addBack(positions);
 
-        // completed waits only - mixing in the still-growing elapsed time of
-        // unserved guests would make the bars drift upward as the day goes on
         ReportChart waits = new ReportChart("Average Time to Service by Priority Tier (min)");
         for (int i = 0; i < rows.size(); i++) {
             TierRow row = rows.get(i);
@@ -210,9 +182,11 @@ public class PriorityLevelEffectivenessReport {
             PriorityReportSupport.QueueEntry worstCase) {
 
         double compliance = totalMeasured == 0
-                ? 100 : (double) (totalMeasured - totalBreaches) / totalMeasured * 100;
+                ? 100
+                : (double) (totalMeasured - totalBreaches) / totalMeasured * 100;
         double overrideShare = totalRecords == 0
-                ? 0 : (double) totalOverridden / totalRecords * 100;
+                ? 0
+                : (double) totalOverridden / totalRecords * 100;
 
         TierRow mostOvertaken = null;
         for (int i = 0; i < rows.size(); i++) {
@@ -250,20 +224,11 @@ public class PriorityLevelEffectivenessReport {
         };
     }
 
-    /**
-     * The headline finding. Rows arrive ordered by rank descending, so a
-     * working priority system produces average wait times that never fall as
-     * the rank falls. The first tier that is served FASTER than the tier above
-     * it is the point where the ranking stops being honoured.
-     */
     private String rankCorrelation(ListInterface<TierRow> rows) {
         TierRow previous = null;
         int compared = 0;
         for (int i = 0; i < rows.size(); i++) {
             TierRow row = rows.get(i);
-            // only tiers with a completed service can be compared: a guest who
-            // is still queuing has no final wait yet, and their elapsed time
-            // keeps rising, which would flip this verdict as the day wears on
             if (row.servedCount == 0) {
                 continue;
             }
@@ -293,10 +258,6 @@ public class PriorityLevelEffectivenessReport {
         private int worstPosition;
         private long waitSum;
         private int measuredCount;
-        // completed waits only (registration -> assigned). Kept apart from the
-        // figures above because a still-waiting guest's elapsed time keeps
-        // growing, so averaging the two together makes tiers with unserved
-        // guests look slower purely because the clock moved on.
         private long servedWaitSum;
         private int servedCount;
         private int timesOvertaken;
@@ -339,11 +300,6 @@ public class PriorityLevelEffectivenessReport {
             return measuredCount == 0 ? 0 : (double) waitSum / measuredCount;
         }
 
-        /**
-         * Average time actually taken to serve this tier. Only completed
-         * waits count, so the figure is stable and comparable between tiers
-         * no matter how long the report is run after the data was captured.
-         */
         double averageServeTime() {
             return servedCount == 0 ? 0 : (double) servedWaitSum / servedCount;
         }
@@ -366,9 +322,7 @@ public class PriorityLevelEffectivenessReport {
     }
 
     // -------------------- result --------------------
-
     public static class Result {
-
         private final String[][] table;
         private final ListInterface<ReportChart> charts;
         private final String[] summary;

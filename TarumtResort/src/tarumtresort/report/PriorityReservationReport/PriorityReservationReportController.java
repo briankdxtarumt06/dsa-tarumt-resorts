@@ -15,14 +15,6 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomType;
 
 // Author: Lee Boon Yew
-/**
- * Report driver for the Priority Reservation module.
- *
- * Collects the filters, loads the DAO data, hands both to the report class,
- * and passes the finished Result to the render UI. No metric is calculated
- * here and none is calculated in PriorityReservationController - the module
- * controller only calls one of the two generate methods below.
- */
 public class PriorityReservationReportController {
 
     private static final DateTimeFormatter FILTER_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -37,10 +29,6 @@ public class PriorityReservationReportController {
         this.scanner = scanner;
     }
 
-    /**
-     * Report 1 - is the priority level actually buying faster service?
-     * Filters: registration date range + reservation status + room type.
-     */
     public void generatePriorityLevelEffectivenessReport() {
         PriorityReservationReportUI ui = ui();
 
@@ -61,10 +49,6 @@ public class PriorityReservationReportController {
         ui.pressEnterToContinue();
     }
 
-    /**
-     * Report 2 - who is bypassing the loyalty tier rules, and at whose expense?
-     * Filters: registration date range + minimum priority level + override scope.
-     */
     public void generateVipQueueGovernanceReport() {
         PriorityReservationReportUI ui = ui();
 

@@ -11,24 +11,6 @@ import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
 // Author: Lee Boon Yew
-/**
- * VIP QUEUE AND OVERRIDE GOVERNANCE REPORT
- *
- * Management question: who is bypassing the loyalty tier rules, and at whose
- * expense?
- *
- * A staff override is the one place in this system where a person can hand
- * edit the service order. This report is the audit trail for that power. Each
- * row is one queued reservation in service order, and the GUESTS DISPLACED
- * column turns a placement into a cost counted in real guests - the number of
- * people who were already waiting and got pushed behind this record.
- *
- * That converts "Amir approved 3 overrides" into "Amir's overrides pushed 27
- * guests down the queue", which is the number management can actually act on.
- *
- * Dependencies: PriorityReservation + Reservation + Staff.
- * Filters: registration date range, minimum priority level, override scope.
- */
 public class VipQueueGovernanceReport {
 
     private static final int REASON_WIDTH = 18;
@@ -45,25 +27,18 @@ public class VipQueueGovernanceReport {
         this.staffList = staffList == null ? new DoublyLinkedList<>() : staffList;
     }
 
-    /**
-     * @param minLevel      rank threshold, e.g. GOLD means "GOLD and above". null = no threshold
-     * @param overrideScope 0 = all records, 1 = overridden only, 2 = non-overridden only
-     */
     public Result generate(LocalDateTime from, LocalDateTime to,
             PriorityLevel minLevel, int overrideScope) {
 
-        // SORT: index both lookup sets so the joins below can binary search
         PriorityReportSupport.ReservationIndex reservationIndex = new PriorityReportSupport.ReservationIndex(reservationList);
         PriorityReportSupport.StaffIndex staffIndex = new PriorityReportSupport.StaffIndex(staffList);
 
-        // SORT: the VIP queue itself - rank desc, then FIFO within a tier
         ListInterface<PriorityReportSupport.QueueEntry> queue = new DoublyLinkedList<>();
         for (int i = 0; i < priorityList.size(); i++) {
             PriorityReservation priority = priorityList.get(i);
             if (priority == null || priority.isDeleted()) {
                 continue;
             }
-            // SEARCH: binary search rather than a linear scan per record
             Reservation reservation = reservationIndex.find(priority.getReservationId());
             if (reservation == null || reservation.isDeleted()) {
                 continue;
@@ -74,8 +49,6 @@ public class VipQueueGovernanceReport {
         int inversions = PriorityReportSupport.countPriorityInversions(queue);
         int queueDepth = queue.size();
 
-        // select the rows this run reports on; positions stay true to the
-        // full queue so a filtered view never invents a better position
         ListInterface<PriorityReportSupport.QueueEntry> shown = new DoublyLinkedList<>();
         int overriddenCount = 0;
         int emergencyGrants = 0;
@@ -111,7 +84,6 @@ public class VipQueueGovernanceReport {
             }
         }
 
-        // SORT: authorisers by guests displaced desc, via compareTo + addSorted
         ListInterface<StaffTally> rankedTallies = new DoublyLinkedList<>();
         for (int i = 0; i < tallies.size(); i++) {
             rankedTallies.addSorted(tallies.get(i));
@@ -126,7 +98,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- filtering --------------------
-
     private boolean passesFilters(PriorityReportSupport.QueueEntry entry, LocalDateTime from, LocalDateTime to,
             PriorityLevel minLevel, int overrideScope) {
         if (!inRange(entry.getRegisteredAt(), from, to)) {
@@ -158,8 +129,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- staff tally --------------------
-
-    // linear search over a short list of authorisers, then accumulate
     private void recordTally(ListInterface<StaffTally> tallies, PriorityReportSupport.StaffIndex staffIndex,
             PriorityReportSupport.QueueEntry entry) {
         String staffId = entry.getPriority().getOverriddenBy();
@@ -183,10 +152,8 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- table --------------------
-
     private String[][] toTable(ListInterface<PriorityReportSupport.QueueEntry> shown, PriorityReportSupport.StaffIndex staffIndex) {
         String[][] table = new String[shown.size() + 1][8];
-        // headers kept short so the rendered table stays inside DOC_WIDTH (132)
         table[0] = new String[] { "Pos", "Reservation", "Priority", "Displaced",
                 "Wait (min)", "Room Type", "Authorised By", "Override Reason" };
         for (int i = 0; i < shown.size(); i++) {
@@ -221,7 +188,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- charts --------------------
-
     private ListInterface<ReportChart> buildCharts(ListInterface<StaffTally> tallies) {
         ListInterface<ReportChart> charts = new DoublyLinkedList<>();
 
@@ -241,7 +207,6 @@ public class VipQueueGovernanceReport {
         return charts;
     }
 
-    // the vertical chart slots are narrow, so a full name will not fit
     private String firstName(String name) {
         if (name == null || name.isEmpty()) {
             return "-";
@@ -251,7 +216,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- summary --------------------
-
     private String[] buildSummary(ListInterface<PriorityReportSupport.QueueEntry> shown,
             ListInterface<StaffTally> tallies, int queueDepth, int overriddenCount,
             int emergencyGrants, int unjustified, int displacedByOverrides,
@@ -302,7 +266,6 @@ public class VipQueueGovernanceReport {
     }
 
     // -------------------- row --------------------
-
     private static class StaffTally implements Comparable<StaffTally> {
 
         private final String staffId;
@@ -317,7 +280,6 @@ public class VipQueueGovernanceReport {
             this.staffName = staffName;
         }
 
-        // most guests displaced first, then most overrides, then by id
         @Override
         public int compareTo(StaffTally other) {
             int comparison = Integer.compare(other.guestsDisplaced, guestsDisplaced);

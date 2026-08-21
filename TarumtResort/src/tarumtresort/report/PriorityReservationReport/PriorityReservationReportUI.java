@@ -18,13 +18,6 @@ import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
 // Author: Lee Boon Yew
-/**
- * Report boundary for the Priority Reservation module: filter prompts, the
- * formal document sections, and the ASCII chart renderer.
- *
- * Structure mirrors HousekeepingReportUI so both modules produce the same
- * document shape; only the subsystem line and the filter prompts differ.
- */
 public class PriorityReservationReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
@@ -54,7 +47,6 @@ public class PriorityReservationReportUI {
     }
 
     // -------------------- filter prompts --------------------
-
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
         System.out.println("  " + fieldLabel.toUpperCase() + " - DATE RANGE");
@@ -82,7 +74,6 @@ public class PriorityReservationReportUI {
         }
     }
 
-    /** Reservation status filter. Returns null for "all statuses". */
     public ReservationStatus selectStatusFilter() {
         ReservationStatus[] values = ReservationStatus.values();
         System.out.println("\n========================================");
@@ -97,7 +88,6 @@ public class PriorityReservationReportUI {
         return choice == 0 ? null : values[choice - 1];
     }
 
-    /** Room type filter. Returns null for "all room types". */
     public RoomType selectRoomTypeFilter() {
         RoomType[] values = RoomType.values();
         System.out.println("\n========================================");
@@ -112,10 +102,6 @@ public class PriorityReservationReportUI {
         return choice == 0 ? null : values[choice - 1];
     }
 
-    /**
-     * Minimum priority level - a rank threshold, e.g. "GOLD and above".
-     * Returns null for no threshold.
-     */
     public PriorityLevel selectMinimumPriorityLevel() {
         PriorityLevel[] values = PriorityLevel.values();
         System.out.println("\n========================================");
@@ -131,7 +117,6 @@ public class PriorityReservationReportUI {
         return choice == 0 ? null : values[choice - 1];
     }
 
-    /** Override scope: 0 = all records, 1 = overridden only, 2 = non-overridden only. */
     public int selectOverrideScope() {
         System.out.println("\n========================================");
         System.out.println("  OVERRIDE SCOPE");
@@ -277,10 +262,6 @@ public class PriorityReservationReportUI {
         System.out.println();
     }
 
-    /**
-     * States the filters the figures were produced under. A management report
-     * that does not say what it excluded cannot be acted on.
-     */
     public void printFilterSection(String[] lines) {
         if (lines == null || lines.length == 0) {
             return;
@@ -311,14 +292,6 @@ public class PriorityReservationReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    /**
-     * Charts are laid out two to a row, side by side, separated by a vertical
-     * rule - the standard layout for this subsystem's report documents.
-     *
-     * @param axisLabels caption printed after the arrow on each chart's x-axis,
-     *                   one per chart; may be null or short, missing entries
-     *                   simply render without a caption
-     */
     public void printChartSection(String reportTitle, ListInterface<ReportChart> charts,
             String[] axisLabels) {
         System.out.println();
@@ -361,7 +334,6 @@ public class PriorityReservationReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    /** Shown instead of a document when no record survives the filters. */
     public void printNoData(String reportTitle) {
         TablePrinter.printFullWidthLine('=');
         TablePrinter.printCentered(UNIVERSITY);
@@ -378,15 +350,9 @@ public class PriorityReservationReportUI {
 
     // -------------------- side-by-side ASCII bar charts --------------------
 
-    // two blocks plus the " | " rule between them must fit DOC_WIDTH
     private static final String CHART_GAP = " | ";
     private static final int BLOCK_WIDTH = (DOC_WIDTH - CHART_GAP.length()) / 2;
 
-    /**
-     * Renders one or two charts as a single side-by-side pair. Each chart is
-     * built into an equal-height block of fixed width, so the vertical rule
-     * between them lines up on every row.
-     */
     private void printChartPair(ReportChart left, String leftAxis,
             ReportChart right, String rightAxis) {
         if (left == null || left.isEmpty()) {
@@ -396,9 +362,6 @@ public class PriorityReservationReportUI {
         ChartBlock rightBlock = (right == null || right.isEmpty())
                 ? null : buildChartBlock(right, rightAxis);
 
-        // the two charts scale independently, so one may need more rows than
-        // the other. Pad the shorter one above its caret to bring both axes
-        // down onto the same baseline.
         int tallest = rightBlock == null ? leftBlock.scaleRows
                 : Math.max(leftBlock.scaleRows, rightBlock.scaleRows);
         String[] leftLines = leftBlock.alignedTo(tallest);
@@ -419,7 +382,6 @@ public class PriorityReservationReportUI {
         }
     }
 
-    /** A rendered chart plus the number of scale rows, used to align baselines. */
     private final class ChartBlock {
         private final String[] lines;
         private final int scaleRows;
@@ -429,7 +391,6 @@ public class PriorityReservationReportUI {
             this.scaleRows = scaleRows;
         }
 
-        /** Inserts blank rows between the title and the caret to match a taller chart. */
         String[] alignedTo(int targetRows) {
             int shortfall = targetRows - scaleRows;
             if (shortfall <= 0) {
@@ -445,7 +406,6 @@ public class PriorityReservationReportUI {
         }
     }
 
-    /** One chart rendered into fixed-width lines: title, scale, bars, axis, labels. */
     private ChartBlock buildChartBlock(ReportChart chart, String axisCaption) {
         ListInterface<ReportChart.Bar> bars = chart.getBars();
         int barCount = bars.size();
@@ -460,15 +420,12 @@ public class PriorityReservationReportUI {
         int[] heights = barHeights(bars, top, rows);
 
         int scaleWidth = String.valueOf(top).length() + 1;
-        // capped so a chart with only two or three bars does not sprawl across
-        // the whole block with the bars marooned far apart
         int pitch = Math.max(4,
                 Math.min(12, (BLOCK_WIDTH - scaleWidth - 2) / Math.max(1, barCount)));
 
         String[][] labels = labelLines(bars, barCount);
         int labelRows = labels.length == 0 ? 0 : labels[0].length;
 
-        // title + caret + scale rows + axis + label rows
         String[] block = new String[1 + 1 + rows + 1 + labelRows];
         int line = 0;
 
@@ -480,7 +437,6 @@ public class PriorityReservationReportUI {
                     + barRow(heights, rowY, barCount, pitch);
         }
 
-        // keep the dash run short enough that the arrow and its caption survive
         String caption = (axisCaption == null || axisCaption.isEmpty()) ? "" : " " + axisCaption;
         int dashBudget = BLOCK_WIDTH - scaleWidth - 1 - caption.length();
         int dashes = Math.max(1, Math.min(barCount * pitch, dashBudget));
