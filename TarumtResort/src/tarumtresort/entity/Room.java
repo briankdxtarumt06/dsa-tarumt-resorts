@@ -11,7 +11,7 @@ public class Room implements Comparable<Room>{
     private RoomType roomType;
     private RoomStatus roomStatus;
     private double pricePerNight;
-    private LinkedListInterface <Reservation> reservations;
+    private transient LinkedListInterface <Reservation> reservations;
 
     //constructor
     public Room(String roomId, String roomNumber, RoomType roomType, RoomStatus roomStatus, double pricePerNight) {
@@ -29,7 +29,12 @@ public class Room implements Comparable<Room>{
     public RoomType getRoomType() { return roomType; }
     public RoomStatus getRoomStatus() { return roomStatus; }
     public double getPricePerNight() { return pricePerNight; }
-    public LinkedListInterface<Reservation> getReservations() { return reservations; }
+    public LinkedListInterface<Reservation> getReservations() {
+        if (reservations == null) {
+            reservations = new LinkedList<>();
+        }
+        return reservations;
+    }
 
     //setters
     public void setRoomId(String roomId) { this.roomId = roomId; }
