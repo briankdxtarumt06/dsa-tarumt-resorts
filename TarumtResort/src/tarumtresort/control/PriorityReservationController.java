@@ -48,7 +48,7 @@ public class PriorityReservationController {
         if (searchPriorityReservationById(reservationId) != null) {
             return true; // record already exists (e.g. created at booking, again at arrival)
         }
-        Member member = loyaltyController.findMember(guestId);
+        Member member = loyaltyController.findMemberByGuestId(guestId);
         if (member == null) {
             return false;
         }
