@@ -20,7 +20,7 @@ public class RoomCleaningPerformanceReport {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final TaskType[] VOLUME_TYPES = {
-        TaskType.CHECKOUT_CLEAN, TaskType.ROOM_SERVICE,
+        TaskType.CLEANING, TaskType.ROOM_SERVICE,
         TaskType.INSPECTION, TaskType.MAINTENANCE
     };
 
@@ -83,12 +83,6 @@ public class RoomCleaningPerformanceReport {
         return null;
     }
 
-    /**
-     * Cleaning duration for a completed task:
-     * 1. statusHistory: earliest IN_PROGRESS -> latest COMPLETED entry
-     * 2. fallback: startDateTime -> endDateTime
-     * 3. fallback: terminal TaskAssignmentChange for the end time
-     */
     private Long getCleanDuration(Task task) {
         if (task == null || task.getTaskStatus() != TaskStatus.COMPLETED) {
             return null;

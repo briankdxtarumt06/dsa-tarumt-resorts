@@ -45,7 +45,7 @@ public class HousekeepingReportUI {
         this.scanner = scanner;
     }
 
-    // -------------------- date range input --------------------
+    // date range input
 
     public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
         System.out.println("\n========================================");
@@ -210,7 +210,7 @@ public class HousekeepingReportUI {
         ConsoleUtil.pressEnterToContinue(scanner);
     }
 
-    // -------------------- formal three-section document --------------------
+    // section headers
 
     public void printDocumentHeader(String reportTitle) {
         TablePrinter.printFullWidthLine('=');
@@ -286,7 +286,7 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    // -------------------- centered ASCII bar chart --------------------
+    // center bar chart
 
     private void printCenteredChart(ReportChart chart) {
         if (chart == null || chart.isEmpty()) {
@@ -454,7 +454,7 @@ public class HousekeepingReportUI {
         return padRight(repeat(' ', leftPad) + blockContent, DOC_WIDTH);
     }
 
-    // -------------------- width helpers --------------------
+    // report width helper functions
 
     private void printFullWidth(String text) {
         System.out.println(padRight(text, DOC_WIDTH));
@@ -488,14 +488,6 @@ public class HousekeepingReportUI {
         StringBuilder sb = new StringBuilder(count);
         for (int i = 0; i < count; i++) {
             sb.append(c);
-        }
-        return sb.toString();
-    }
-
-    private String repeat(String s, int count) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            sb.append(s);
         }
         return sb.toString();
     }

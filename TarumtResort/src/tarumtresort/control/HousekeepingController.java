@@ -396,6 +396,7 @@ public class HousekeepingController {
             case "NO_TASK", "NO_STAFF" -> ui.printNotFound();
             default -> ui.printSuccess();
         }
+        ui.pressEnterToContinue();
     }
 
     // auto mode picks the earliest available staff, manual mode asks the user
@@ -1018,7 +1019,7 @@ public class HousekeepingController {
             }
         }
         if (current != null) {
-            task.getStatusHistory().addFront(new TaskStatusChange(current, reason, LocalDateTime.now()));
+            task.getStatusHistory().addFront(new TaskStatusChange(newStatus, reason, LocalDateTime.now()));
         }
         LocalDateTime previousEnd = task.getEndDateTime();
         task.setTaskStatus(newStatus);
@@ -1083,7 +1084,7 @@ public class HousekeepingController {
                 if (task != null && task.getTaskStatus() != TaskStatus.COMPLETED && allAssignmentsTerminal(task)) {
                     TaskStatus current = task.getTaskStatus();
                     if (current != null) {
-                        task.getStatusHistory().addFront(new TaskStatusChange(current, null, LocalDateTime.now()));
+                        task.getStatusHistory().addFront(new TaskStatusChange(newStatus, null, LocalDateTime.now()));
                     }
                     task.setTaskStatus(TaskStatus.COMPLETED);
                     task.setEndDateTime(LocalDateTime.now());
@@ -1121,14 +1122,19 @@ public class HousekeepingController {
         if (statusHistoryStack.isEmpty()) {
             return "NO_PREVIOUS";
         }
-        TaskStatusChange previousStatusChange = statusHistoryStack.removeFront();
-        if (previousStatusChange == null || previousStatusChange.getTaskStatus() == null) {
-            if (previousStatusChange != null) {
-                statusHistoryStack.addFront(previousStatusChange);
+        TaskStatusChange currentChange = statusHistoryStack.removeFront();
+        if (currentChange != null && currentChange.getTaskStatus() == null) {
+            statusHistoryStack.addFront(currentChange);
+            return "NO_PREVIOUS";
+        }
+        if (statusHistoryStack.isEmpty() || statusHistoryStack.getFront() == null
+                || statusHistoryStack.getFront().getTaskStatus() == null) {
+            if (currentChange != null) {
+                statusHistoryStack.addFront(currentChange);
             }
             return "NO_PREVIOUS";
         }
-        TaskStatus previous = previousStatusChange.getTaskStatus();
+        TaskStatus previous = statusHistoryStack.getFront().getTaskStatus();
         TaskStatus current = task.getTaskStatus();
         LocalDateTime previousEnd = task.getEndDateTime();
         task.setTaskStatus(previous);
@@ -1142,7 +1148,9 @@ public class HousekeepingController {
         } catch (Exception e) {
             task.setTaskStatus(current);
             task.setEndDateTime(previousEnd);
-            statusHistoryStack.addFront(previousStatusChange);
+            if (currentChange != null) {
+                statusHistoryStack.addFront(currentChange);
+            }
             ConsoleUtil.printError("Rollback failed during room status update: " + e.getMessage());
             return "UPDATE_FAILED";
         }
@@ -1197,7 +1205,7 @@ public class HousekeepingController {
     public LinkedListInterface<Staff> getEligibleStaffByRole(TaskType taskType) {
         LinkedListInterface<Staff> eligible = new LinkedList<>();
         StaffRole requiredRole = switch (taskType) {
-            case CHECKOUT_CLEAN, ROOM_SERVICE, MAINTENANCE -> StaffRole.CLEANER;
+            case CLEANING, ROOM_SERVICE, MAINTENANCE -> StaffRole.CLEANER;
             case INSPECTION -> StaffRole.SUPERVISOR;
             default -> StaffRole.UNKNOWN;
         };
@@ -1323,14 +1331,14 @@ public class HousekeepingController {
         if (roomId == null || roomId.isBlank()) {
             return null;
         }
-        String taskId = createTask("Clean " + roomId, TaskType.CHECKOUT_CLEAN, TaskPriority.MEDIUM,
+        String taskId = createTask("Clean " + roomId, TaskType.CLEANING, TaskPriority.MEDIUM,
                 LocalDateTime.now(), roomId);
         if (taskId == null) {
             return null;
         }
         setRoomStatus(roomId, RoomStatus.CLEANING);
         // assign earliest available cleaner to cleaning task
-        Staff cleaner = findEarliestAvailableStaff(TaskType.CHECKOUT_CLEAN);
+        Staff cleaner = findEarliestAvailableStaff(TaskType.CLEANING);
         if (cleaner != null) {
             assignTaskToStaff(getTaskById(taskId), cleaner);
         }
