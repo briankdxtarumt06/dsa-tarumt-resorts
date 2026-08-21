@@ -2,8 +2,8 @@ package tarumtresort.report.HousekeepingReport;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.RoomDAO;
 import tarumtresort.dao.StaffDAO;
 import tarumtresort.dao.TaskAssignmentChangeDAO;
@@ -36,10 +36,10 @@ public class HousekeepingReportController {
             return;
         }
 
-        LinkedListInterface<Room> rooms = new LinkedList<>();
+        ListInterface<Room> rooms = new DoublyLinkedList<>();
         roomDAO.loadFromFile(rooms);
-        LinkedListInterface<Task> tasks = taskDAO.retrieveTaskList();
-        LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        ListInterface<Task> tasks = taskDAO.retrieveTaskList();
+        ListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
 
         RoomCleaningPerformanceReport.Result result = new RoomCleaningPerformanceReport(
                 rooms, tasks, changes).generate(range[0], range[1]);

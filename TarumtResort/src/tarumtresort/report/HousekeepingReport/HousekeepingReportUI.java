@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
@@ -248,7 +248,7 @@ public class HousekeepingReportUI {
         TablePrinter.printFullWidthLine('=');
     }
 
-    public void printChartSection(String reportTitle, LinkedListInterface<ReportChart> charts) {
+    public void printChartSection(String reportTitle, ListInterface<ReportChart> charts) {
         System.out.println();
         TablePrinter.printCentered("GRAPHICAL REPRESENTATION OF " + reportTitle);
         System.out.println();
@@ -292,7 +292,7 @@ public class HousekeepingReportUI {
         if (chart == null || chart.isEmpty()) {
             return;
         }
-        LinkedListInterface<ReportChart.Bar> bars = chart.getBars();
+        ListInterface<ReportChart.Bar> bars = chart.getBars();
         int barCount = bars.size();
 
         double peak = 0;
@@ -367,7 +367,7 @@ public class HousekeepingReportUI {
         return text.substring(0, width);
     }
 
-    private String[][] labelLines(LinkedListInterface<ReportChart.Bar> bars, int barCount) {
+    private String[][] labelLines(ListInterface<ReportChart.Bar> bars, int barCount) {
         String[][] result = new String[barCount][];
         int maxRows = 0;
         for (int i = 0; i < barCount; i++) {
@@ -428,7 +428,7 @@ public class HousekeepingReportUI {
         return (int) Math.ceil(peak / step) * step;
     }
 
-    private int[] barHeights(LinkedListInterface<ReportChart.Bar> bars, int top, int rows) {
+    private int[] barHeights(ListInterface<ReportChart.Bar> bars, int top, int rows) {
         int n = bars.size();
         int[] heights = new int[n];
         double maxVal = 0;

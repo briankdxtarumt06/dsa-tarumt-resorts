@@ -3,8 +3,8 @@ package tarumtresort.report.HousekeepingReport;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignmentChange;
@@ -24,19 +24,19 @@ public class RoomCleaningPerformanceReport {
         TaskType.INSPECTION, TaskType.MAINTENANCE
     };
 
-    private final LinkedListInterface<Room> roomList;
-    private final LinkedListInterface<Task> taskList;
-    private final LinkedListInterface<TaskAssignmentChange> changeList;
+    private final ListInterface<Room> roomList;
+    private final ListInterface<Task> taskList;
+    private final ListInterface<TaskAssignmentChange> changeList;
 
-    public RoomCleaningPerformanceReport(LinkedListInterface<Room> roomList,
-            LinkedListInterface<Task> taskList, LinkedListInterface<TaskAssignmentChange> changeList) {
-        this.roomList = roomList == null ? new LinkedList<>() : roomList;
-        this.taskList = taskList == null ? new LinkedList<>() : taskList;
-        this.changeList = changeList == null ? new LinkedList<>() : changeList;
+    public RoomCleaningPerformanceReport(ListInterface<Room> roomList,
+            ListInterface<Task> taskList, ListInterface<TaskAssignmentChange> changeList) {
+        this.roomList = roomList == null ? new DoublyLinkedList<>() : roomList;
+        this.taskList = taskList == null ? new DoublyLinkedList<>() : taskList;
+        this.changeList = changeList == null ? new DoublyLinkedList<>() : changeList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to) {
-        LinkedListInterface<TaskRow> rows = new LinkedList<>();
+        ListInterface<TaskRow> rows = new DoublyLinkedList<>();
 
         for (int i = 0; i < taskList.size(); i++) {
             Task task = taskList.get(i);
@@ -90,7 +90,7 @@ public class RoomCleaningPerformanceReport {
         LocalDateTime start = null;
         LocalDateTime end = null;
 
-        LinkedListInterface<TaskStatusChange> history = task.getStatusHistory();
+        ListInterface<TaskStatusChange> history = task.getStatusHistory();
         for (int i = 0; i < history.size(); i++) {
             TaskStatusChange change = history.get(i);
             if (change == null) {
@@ -167,7 +167,7 @@ public class RoomCleaningPerformanceReport {
         };
     }
 
-    private String[][] toTable(LinkedListInterface<TaskRow> rows) {
+    private String[][] toTable(ListInterface<TaskRow> rows) {
         String[][] table = new String[rows.size() + 1][7];
         table[0] = new String[] { "Room ID", "Room Type", "Task Status",
                 "Priority", "Started", "Completed", "Duration (min)" };
@@ -191,14 +191,14 @@ public class RoomCleaningPerformanceReport {
         return dateTime == null ? "-" : dateTime.format(TIME_FMT);
     }
 
-    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<TaskRow> rows) {
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+    private ListInterface<ReportChart> buildCharts(ListInterface<TaskRow> rows) {
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         charts.addBack(buildAverageChart(rows));
         charts.addBack(buildVolumeChart(rows));
         return charts;
     }
 
-    private ReportChart buildAverageChart(LinkedListInterface<TaskRow> rows) {
+    private ReportChart buildAverageChart(ListInterface<TaskRow> rows) {
         ReportChart chart = new ReportChart("Average Cleaning Time by Room Type (min)");
         long[][] sums = new long[RoomType.values().length][2];
         for (int i = 0; i < rows.size(); i++) {
@@ -219,7 +219,7 @@ public class RoomCleaningPerformanceReport {
         return chart;
     }
 
-    private ReportChart buildVolumeChart(LinkedListInterface<TaskRow> rows) {
+    private ReportChart buildVolumeChart(ListInterface<TaskRow> rows) {
         ReportChart chart = new ReportChart("Task Volume by Task Type");
         int[] counts = new int[TaskType.values().length];
         for (int i = 0; i < rows.size(); i++) {
@@ -236,7 +236,7 @@ public class RoomCleaningPerformanceReport {
         return chart;
     }
 
-    private String[] buildSummary(LinkedListInterface<TaskRow> rows) {
+    private String[] buildSummary(ListInterface<TaskRow> rows) {
         long[][] sums = new long[RoomType.values().length][2];
         int[] overdue = new int[RoomType.values().length];
         int[] typeCounts = new int[TaskType.values().length];
@@ -356,12 +356,12 @@ public class RoomCleaningPerformanceReport {
 
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
         }
 
@@ -369,7 +369,7 @@ public class RoomCleaningPerformanceReport {
             return table;
         }
 
-        public LinkedListInterface<ReportChart> getCharts() {
+        public ListInterface<ReportChart> getCharts() {
             return charts;
         }
 

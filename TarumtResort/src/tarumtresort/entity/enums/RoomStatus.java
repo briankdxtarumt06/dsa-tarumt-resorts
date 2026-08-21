@@ -1,5 +1,7 @@
 package tarumtresort.entity.enums;
 
+// Author: Chai Chee Tong
+
 public enum RoomStatus {
     AVAILABLE("Available"),
     OCCUPIED("Occupied"),

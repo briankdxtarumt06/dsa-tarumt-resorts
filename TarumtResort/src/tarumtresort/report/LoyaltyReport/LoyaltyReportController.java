@@ -2,8 +2,8 @@ package tarumtresort.report.LoyaltyReport;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.MemberDAO;
 import tarumtresort.dao.RewardDAO;
@@ -31,8 +31,8 @@ public class LoyaltyReportController {
     public void generateMembershipPerformanceReport() {
         LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("transaction");
         Tier tierFilter = reportUI.inputTierFilter();
-        LinkedListInterface<Member> members = memberDAO.retrieveFromFile();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Member> members = memberDAO.retrieveFromFile();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
         MembershipPerformanceReport.Result result = new MembershipPerformanceReport(members, guests).generate(range[0], range[1], tierFilter);
@@ -43,9 +43,9 @@ public class LoyaltyReportController {
     public void generateRedemptionVoucherReport() {
         LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("redemption");
         String statusFilter = reportUI.inputStatusFilter();
-        LinkedListInterface<Member> members = memberDAO.retrieveFromFile();
-        LinkedListInterface<Reward> rewards = rewardDAO.retrieveFromFile();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Member> members = memberDAO.retrieveFromFile();
+        ListInterface<Reward> rewards = rewardDAO.retrieveFromFile();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
         RedemptionVoucherReport.Result result = new RedemptionVoucherReport(members, rewards, guests).generate(range[0], range[1], statusFilter);
@@ -57,8 +57,8 @@ public class LoyaltyReportController {
         LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("transaction");
         Tier tierFilter = reportUI.inputTierFilter();
         boolean expiringOnly = reportUI.inputYesNo("Show only members with points expiring within the window?");
-        LinkedListInterface<Member> members = memberDAO.retrieveFromFile();
-        LinkedListInterface<Guest> guests = new LinkedList<>();
+        ListInterface<Member> members = memberDAO.retrieveFromFile();
+        ListInterface<Guest> guests = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guests);
 
         PointExpiryReport.Result result = new PointExpiryReport(members, guests).generate(range[0], range[1], tierFilter, expiringOnly);

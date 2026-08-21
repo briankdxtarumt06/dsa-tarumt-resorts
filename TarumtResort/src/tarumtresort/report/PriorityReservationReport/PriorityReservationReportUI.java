@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.PriorityLevel;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomType;
@@ -319,7 +319,7 @@ public class PriorityReservationReportUI {
      *                   one per chart; may be null or short, missing entries
      *                   simply render without a caption
      */
-    public void printChartSection(String reportTitle, LinkedListInterface<ReportChart> charts,
+    public void printChartSection(String reportTitle, ListInterface<ReportChart> charts,
             String[] axisLabels) {
         System.out.println();
         TablePrinter.printCentered("GRAPHICAL REPRESENTATION OF " + reportTitle);
@@ -447,7 +447,7 @@ public class PriorityReservationReportUI {
 
     /** One chart rendered into fixed-width lines: title, scale, bars, axis, labels. */
     private ChartBlock buildChartBlock(ReportChart chart, String axisCaption) {
-        LinkedListInterface<ReportChart.Bar> bars = chart.getBars();
+        ListInterface<ReportChart.Bar> bars = chart.getBars();
         int barCount = bars.size();
 
         double peak = 0;
@@ -535,7 +535,7 @@ public class PriorityReservationReportUI {
         return text.length() <= width ? text : text.substring(0, width);
     }
 
-    private String[][] labelLines(LinkedListInterface<ReportChart.Bar> bars, int barCount) {
+    private String[][] labelLines(ListInterface<ReportChart.Bar> bars, int barCount) {
         String[][] result = new String[barCount][];
         int maxRows = 0;
         for (int i = 0; i < barCount; i++) {
@@ -596,7 +596,7 @@ public class PriorityReservationReportUI {
         return (int) Math.ceil(peak / step) * step;
     }
 
-    private int[] barHeights(LinkedListInterface<ReportChart.Bar> bars, int top, int rows) {
+    private int[] barHeights(ListInterface<ReportChart.Bar> bars, int top, int rows) {
         int n = bars.size();
         int[] heights = new int[n];
         double maxVal = 0;

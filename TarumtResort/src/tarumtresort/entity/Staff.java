@@ -1,7 +1,7 @@
 package tarumtresort.entity;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.AvailabilityStatus;
 import tarumtresort.entity.enums.Department;
 import tarumtresort.entity.enums.StaffRole;
@@ -14,7 +14,7 @@ public class Staff implements Comparable<Staff> {
     private StaffRole staffRole;
     private AvailabilityStatus availabilityStatus;
     private boolean isDeleted;
-    private LinkedListInterface<TaskAssignment> taskAssignments;
+    private ListInterface<TaskAssignment> taskAssignments;
     
     public Staff(){ }
 
@@ -74,14 +74,14 @@ public class Staff implements Comparable<Staff> {
         isDeleted = deleted;
     }
 
-    public LinkedListInterface<TaskAssignment> getTaskAssignments() {
+    public ListInterface<TaskAssignment> getTaskAssignments() {
         if (taskAssignments == null) {
-            taskAssignments = new LinkedList<>();
+            taskAssignments = new DoublyLinkedList<>();
         }
         return taskAssignments;
     }
 
-    public void setTaskAssignments(LinkedListInterface<TaskAssignment> taskAssignments) {
+    public void setTaskAssignments(ListInterface<TaskAssignment> taskAssignments) {
         this.taskAssignments = taskAssignments;
     }
 
@@ -90,7 +90,7 @@ public class Staff implements Comparable<Staff> {
             return;
         }
         if (taskAssignments == null) {
-            taskAssignments = new LinkedList<>();
+            taskAssignments = new DoublyLinkedList<>();
         }
         if (taskAssignments.contains(taskAssignment)) {
             return; // duplicate assignment id

@@ -1,12 +1,10 @@
 package tarumtresort.entity;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 
-/**
- * Guest entity. Combines the member/points module needs (notificationList)
- * with the room/reservation module needs (reservations).
- */
+// Author: Chai Chee Tong
+
 public class Guest implements Comparable<Guest> {
     private String guestId;
     private String name;
@@ -14,28 +12,28 @@ public class Guest implements Comparable<Guest> {
     private String contactNumber;
     private String nationality;
     private String address;
-    private LinkedListInterface<Notification> notificationList = new LinkedList<>();
-    private transient LinkedListInterface<Reservation> reservations;
+    private ListInterface<Notification> notificationList = new DoublyLinkedList<>();
+    private transient ListInterface<Reservation> reservations;
 
-    // constructor (no arguments) - used by Gson when loading from JSON
+    // constructor 
     public Guest() {
     }
 
     //Constructor
     public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality, String address) {
-        this(guestId, name, icOrPassport, contactNumber, nationality, address, new LinkedList<>());
+        this(guestId, name, icOrPassport, contactNumber, nationality, address, new DoublyLinkedList<>());
     }
 
     public Guest(String guestId, String name, String icOrPassport, String contactNumber, String nationality,
-            String address, LinkedListInterface<Notification> notificationList) {
+            String address, ListInterface<Notification> notificationList) {
         this.guestId = guestId;
         this.name = name;
         this.icOrPassport = icOrPassport;
         this.contactNumber = contactNumber;
         this.nationality = nationality;
         this.address = address;
-        this.notificationList = notificationList == null ? new LinkedList<>() : notificationList;
-        this.reservations = new LinkedList<>();
+        this.notificationList = notificationList == null ? new DoublyLinkedList<>() : notificationList;
+        this.reservations = new DoublyLinkedList<>();
     }
 
     //setters
@@ -53,16 +51,16 @@ public class Guest implements Comparable<Guest> {
     public String getContactNumber() { return contactNumber; }
     public String getNationality() { return nationality; }
     public String getAddress() { return address; }
-    public LinkedListInterface<Reservation> getReservations(){
+    public ListInterface<Reservation> getReservations(){
         if (reservations == null) {
-            reservations = new LinkedList<>();
+            reservations = new DoublyLinkedList<>();
         }
         return reservations;
     }
 
-    public LinkedListInterface<Notification> getNotificationList() {
+    public ListInterface<Notification> getNotificationList() {
         if (notificationList == null) {
-            notificationList = new LinkedList<>();
+            notificationList = new DoublyLinkedList<>();
         }
         return notificationList;
     }

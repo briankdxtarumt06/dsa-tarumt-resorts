@@ -2,8 +2,8 @@ package tarumtresort.control;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.InquiryUI;
 import tarumtresort.boundary.ReservationUI;
 import tarumtresort.dao.GuestDAO;
@@ -181,7 +181,7 @@ public class InquiryController {
 
     // case 4
     public void cancelInquiry() {
-        LinkedListInterface<Inquiry> pendingOnly = getInquiriesByStatus(InquiryStatus.PENDING);
+        ListInterface<Inquiry> pendingOnly = getInquiriesByStatus(InquiryStatus.PENDING);
         if (pendingOnly.isEmpty()) {
             ui.printMessage("No pending inquiries to cancel.");
             return;
@@ -242,14 +242,14 @@ public class InquiryController {
                     ui.printNotFound();
                     return;
                 }
-                LinkedListInterface<Inquiry> result = new LinkedList<>();
+                ListInterface<Inquiry> result = new DoublyLinkedList<>();
                 result.addBack(found);
                 ui.listAllInquiries(buildInquiryTableData(result));
                 break;
             }
             case 2: {
                 String confirmationNumber = ui.inputConfirmationNumber();
-                LinkedListInterface<Inquiry> matches = searchInquiriesByConfirmationNumber(confirmationNumber);
+                ListInterface<Inquiry> matches = searchInquiriesByConfirmationNumber(confirmationNumber);
                 if (matches.isEmpty()) {
                     ui.printNotFound();
                     return;
@@ -274,8 +274,8 @@ public class InquiryController {
         return null;
     }
 
-    public LinkedListInterface<Inquiry> searchInquiriesByConfirmationNumber(String confirmationNumber) {
-        LinkedListInterface<Inquiry> matches = new LinkedList<>();
+    public ListInterface<Inquiry> searchInquiriesByConfirmationNumber(String confirmationNumber) {
+        ListInterface<Inquiry> matches = new DoublyLinkedList<>();
         for (int i = 0; i < inquiryList.size(); i++) {
             Inquiry inq = inquiryList.get(i);
             if (inq.getConfirmationNumber().equals(confirmationNumber)) {
@@ -287,7 +287,7 @@ public class InquiryController {
 
     // Searching
     public Reservation searchReservationByConfirmationNumber(String confirmationNumber) {
-        LinkedListInterface<Reservation> allReservations = new LinkedList<>();
+        ListInterface<Reservation> allReservations = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(allReservations);
 
         for (int i = 0; i < allReservations.size(); i++) {
@@ -304,7 +304,7 @@ public class InquiryController {
     }
 
     public Guest searchGuestById(String guestId) {
-        LinkedListInterface<Guest> guestList = new LinkedList<>();
+        ListInterface<Guest> guestList = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guestList);
 
         Guest found = null;
@@ -322,7 +322,7 @@ public class InquiryController {
     }
 
     private void attachReservations(Guest guest) {
-        LinkedListInterface<Reservation> allReservations = new LinkedList<>();
+        ListInterface<Reservation> allReservations = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(allReservations);
 
         for (int i = 0; i < allReservations.size(); i++) {
@@ -334,12 +334,12 @@ public class InquiryController {
     }
 
     public Payment searchPaymentByConfirmationNumber(String confirmationNumber) {
-        LinkedListInterface<Payment> paymentList = new LinkedList<>();
+        ListInterface<Payment> paymentList = new DoublyLinkedList<>();
         paymentDAO.loadFromFile(paymentList);
 
         for (int i = 0; i < paymentList.size(); i++) {
             Payment p = paymentList.get(i);
-            LinkedListInterface<String> confirmationNumbers = p.getConfirmationNumbers();
+            ListInterface<String> confirmationNumbers = p.getConfirmationNumbers();
             if (confirmationNumbers == null) {
                 continue;
             }
@@ -388,8 +388,8 @@ public class InquiryController {
     }
 
     // filterStatus == null returns every inquiry regardless of status
-    private LinkedListInterface<Inquiry> getInquiriesByStatus(InquiryStatus filterStatus) {
-        LinkedListInterface<Inquiry> result = new LinkedList<>();
+    private ListInterface<Inquiry> getInquiriesByStatus(InquiryStatus filterStatus) {
+        ListInterface<Inquiry> result = new DoublyLinkedList<>();
         for (int i = 0; i < inquiryList.size(); i++) {
             Inquiry inq = inquiryList.get(i);
             if (filterStatus == null || inq.getStatus() == filterStatus) {
@@ -434,7 +434,7 @@ public class InquiryController {
         if (reservation.getStatus() == ReservationStatus.WAITING
                 || reservation.getStatus() == ReservationStatus.BOOKED) {
             RoomType type = reservation.getRoomTypeRequested();
-            LinkedListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
+            ListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
             int availableCount = 0;
             for (int i = 0; i < roomsOfType.size(); i++) {
                 if (roomsOfType.get(i).getRoomStatus() == RoomStatus.AVAILABLE) {
@@ -459,7 +459,7 @@ public class InquiryController {
     }
 
     // convert inquiry list to 2D table
-    private String[][] buildInquiryTableData(LinkedListInterface<Inquiry> list) {
+    private String[][] buildInquiryTableData(ListInterface<Inquiry> list) {
         String[][] data = new String[list.size() + 1][5]; // +1 row for the header; size() = record count
         data[0] = new String[]{"Inquiry ID", "Confirm No.", "Type", "Priority", "Status"};
         for (int i = 0; i < list.size(); i++) {

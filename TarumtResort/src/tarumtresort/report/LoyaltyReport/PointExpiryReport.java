@@ -1,8 +1,8 @@
 package tarumtresort.report.LoyaltyReport;
 
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
@@ -13,17 +13,17 @@ public class PointExpiryReport {
 
     private static final int[] TIER_THRESHOLDS = {0, 1000, 3000, 6000};
 
-    private final LinkedListInterface<Member> memberList;
-    private final LinkedListInterface<Guest> guestList;
+    private final ListInterface<Member> memberList;
+    private final ListInterface<Guest> guestList;
 
-    public PointExpiryReport(LinkedListInterface<Member> memberList, LinkedListInterface<Guest> guestList) {
-        this.memberList = memberList == null ? new LinkedList<>() : memberList;
-        this.guestList = guestList == null ? new LinkedList<>() : guestList;
+    public PointExpiryReport(ListInterface<Member> memberList, ListInterface<Guest> guestList) {
+        this.memberList = memberList == null ? new DoublyLinkedList<>() : memberList;
+        this.guestList = guestList == null ? new DoublyLinkedList<>() : guestList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to, Tier tierFilter, boolean expiringOnly) {
         LocalDateTime now = LocalDateTime.now();
-        LinkedListInterface<Member> filtered = new LinkedList<>();
+        ListInterface<Member> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
             if (m.isDeleted()) continue;
@@ -40,7 +40,7 @@ public class PointExpiryReport {
             }
             filtered.addBack(m);
         }
-        LinkedListInterface<Member> sorted = new LinkedList<>();
+        ListInterface<Member> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < filtered.size(); i++) sorted.addSorted(filtered.get(i));
 
         // For expiry, derive window from date range: if range provided, window = days between from/to, else use 30 as default for chart
@@ -52,7 +52,7 @@ public class PointExpiryReport {
 
         // expiring-only: keep members that actually have points expiring within the window
         if (expiringOnly) {
-            LinkedListInterface<Member> expiring = new LinkedList<>();
+            ListInterface<Member> expiring = new DoublyLinkedList<>();
             for (int i = 0; i < sorted.size(); i++) {
                 if (expiringWithin(sorted.get(i), windowForChart, now) > 0) expiring.addBack(sorted.get(i));
             }
@@ -104,7 +104,7 @@ public class PointExpiryReport {
         return sum;
     }
 
-    private String[][] toTable(LinkedListInterface<Member> rows, int window, LocalDateTime now) {
+    private String[][] toTable(ListInterface<Member> rows, int window, LocalDateTime now) {
         String[][] table = new String[rows.size() + 1][9];
         table[0] = new String[]{"No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Next Tier", "Pts to Next", "Expiring <= " + window + "d"};
         for (int i = 0; i < rows.size(); i++) {
@@ -130,8 +130,8 @@ public class PointExpiryReport {
         return table;
     }
 
-    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<Member> rows, int window, LocalDateTime now) {
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+    private ListInterface<ReportChart> buildCharts(ListInterface<Member> rows, int window, LocalDateTime now) {
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         int[] perTier = new int[Tier.values().length];
         long[] expPerTier = new long[Tier.values().length];
         for (int i = 0; i < rows.size(); i++) {
@@ -151,7 +151,7 @@ public class PointExpiryReport {
         return charts;
     }
 
-    private String[] buildSummary(LinkedListInterface<Member> rows, int window, LocalDateTime now) {
+    private String[] buildSummary(ListInterface<Member> rows, int window, LocalDateTime now) {
         long cumSum = 0;
         long expiringSum = 0;
         int nearExpiry = 0;
@@ -171,8 +171,8 @@ public class PointExpiryReport {
         };
     }
 
-    private LinkedListInterface<String> buildCallouts(LinkedListInterface<Member> rows, int window, LocalDateTime now) {
-        LinkedListInterface<String> callouts = new LinkedList<>();
+    private ListInterface<String> buildCallouts(ListInterface<Member> rows, int window, LocalDateTime now) {
+        ListInterface<String> callouts = new DoublyLinkedList<>();
         if (window > 0) {
             for (int i = 0; i < rows.size(); i++) {
                 Member m = rows.get(i);
@@ -185,27 +185,27 @@ public class PointExpiryReport {
 
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
-        private final LinkedListInterface<String> callouts;
+        private final ListInterface<String> callouts;
         private final String criteria;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary, ListInterface<String> callouts) {
             this(table, charts, summary, callouts, null);
         }
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts, String criteria) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary, ListInterface<String> callouts, String criteria) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
-            this.callouts = callouts == null ? new LinkedList<>() : callouts;
+            this.callouts = callouts == null ? new DoublyLinkedList<>() : callouts;
             this.criteria = criteria;
         }
 
         public String[][] getTable() { return table; }
-        public LinkedListInterface<ReportChart> getCharts() { return charts; }
+        public ListInterface<ReportChart> getCharts() { return charts; }
         public String[] getSummary() { return summary; }
-        public LinkedListInterface<String> getCallouts() { return callouts; }
+        public ListInterface<String> getCallouts() { return callouts; }
         public String getCriteria() { return criteria; }
     }
 }

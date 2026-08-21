@@ -1,6 +1,6 @@
 package tarumtresort.entity;
-import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.adt.LinkedList;
+import tarumtresort.adt.ListInterface;
+import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.entity.enums.*;
 import java.time.LocalDateTime;
 
@@ -19,7 +19,7 @@ public class Payment implements Comparable<Payment> {
     private PaymentStatus paymentStatus;
     private LocalDateTime paymentDateTime;
     private String reservationID;
-    private LinkedListInterface<String> confirmationNumbers = new LinkedList<>();
+    private ListInterface<String> confirmationNumbers = new DoublyLinkedList<>();
     private double refundedAmount;
     private LocalDateTime refundDateTime;
 
@@ -110,7 +110,7 @@ public class Payment implements Comparable<Payment> {
         this.reservationID = reservationID;
     }
 
-    public LinkedListInterface<String> getConfirmationNumbers() {
+    public ListInterface<String> getConfirmationNumbers() {
         return confirmationNumbers;
     }
 

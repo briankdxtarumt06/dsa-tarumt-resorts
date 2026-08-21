@@ -2,8 +2,8 @@ package tarumtresort.entity;
 
 // imports
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.TaskStatus;
 
 // Author: Brian Kam Ding Xian
@@ -15,7 +15,7 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
     private boolean isDeleted;
     private String assignedStaffId;
     private String assignedTaskId;
-    private LinkedListInterface<TaskAssignmentChange> changes;
+    private ListInterface<TaskAssignmentChange> changes;
 
     public TaskAssignment() { }
 
@@ -87,14 +87,14 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         return status != TaskStatus.COMPLETED && status != TaskStatus.CANCELLED;
     }
 
-    public LinkedListInterface<TaskAssignmentChange> getChanges() {
+    public ListInterface<TaskAssignmentChange> getChanges() {
         if (changes == null) {
-            changes = new LinkedList<>();
+            changes = new DoublyLinkedList<>();
         }
         return changes;
     }
 
-    public void setChanges(LinkedListInterface<TaskAssignmentChange> changes) {
+    public void setChanges(ListInterface<TaskAssignmentChange> changes) {
         this.changes = changes;
     }
 
@@ -103,7 +103,7 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
             return;
         }
         if (changes == null) {
-            changes = new LinkedList<>();
+            changes = new DoublyLinkedList<>();
         }
         if (changes.contains(change)) {
             return; // duplicate change id

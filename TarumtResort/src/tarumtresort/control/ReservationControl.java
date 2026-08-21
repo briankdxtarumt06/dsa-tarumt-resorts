@@ -4,12 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-
-import java.util.Scanner;
-
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.ReservationUI;
 import tarumtresort.dao.GuestDAO;
 import tarumtresort.dao.NationalityDAO;
@@ -30,10 +26,9 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-// import tarumtresort.report.NationalityReport;
-import tarumtresort.report.ReportResult;
-//import tarumtresort.report.ReportUI;
-// import tarumtresort.report.RoomTypeReport;
+import tarumtresort.report.ReservationReport.ReservationReportController;
+
+// Author: Chai Chee Tong, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
 
 public class ReservationControl {
 
@@ -62,10 +57,10 @@ public class ReservationControl {
     }
 
     // List declaration
-    private LinkedListInterface<Reservation> reservations = new LinkedList<>();
-    private LinkedListInterface<Guest> guestList = new LinkedList<>();
-    private LinkedListInterface<String> customNationalities = new LinkedList<>();
-    private LinkedListInterface<Room> roomList = new LinkedList<>();
+    private ListInterface<Reservation> reservations = new DoublyLinkedList<>();
+    private ListInterface<Guest> guestList = new DoublyLinkedList<>();
+    private ListInterface<String> customNationalities = new DoublyLinkedList<>();
+    private ListInterface<Room> roomList = new DoublyLinkedList<>();
 
     // DAO declarations
     private static final GuestDAO guestDAO = new GuestDAO();
@@ -78,6 +73,9 @@ public class ReservationControl {
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
     private LoyaltyController loyaltyController = new LoyaltyController();
     private HousekeepingController housekeepingController = new HousekeepingController();
+
+    // Reports - all report calculation lives in the report package
+    private ReservationReportController reservationReportController = new ReservationReportController(reservationUI.getScanner());
 
     // Constructors
     public ReservationControl() {
@@ -96,12 +94,12 @@ public class ReservationControl {
     }
 
     // list declaration
-    public LinkedListInterface<Reservation> getReservations() {
+    public ListInterface<Reservation> getReservations() {
         return reservations;
     }
 
-    public LinkedListInterface<Reservation> getBookingList() {
-        LinkedListInterface<Reservation> result = new LinkedList<>();
+    public ListInterface<Reservation> getBookingList() {
+        ListInterface<Reservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < reservations.size(); i++) {
             Reservation r = reservations.get(i);
             if (r.isDeleted() || r.getStatus() != ReservationStatus.BOOKED)
@@ -111,8 +109,8 @@ public class ReservationControl {
         return result;
     }
 
-    public LinkedListInterface<Reservation> getGuestQueue() {
-        LinkedListInterface<Reservation> result = new LinkedList<>();
+    public ListInterface<Reservation> getGuestQueue() {
+        ListInterface<Reservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < reservations.size(); i++) {
             Reservation r = reservations.get(i);
             if (r.isDeleted() || r.getStatus() != ReservationStatus.WAITING)
@@ -124,8 +122,8 @@ public class ReservationControl {
         return result;
     }
 
-    public LinkedListInterface<Reservation> getVipList() {
-        LinkedListInterface<Reservation> result = new LinkedList<>();
+    public ListInterface<Reservation> getVipList() {
+        ListInterface<Reservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < reservations.size(); i++) {
             Reservation r = reservations.get(i);
             if (r.isDeleted() || r.getStatus() != ReservationStatus.WAITING)
@@ -137,8 +135,8 @@ public class ReservationControl {
         return result;
     }
 
-    public LinkedListInterface<Reservation> getAssignedList() {
-        LinkedListInterface<Reservation> result = new LinkedList<>();
+    public ListInterface<Reservation> getAssignedList() {
+        ListInterface<Reservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < reservations.size(); i++) {
             Reservation r = reservations.get(i);
             if (r.isDeleted())
@@ -191,7 +189,8 @@ public class ReservationControl {
                 case 3:
                     runRoomManagement();
                     break;
-                case 4: // generateReport();
+                case 4:
+                    generateReport();
                     break;
                 default:
                     break;
@@ -219,7 +218,7 @@ public class ReservationControl {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Guest> display;
+            ListInterface<Guest> display;
             if (nationalityFilter != null) {
                 display = getGuestsByNationality(nationalityFilter);
             } else {
@@ -231,7 +230,7 @@ public class ReservationControl {
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<Guest> pageList = pageOfGuests(display, page);
+            ListInterface<Guest> pageList = pageOfGuests(display, page);
             int choice = reservationUI.printGuestListMenu(pageList, page, pageCount, hasFilter, this::memberIdOf, this::unreadOf);
 
             if (choice == 0) {
@@ -274,7 +273,7 @@ public class ReservationControl {
         }
     }
 
-    private void viewGuest(LinkedListInterface<Guest> pageList) {
+    private void viewGuest(ListInterface<Guest> pageList) {
         if (pageList.isEmpty()) {
             reservationUI.printNoRecords();
             reservationUI.pressEnterToContinue();
@@ -322,7 +321,7 @@ public class ReservationControl {
     }
 
     // action 3: register a guest (picked from the current page) as a loyalty member
-    private void registerGuestAsMember(LinkedListInterface<Guest> pageList) {
+    private void registerGuestAsMember(ListInterface<Guest> pageList) {
         if (pageList.isEmpty()) {
             reservationUI.printNoRecords();
             reservationUI.pressEnterToContinue();
@@ -431,7 +430,7 @@ public class ReservationControl {
             forceCheckoutOverdueReservations();
             detectNoShowReservations();
 
-            LinkedListInterface<Reservation> sourceList;
+            ListInterface<Reservation> sourceList;
             String currentListName;
             switch (currentView) {
                 case VIEW_BOOKING_LIST:
@@ -448,9 +447,9 @@ public class ReservationControl {
                     break;
             }
 
-            LinkedListInterface<Reservation> displayList = sourceList;
+            ListInterface<Reservation> displayList = sourceList;
             if (roomTypeFilter != null) {
-                displayList = new LinkedList<>();
+                displayList = new DoublyLinkedList<>();
                 for (int i = 0; i < sourceList.size(); i++) {
                     if (sourceList.get(i).getRoomTypeRequested() == roomTypeFilter) {
                         displayList.addBack(sourceList.get(i));
@@ -523,8 +522,8 @@ public class ReservationControl {
     // business rule: guests still CHECKED_IN past FORCE_CHECKOUT_HOUR on their expectedCheckOutDate are forcibly checked out so the room can be freed up for the guest queue
     private void forceCheckoutOverdueReservations() {
         LocalDateTime now = LocalDateTime.now();
-        LinkedListInterface<Reservation> forcedOut = new LinkedList<>();
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+        ListInterface<Reservation> forcedOut = new DoublyLinkedList<>();
+        ListInterface<Reservation> assignedList = getAssignedList();
 
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation r = assignedList.get(i);
@@ -552,8 +551,8 @@ public class ReservationControl {
     // auto-cancelled
     private void detectNoShowReservations() {
         LocalDate today = LocalDate.now();
-        LinkedListInterface<Reservation> noShows = new LinkedList<>();
-        LinkedListInterface<Reservation> bookingList = getBookingList();
+        ListInterface<Reservation> noShows = new DoublyLinkedList<>();
+        ListInterface<Reservation> bookingList = getBookingList();
 
         for (int i = bookingList.size() - 1; i >= 0; i--) {
             Reservation r = bookingList.get(i);
@@ -620,7 +619,7 @@ public class ReservationControl {
             int pageCount = Math.max(1, (guestList.size() + PAGE_SIZE - 1) / PAGE_SIZE);
             if (page >= pageCount)
                 page = pageCount - 1;
-            LinkedListInterface<Guest> pageList = pageOfGuests(guestList, page);
+            ListInterface<Guest> pageList = pageOfGuests(guestList, page);
             int choice = reservationUI.printGuestSelectionMenu(buildGuestSelectionTableData(pageList), page, pageCount);
             if (choice == 0)
                 return null;
@@ -674,7 +673,7 @@ public class ReservationControl {
         }
         LocalDate expectedCheckOutDate = expectedCheckInDate.plusDays(numberOfNights);
 
-        LinkedListInterface<Reservation> sessionBookings = new LinkedList<>();
+        ListInterface<Reservation> sessionBookings = new DoublyLinkedList<>();
         boolean continueBooking = true;
 
         while (continueBooking) {
@@ -774,14 +773,14 @@ public class ReservationControl {
 
     // case 3
     public void guestArrival() {
-        LinkedListInterface<Reservation> bookingList = getBookingList();
+        ListInterface<Reservation> bookingList = getBookingList();
         if (bookingList.isEmpty()) {
             reservationUI.printError("No advance bookings found.");
             reservationUI.pressEnterToContinue();
             return;
         }
 
-        LinkedListInterface<Reservation> sortedBookings = sortByExpectedCheckIn(bookingList);
+        ListInterface<Reservation> sortedBookings = sortByExpectedCheckIn(bookingList);
         reservationUI.printBookingListForArrival(buildArrivalListTableData(sortedBookings));
 
         int selection = reservationUI.inputListIndex("booking", sortedBookings.size());
@@ -842,7 +841,7 @@ public class ReservationControl {
         if (roomType == null)
             return;
 
-        LinkedListInterface<Room> availableRooms = getAvailableRoomsByType(roomType);
+        ListInterface<Room> availableRooms = getAvailableRoomsByType(roomType);
         if (availableRooms.isEmpty()) {
             reservationUI.printRoomNotAvailable();
             reservationUI.pressEnterToContinue();
@@ -859,7 +858,7 @@ public class ReservationControl {
         Reservation found = null;
         boolean fromVip = false;
 
-        LinkedListInterface<Reservation> rankedVip = priorityReservationController.generateVIPQueue(getVipList());
+        ListInterface<Reservation> rankedVip = priorityReservationController.generateVIPQueue(getVipList());
         for (int i = 0; i < rankedVip.size(); i++) {
             Reservation r = rankedVip.get(i);
             if (r.getRoomTypeRequested() == roomType) {
@@ -870,7 +869,7 @@ public class ReservationControl {
         }
 
         if (found == null) {
-            LinkedListInterface<Reservation> guestQueue = getGuestQueue();
+            ListInterface<Reservation> guestQueue = getGuestQueue();
             for (int i = 0; i < guestQueue.size(); i++) {
                 Reservation r = guestQueue.get(i);
                 if (r.getRoomTypeRequested() == roomType) {
@@ -917,8 +916,8 @@ public class ReservationControl {
 
     // case 5
     public void checkIn() {
-        LinkedListInterface<Reservation> candidates = new LinkedList<>();
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+        ListInterface<Reservation> candidates = new DoublyLinkedList<>();
+        ListInterface<Reservation> assignedList = getAssignedList();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation r = assignedList.get(i);
             if (r.getStatus() == ReservationStatus.ASSIGNED) {
@@ -996,8 +995,8 @@ public class ReservationControl {
 
     // case 6
     public void checkOut() {
-        LinkedListInterface<Reservation> checkedIn = new LinkedList<>();
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+        ListInterface<Reservation> checkedIn = new DoublyLinkedList<>();
+        ListInterface<Reservation> assignedList = getAssignedList();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation r = assignedList.get(i);
             if (r.getStatus() == ReservationStatus.CHECKED_IN) {
@@ -1017,7 +1016,7 @@ public class ReservationControl {
 
         String guestId = checkedIn.get(selection - 1).getGuestId();
 
-        LinkedListInterface<Reservation> checkedInRooms = new LinkedList<>();
+        ListInterface<Reservation> checkedInRooms = new DoublyLinkedList<>();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation r = assignedList.get(i);
             if (r.getGuestId().equals(guestId) && r.getStatus() == ReservationStatus.CHECKED_IN) {
@@ -1040,7 +1039,7 @@ public class ReservationControl {
         if (scopeChoice == 0)
             return;
 
-        LinkedListInterface<Reservation> toCheckOut = new LinkedList<>();
+        ListInterface<Reservation> toCheckOut = new DoublyLinkedList<>();
         if (scopeChoice == 1) {
             toCheckOut = checkedInRooms;
         } else if (scopeChoice == 2) {
@@ -1052,7 +1051,7 @@ public class ReservationControl {
                         "- No, cancel check-out")) {
                     return;
                 }
-                LinkedListInterface<Reservation> selected = new LinkedList<>();
+                ListInterface<Reservation> selected = new DoublyLinkedList<>();
                 for (int i = 0; i < checkedInRooms.size(); i++) {
                     Reservation r = checkedInRooms.get(i);
                     boolean wantsToCheckOut = reservationUI.askConfirmation(
@@ -1123,7 +1122,7 @@ public class ReservationControl {
 
     // case 8
     public void checkQueuePosition() {
-        LinkedListInterface<Guest> queuedGuests = buildQueuedGuestList();
+        ListInterface<Guest> queuedGuests = buildQueuedGuestList();
 
         if (queuedGuests.isEmpty()) {
             reservationUI.printNotFound();
@@ -1138,8 +1137,8 @@ public class ReservationControl {
 
         Guest selectedGuest = queuedGuests.get(guestSelection - 1);
 
-        LinkedListInterface<Reservation> guestReservationsInQueue = new LinkedList<>();
-        LinkedListInterface<Reservation> guestQueue = getGuestQueue();
+        ListInterface<Reservation> guestReservationsInQueue = new DoublyLinkedList<>();
+        ListInterface<Reservation> guestQueue = getGuestQueue();
         for (int i = 0; i < guestQueue.size(); i++) {
             Reservation r = guestQueue.get(i);
             if (r.getGuestId().equals(selectedGuest.getGuestId())) {
@@ -1166,9 +1165,9 @@ public class ReservationControl {
     }
 
     // List of guests who currently have at least one reservation in guestQueue
-    private LinkedListInterface<Guest> buildQueuedGuestList() {
-        LinkedListInterface<Guest> queuedGuests = new LinkedList<>();
-        LinkedListInterface<Reservation> guestQueue = getGuestQueue();
+    private ListInterface<Guest> buildQueuedGuestList() {
+        ListInterface<Guest> queuedGuests = new DoublyLinkedList<>();
+        ListInterface<Reservation> guestQueue = getGuestQueue();
         for (int i = 0; i < guestQueue.size(); i++) {
             String guestId = guestQueue.get(i).getGuestId();
             boolean alreadyAdded = false;
@@ -1188,8 +1187,8 @@ public class ReservationControl {
         return queuedGuests;
     }
 
-    private String[][] buildGuestQueuePositionTableData(LinkedListInterface<Reservation> guestReservations) {
-        LinkedListInterface<Reservation> guestQueue = getGuestQueue();
+    private String[][] buildGuestQueuePositionTableData(ListInterface<Reservation> guestReservations) {
+        ListInterface<Reservation> guestQueue = getGuestQueue();
         String[][] data = new String[guestReservations.size() + 1][6];
         data[0] = new String[] { "Position", "Conf. No.", "Room Type", "Type", "Status", "Expected Check-In" };
         for (int i = 0; i < guestReservations.size(); i++) {
@@ -1209,10 +1208,10 @@ public class ReservationControl {
 
     // case 9
     public void cancelReservation() {
-        LinkedListInterface<Reservation> candidates = new LinkedList<>();
-        LinkedListInterface<Reservation> guestQueue = getGuestQueue();
-        LinkedListInterface<Reservation> vipList = getVipList();
-        LinkedListInterface<Reservation> bookingList = getBookingList();
+        ListInterface<Reservation> candidates = new DoublyLinkedList<>();
+        ListInterface<Reservation> guestQueue = getGuestQueue();
+        ListInterface<Reservation> vipList = getVipList();
+        ListInterface<Reservation> bookingList = getBookingList();
         for (int i = 0; i < guestQueue.size(); i++) {
             candidates.addBack(guestQueue.get(i));
         }
@@ -1384,7 +1383,7 @@ public class ReservationControl {
         int page = 0;
 
         while (true) {
-            LinkedListInterface<Room> display;
+            ListInterface<Room> display;
             if (typeFilter != null) {
                 display = getRoomsByType(typeFilter);
             } else if (statusFilter != null) {
@@ -1398,7 +1397,7 @@ public class ReservationControl {
             if (page >= pageCount) {
                 page = pageCount - 1;
             }
-            LinkedListInterface<Room> pageList = pageOfRooms(display, page);
+            ListInterface<Room> pageList = pageOfRooms(display, page);
             int choice = reservationUI.printRoomListMenu(pageList, page, pageCount, hasFilter);
             if (choice == 0)
                 break;
@@ -1447,7 +1446,7 @@ public class ReservationControl {
         }
     }
 
-    private void viewRoom(LinkedListInterface<Room> pageList) {
+    private void viewRoom(ListInterface<Room> pageList) {
         if (pageList.isEmpty()) {
             reservationUI.printNoRecords();
             reservationUI.pressEnterToContinue();
@@ -1477,67 +1476,29 @@ public class ReservationControl {
     }
 
     // ===== REPORTS =====
-    // public void generateReport() {
-    // ReportUI reportUI = new ReportUI(reservationUI.getScanner());
+    public void generateReport() {
+        int choice;
+        do {
+            System.out.println("\n========================================");
+            System.out.println("  RESERVATION REPORTS");
+            System.out.println("========================================");
+            System.out.println("  1. Nationality Demand Report");
+            System.out.println("  2. Room Type Demand Report");
+            System.out.println("  0. Back");
+            System.out.println("========================================");
+            choice = reservationUI.inputListIndex("report option", 2);
 
-    // int choice;
-    // do {
-    // System.out.println("\n========================================");
-    // System.out.println(" RESERVATION REPORTS");
-    // System.out.println("========================================");
-    // System.out.println(" 1. Nationality Demand Report");
-    // System.out.println(" 2. Room Type Demand Report");
-    // System.out.println(" 0. Back");
-    // System.out.println("========================================");
-    // choice = reservationUI.inputListIndex("report option", 2);
-
-    // if (choice == 1) {
-    // LinkedListInterface<Guest> reportGuests = new LinkedList<>();
-    // guestDAO.loadFromFile(reportGuests);
-    // LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-    // reservationDAO.loadAllReservations(reportReservations);
-
-    // LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration
-    // timestamp");
-    // ReservationStatus status = inputReportStatusFilter();
-    // ReportResult result = new NationalityReport(reportGuests, reportReservations)
-    // .generate(range[0], range[1], status);
-    // reportUI.printReport(result, "NATIONALITY DEMAND REPORT");
-    // reportUI.pressEnterToContinue();
-    // } else if (choice == 2) {
-    // LinkedListInterface<Room> reportRooms = new LinkedList<>();
-    // roomDAO.loadFromFile(reportRooms);
-    // LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-    // reservationDAO.loadAllReservations(reportReservations);
-
-    // LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration
-    // timestamp");
-    // ReservationStatus status = inputReportStatusFilter();
-    // ReportResult result = new RoomTypeReport(reportRooms, reportReservations)
-    // .generate(range[0], range[1], status);
-    // reportUI.printReport(result, "ROOM TYPE DEMAND REPORT");
-    // reportUI.pressEnterToContinue();
-    // }
-    // } while (choice != 0);
-    // }
-
-    private ReservationStatus inputReportStatusFilter() {
-        ReservationStatus[] values = ReservationStatus.values();
-        System.out.println("\nFilter by reservation status:");
-        System.out.println("  0. All statuses (no filter)");
-        for (int i = 0; i < values.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + values[i]);
-        }
-        int choice = reservationUI.inputListIndex("status option", values.length);
-        if (choice == 0) {
-            return null;
-        }
-        return values[choice - 1];
+            if (choice == 1) {
+                reservationReportController.generateNationalityDemandReport();
+            } else if (choice == 2) {
+                reservationReportController.generateRoomTypeDemandReport();
+            }
+        } while (choice != 0);
     }
 
     // ===== HELPERS =====
-    private LinkedListInterface<Guest> pageOfGuests(LinkedListInterface<Guest> source, int page) {
-        LinkedListInterface<Guest> result = new LinkedList<>();
+    private ListInterface<Guest> pageOfGuests(ListInterface<Guest> source, int page) {
+        ListInterface<Guest> result = new DoublyLinkedList<>();
         int startIndex = page * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, source.size());
         for (int i = startIndex; i < endIndex; i++) {
@@ -1546,8 +1507,8 @@ public class ReservationControl {
         return result;
     }
 
-    private LinkedListInterface<Room> pageOfRooms(LinkedListInterface<Room> source, int page) {
-        LinkedListInterface<Room> result = new LinkedList<>();
+    private ListInterface<Room> pageOfRooms(ListInterface<Room> source, int page) {
+        ListInterface<Room> result = new DoublyLinkedList<>();
         int startIndex = page * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, source.size());
         for (int i = startIndex; i < endIndex; i++) {
@@ -1611,8 +1572,8 @@ public class ReservationControl {
         return count;
     }
 
-    private LinkedListInterface<Reservation> sortByExpectedCheckIn(LinkedListInterface<Reservation> list) {
-        LinkedListInterface<Reservation> sorted = new LinkedList<>();
+    private ListInterface<Reservation> sortByExpectedCheckIn(ListInterface<Reservation> list) {
+        ListInterface<Reservation> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
             int insertAt = sorted.size();
@@ -1655,7 +1616,7 @@ public class ReservationControl {
         nationalityDAO.saveCustomNationalities(arr);
     }
 
-    private String[][] buildArrivalListTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildArrivalListTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
         data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In" };
         for (int i = 0; i < list.size(); i++) {
@@ -1673,7 +1634,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildGuestSelectionTableData(LinkedListInterface<Guest> list) {
+    private String[][] buildGuestSelectionTableData(ListInterface<Guest> list) {
         String[][] data = new String[list.size() + 1][5];
         data[0] = new String[] { "No.", "Guest ID", "Name", "Nationality", "Contact" };
         for (int i = 0; i < list.size(); i++) {
@@ -1689,7 +1650,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildCheckInCandidateTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildCheckInCandidateTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
         data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In" };
         for (int i = 0; i < list.size(); i++) {
@@ -1707,7 +1668,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildCheckOutCandidateTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildCheckOutCandidateTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
         data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-Out" };
         for (int i = 0; i < list.size(); i++) {
@@ -1725,7 +1686,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildNoShowTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildNoShowTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
         data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Expected Check-In" };
         for (int i = 0; i < list.size(); i++) {
@@ -1743,7 +1704,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildAvailableRoomTableData(LinkedListInterface<Room> rooms) {
+    private String[][] buildAvailableRoomTableData(ListInterface<Room> rooms) {
         String[][] data = new String[rooms.size() + 1][4];
         data[0] = new String[] { "No.", "Room ID", "Room Number", "Price/Night" };
         for (int i = 0; i < rooms.size(); i++) {
@@ -1758,7 +1719,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildQueueTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildQueueTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][7];
         data[0] = new String[] { "No.", "Conf. No.", "Guest ID", "Guest Name", "Room Type", "Type", "Status" };
         for (int i = 0; i < list.size(); i++) {
@@ -1777,7 +1738,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildBookingSummaryTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildBookingSummaryTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][6];
         data[0] = new String[] { "No.", "Conf. No.", "Room Type", "Nights", "Check-In Date", "Status" };
         for (int i = 0; i < list.size(); i++) {
@@ -1794,7 +1755,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildCheckOutSelectionTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildCheckOutSelectionTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][5];
         data[0] = new String[] { "No.", "Conf. No.", "Room Type", "Nights", "Check-In Date" };
         for (int i = 0; i < list.size(); i++) {
@@ -1810,7 +1771,7 @@ public class ReservationControl {
         return data;
     }
 
-    private String[][] buildCheckOutSummaryTableData(LinkedListInterface<Reservation> list) {
+    private String[][] buildCheckOutSummaryTableData(ListInterface<Reservation> list) {
         String[][] data = new String[list.size() + 1][8];
         data[0] = new String[] { "No.", "Conf. No.", "Room Type", "Status", "Check-In Date", "Check-Out Date",
                 "Actual Check-In", "Actual Check-Out" };
@@ -1916,7 +1877,7 @@ public class ReservationControl {
         return null;
     }
 
-    public LinkedListInterface<Guest> getAllGuests() {
+    public ListInterface<Guest> getAllGuests() {
         return guestList;
     }
 
@@ -1928,8 +1889,8 @@ public class ReservationControl {
         return guest.getName();
     }
 
-    public LinkedListInterface<Guest> getGuestsByNationality(String nationality) {
-        LinkedListInterface<Guest> result = new LinkedList<>();
+    public ListInterface<Guest> getGuestsByNationality(String nationality) {
+        ListInterface<Guest> result = new DoublyLinkedList<>();
         for (int i = 0; i < guestList.size(); i++) {
             if (guestList.get(i).getNationality().equalsIgnoreCase(nationality)) {
                 result.addBack(guestList.get(i));
@@ -1947,9 +1908,9 @@ public class ReservationControl {
         return result;
     }
 
-    public LinkedList<Reservation> findReservationsByRoomType(RoomType roomType) {
-        LinkedList<Reservation> reservationList = new LinkedList<>();
-        LinkedListInterface<Reservation> guestQueue = getGuestQueue();
+    public DoublyLinkedList<Reservation> findReservationsByRoomType(RoomType roomType) {
+        DoublyLinkedList<Reservation> reservationList = new DoublyLinkedList<>();
+        ListInterface<Reservation> guestQueue = getGuestQueue();
         for (int i = 0; i < guestQueue.size(); i++) {
             Reservation reservation = guestQueue.get(i);
             if (reservation.getRoomTypeRequested() == roomType) {
@@ -1980,7 +1941,7 @@ public class ReservationControl {
     }
 
     public Reservation findReservationByRoomId(String roomId) {
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+        ListInterface<Reservation> assignedList = getAssignedList();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation reservation = assignedList.get(i);
             if (reservation.getRoomId() != null
@@ -1991,9 +1952,9 @@ public class ReservationControl {
         return null;
     }
 
-    public LinkedListInterface<Reservation> findCheckedInReservations() {
-        LinkedListInterface<Reservation> reservationList = new LinkedList<>();
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+    public ListInterface<Reservation> findCheckedInReservations() {
+        ListInterface<Reservation> reservationList = new DoublyLinkedList<>();
+        ListInterface<Reservation> assignedList = getAssignedList();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation reservation = assignedList.get(i);
             if (reservation.getStatus() == ReservationStatus.CHECKED_IN) {
@@ -2003,9 +1964,9 @@ public class ReservationControl {
         return reservationList;
     }
 
-    public LinkedListInterface<Reservation> findAssignedReservations() {
-        LinkedListInterface<Reservation> reservationList = new LinkedList<>();
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+    public ListInterface<Reservation> findAssignedReservations() {
+        ListInterface<Reservation> reservationList = new DoublyLinkedList<>();
+        ListInterface<Reservation> assignedList = getAssignedList();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation reservation = assignedList.get(i);
             if (reservation.getStatus() == ReservationStatus.ASSIGNED) {
@@ -2015,9 +1976,9 @@ public class ReservationControl {
         return reservationList;
     }
 
-    public LinkedListInterface<Reservation> findCheckedOutReservations() {
-        LinkedListInterface<Reservation> reservationList = new LinkedList<>();
-        LinkedListInterface<Reservation> assignedList = getAssignedList();
+    public ListInterface<Reservation> findCheckedOutReservations() {
+        ListInterface<Reservation> reservationList = new DoublyLinkedList<>();
+        ListInterface<Reservation> assignedList = getAssignedList();
         for (int i = 0; i < assignedList.size(); i++) {
             Reservation reservation = assignedList.get(i);
             if (reservation.getStatus() == ReservationStatus.CHECKED_OUT) {
@@ -2039,7 +2000,7 @@ public class ReservationControl {
     }
 
     public Room getAvailableRoom(RoomType roomType) {
-        LinkedListInterface<Room> roomsOfType = getRoomsByType(roomType);
+        ListInterface<Room> roomsOfType = getRoomsByType(roomType);
         for (int i = 0; i < roomsOfType.size(); i++) {
             Room room = roomsOfType.get(i);
             if (room.getRoomStatus() == RoomStatus.AVAILABLE) {
@@ -2049,9 +2010,9 @@ public class ReservationControl {
         return null;
     }
 
-    public LinkedListInterface<Room> getAvailableRoomsByType(RoomType roomType) {
-        LinkedListInterface<Room> result = new LinkedList<>();
-        LinkedListInterface<Room> roomsOfType = getRoomsByType(roomType);
+    public ListInterface<Room> getAvailableRoomsByType(RoomType roomType) {
+        ListInterface<Room> result = new DoublyLinkedList<>();
+        ListInterface<Room> roomsOfType = getRoomsByType(roomType);
         for (int i = 0; i < roomsOfType.size(); i++) {
             Room room = roomsOfType.get(i);
             if (room.getRoomStatus() == RoomStatus.AVAILABLE) {
@@ -2065,8 +2026,8 @@ public class ReservationControl {
         return getRoomsByType(roomType).size();
     }
 
-    public LinkedListInterface<Room> getAvailableRooms() {
-        LinkedListInterface<Room> availableRooms = new LinkedList<>();
+    public ListInterface<Room> getAvailableRooms() {
+        ListInterface<Room> availableRooms = new DoublyLinkedList<>();
         for (int i = 0; i < roomList.size(); i++) {
             Room room = roomList.get(i);
             if (room.getRoomStatus() == RoomStatus.AVAILABLE) {
@@ -2076,8 +2037,8 @@ public class ReservationControl {
         return availableRooms;
     }
 
-    public LinkedListInterface<Room> getOccupiedRooms() {
-        LinkedListInterface<Room> occupiedRooms = new LinkedList<>();
+    public ListInterface<Room> getOccupiedRooms() {
+        ListInterface<Room> occupiedRooms = new DoublyLinkedList<>();
         for (int i = 0; i < roomList.size(); i++) {
             Room room = roomList.get(i);
             if (room.getRoomStatus() == RoomStatus.OCCUPIED) {
@@ -2087,8 +2048,8 @@ public class ReservationControl {
         return occupiedRooms;
     }
 
-    public LinkedListInterface<Room> getRoomsByStatus(RoomStatus status) {
-        LinkedListInterface<Room> result = new LinkedList<>();
+    public ListInterface<Room> getRoomsByStatus(RoomStatus status) {
+        ListInterface<Room> result = new DoublyLinkedList<>();
         for (int i = 0; i < roomList.size(); i++) {
             if (roomList.get(i).getRoomStatus() == status) {
                 result.addBack(roomList.get(i));
@@ -2097,8 +2058,8 @@ public class ReservationControl {
         return result;
     }
 
-    public LinkedListInterface<Room> getRoomsByType(RoomType roomType) {
-        LinkedListInterface<Room> roomTypeList = new LinkedList<>();
+    public ListInterface<Room> getRoomsByType(RoomType roomType) {
+        ListInterface<Room> roomTypeList = new DoublyLinkedList<>();
         for (int i = 0; i < roomList.size(); i++) {
             Room room = roomList.get(i);
             if (room.getRoomType() == roomType) {
@@ -2108,7 +2069,7 @@ public class ReservationControl {
         return roomTypeList;
     }
 
-    public LinkedListInterface<Room> getAllRooms() {
+    public ListInterface<Room> getAllRooms() {
         return roomList;
     }
 
@@ -2137,7 +2098,7 @@ public class ReservationControl {
     }
 
     public double getPriceByRoomType(RoomType roomType) {
-        LinkedListInterface<Room> roomsOfType = getRoomsByType(roomType);
+        ListInterface<Room> roomsOfType = getRoomsByType(roomType);
         if (roomsOfType.isEmpty()) {
             return -1;
         }
@@ -2289,7 +2250,7 @@ public class ReservationControl {
     // PaymentControl (nested)
     // ------------------------------------------------------------------
     private static class PaymentControl {
-        private final LinkedListInterface<Payment> paymentList = new LinkedList<>();
+        private final ListInterface<Payment> paymentList = new DoublyLinkedList<>();
         private final PaymentDAO paymentDAO = new PaymentDAO();
 
         public PaymentControl() {
@@ -2297,7 +2258,7 @@ public class ReservationControl {
         }
 
         // called from bookRoom() - one combined payment for the whole booking session
-        public Payment processBookingPayment(LinkedListInterface<Reservation> reservations,
+        public Payment processBookingPayment(ListInterface<Reservation> reservations,
                 ReservationControl reservationControl, Member member, LoyaltyController loyaltyController) {
             if (reservations == null || reservations.size() == 0) {
                 return null;
@@ -2311,8 +2272,8 @@ public class ReservationControl {
 
             // ---- vouchers: each voucher offsets its own room type's subtotal (capped);
             // generic vouchers (null room type) offset the remaining session charge.
-            LinkedListInterface<RedemptionRecord> appliedVouchers = new LinkedList<>();
-            LinkedListInterface<Double> appliedDeductions = new LinkedList<>();
+            ListInterface<RedemptionRecord> appliedVouchers = new DoublyLinkedList<>();
+            ListInterface<Double> appliedDeductions = new DoublyLinkedList<>();
             if (member != null) {
                 double[] poolByType = new double[RoomType.values().length];
                 for (int i = 0; i < reservations.size(); i++) {
@@ -2326,9 +2287,9 @@ public class ReservationControl {
                 double genericPool = totalRoomCharge;
 
                 while (true) {
-                    LinkedListInterface<RedemptionRecord> available =
+                    ListInterface<RedemptionRecord> available =
                             loyaltyController.getAvailableVouchers(member.getMemberId());
-                    LinkedListInterface<RedemptionRecord> applicable = new LinkedList<>();
+                    ListInterface<RedemptionRecord> applicable = new DoublyLinkedList<>();
                     for (int i = 0; i < available.size(); i++) {
                         RedemptionRecord v = available.get(i);
                         if (isVoucherApplied(appliedVouchers, v.getRedemptionId())) {
@@ -2447,7 +2408,7 @@ public class ReservationControl {
             return payment;
         }
 
-        private boolean isVoucherApplied(LinkedListInterface<RedemptionRecord> applied, String redemptionId) {
+        private boolean isVoucherApplied(ListInterface<RedemptionRecord> applied, String redemptionId) {
             for (int i = 0; i < applied.size(); i++) {
                 if (applied.get(i).getRedemptionId().equals(redemptionId)) {
                     return true;
@@ -2456,7 +2417,7 @@ public class ReservationControl {
             return false;
         }
 
-        private RedemptionRecord findVoucher(LinkedListInterface<RedemptionRecord> list, String redemptionId) {
+        private RedemptionRecord findVoucher(ListInterface<RedemptionRecord> list, String redemptionId) {
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i).getRedemptionId().equals(redemptionId)) {
                     return list.get(i);
@@ -2523,7 +2484,7 @@ public class ReservationControl {
                 if (confirmationNumber.equals(p.getReservationID())) {
                     return p;
                 }
-                LinkedListInterface<String> numbers = p.getConfirmationNumbers();
+                ListInterface<String> numbers = p.getConfirmationNumbers();
                 if (numbers != null) {
                     for (int j = 0; j < numbers.size(); j++) {
                         if (confirmationNumber.equals(numbers.get(j))) {
@@ -2539,7 +2500,7 @@ public class ReservationControl {
             ui.printPaymentRecords(paymentList);
         }
 
-        public LinkedListInterface<Payment> getPaymentList() {
+        public ListInterface<Payment> getPaymentList() {
             return paymentList;
         }
 

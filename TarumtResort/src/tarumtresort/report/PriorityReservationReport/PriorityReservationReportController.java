@@ -3,14 +3,13 @@ package tarumtresort.report.PriorityReservationReport;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.dao.PriorityReservationDAO;
 import tarumtresort.dao.ReservationDAO;
 import tarumtresort.dao.StaffDAO;
 import tarumtresort.entity.PriorityReservation;
 import tarumtresort.entity.Reservation;
-import tarumtresort.entity.Staff;
 import tarumtresort.entity.enums.PriorityLevel;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomType;
@@ -89,12 +88,12 @@ public class PriorityReservationReportController {
 
     // -------------------- data loading --------------------
 
-    private LinkedListInterface<PriorityReservation> loadPriorityReservations() {
+    private ListInterface<PriorityReservation> loadPriorityReservations() {
         return priorityReservationDAO.loadFromFile();
     }
 
-    private LinkedListInterface<Reservation> loadReservations() {
-        LinkedListInterface<Reservation> reservations = new LinkedList<>();
+    private ListInterface<Reservation> loadReservations() {
+        ListInterface<Reservation> reservations = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(reservations);
         return reservations;
     }

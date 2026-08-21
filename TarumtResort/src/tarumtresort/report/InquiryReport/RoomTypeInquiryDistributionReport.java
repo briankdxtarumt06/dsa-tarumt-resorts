@@ -1,7 +1,7 @@
 package tarumtresort.report.InquiryReport;
 
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.enums.InquiryStatus;
@@ -20,13 +20,13 @@ import tarumtresort.utility.Ansi;
  */
 public class RoomTypeInquiryDistributionReport {
 
-    private final LinkedListInterface<Inquiry> inquiryList;
-    private final LinkedListInterface<Reservation> reservationList;
+    private final ListInterface<Inquiry> inquiryList;
+    private final ListInterface<Reservation> reservationList;
 
-    public RoomTypeInquiryDistributionReport(LinkedListInterface<Inquiry> inquiryList,
-            LinkedListInterface<Reservation> reservationList) {
-        this.inquiryList = inquiryList == null ? new LinkedList<>() : inquiryList;
-        this.reservationList = reservationList == null ? new LinkedList<>() : reservationList;
+    public RoomTypeInquiryDistributionReport(ListInterface<Inquiry> inquiryList,
+            ListInterface<Reservation> reservationList) {
+        this.inquiryList = inquiryList == null ? new DoublyLinkedList<>() : inquiryList;
+        this.reservationList = reservationList == null ? new DoublyLinkedList<>() : reservationList;
     }
 
     public Result generate(RoomType filterType) {
@@ -104,7 +104,7 @@ public class RoomTypeInquiryDistributionReport {
             }
         }
 
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         charts.addBack(chart);
 
         String[] summary = buildSummary(grandTotal, busiestType, busiestCount,
@@ -193,12 +193,12 @@ public class RoomTypeInquiryDistributionReport {
 
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
         }
 
@@ -206,7 +206,7 @@ public class RoomTypeInquiryDistributionReport {
             return table;
         }
 
-        public LinkedListInterface<ReportChart> getCharts() {
+        public ListInterface<ReportChart> getCharts() {
             return charts;
         }
 

@@ -3,7 +3,7 @@ package tarumtresort.boundary;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.PriorityReservation;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Staff;
@@ -148,8 +148,8 @@ public class PriorityReservationUI {
     }
 
     // VIP QUEUE (waiting members only)
-    public void displayVIPQueue(LinkedListInterface<Reservation> queue,
-            LinkedListInterface<PriorityReservation> priorities) {
+    public void displayVIPQueue(ListInterface<Reservation> queue,
+            ListInterface<PriorityReservation> priorities) {
         ConsoleUtil.clearScreen();
         printBanner("VIP QUEUE (Waiting Members)");
         if (queue.isEmpty()) {
@@ -176,7 +176,7 @@ public class PriorityReservationUI {
     }
 
     // OVERRIDE
-    public Reservation selectReservation(LinkedListInterface<Reservation> reservations) {
+    public Reservation selectReservation(ListInterface<Reservation> reservations) {
         clearScreen();
         printBanner("SELECT RESERVATION (Non-Member, Waiting)");
         if (reservations.isEmpty()) {
@@ -205,7 +205,7 @@ public class PriorityReservationUI {
         return reservations.get(num - 1);
     }
 
-    public Staff selectStaff(LinkedListInterface<Staff> staffList) {
+    public Staff selectStaff(ListInterface<Staff> staffList) {
         clearScreen();
         printBanner("SELECT STAFF");
         if (staffList.isEmpty()) {
@@ -357,7 +357,7 @@ public class PriorityReservationUI {
         }
     }
 
-    private PriorityLevel findLevel(LinkedListInterface<PriorityReservation> priorities, String reservationId) {
+    private PriorityLevel findLevel(ListInterface<PriorityReservation> priorities, String reservationId) {
         for (int i = 0; i < priorities.size(); i++) {
             if (priorities.get(i).getReservationId().equals(reservationId)) {
                 return priorities.get(i).getPriorityLevel();

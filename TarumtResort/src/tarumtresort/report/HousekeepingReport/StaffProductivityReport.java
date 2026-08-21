@@ -30,7 +30,7 @@ public class StaffProductivityReport {
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to) {
-        LinkedListInterface<StaffRow> rows = new LinkedList<>();
+        ListInterface<StaffRow> rows = new DoublyLinkedList<>();
 
         for (int i = 0; i < staffList.size(); i++) {
             Staff staff = staffList.get(i);
@@ -126,7 +126,7 @@ public class StaffProductivityReport {
                 || status.equalsIgnoreCase("Inspected");
     }
 
-    private String[][] toTable(LinkedListInterface<StaffRow> rows) {
+    private String[][] toTable(ListInterface<StaffRow> rows) {
         String[][] table = new String[rows.size() + 1][7];
         table[0] = new String[] { "Staff ID", "Name", "Role", "Department",
                 "Tasks Completed", "Avg (min)", "Per Hr" };
@@ -146,14 +146,14 @@ public class StaffProductivityReport {
         return table;
     }
 
-    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<StaffRow> rows) {
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+    private ListInterface<ReportChart> buildCharts(ListInterface<StaffRow> rows) {
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         charts.addBack(buildCompletedChart(rows));
         charts.addBack(buildAverageChart(rows));
         return charts;
     }
 
-    private ReportChart buildCompletedChart(LinkedListInterface<StaffRow> rows) {
+    private ReportChart buildCompletedChart(ListInterface<StaffRow> rows) {
         ReportChart chart = new ReportChart("Completed Tasks per Staff");
         LinkedListInterface<StaffRow> sorted = new LinkedList<>();
         for (int i = 0; i < rows.size(); i++) {
@@ -168,7 +168,7 @@ public class StaffProductivityReport {
         return chart;
     }
 
-    private ReportChart buildAverageChart(LinkedListInterface<StaffRow> rows) {
+    private ReportChart buildAverageChart(ListInterface<StaffRow> rows) {
         ReportChart chart = new ReportChart("Average Completion Time per Staff (min)");
         LinkedListInterface<AverageSortRow> sorted = new LinkedList<>();
         for (int i = 0; i < rows.size(); i++) {
@@ -184,7 +184,7 @@ public class StaffProductivityReport {
         return chart;
     }
 
-    private String[] buildSummary(LinkedListInterface<StaffRow> rows) {
+    private String[] buildSummary(ListInterface<StaffRow> rows) {
         StaffRow topPerformer = null;
         StaffRow fastest = null;
         StaffRow slowest = null;
@@ -287,12 +287,12 @@ public class StaffProductivityReport {
 
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
         }
 
@@ -300,7 +300,7 @@ public class StaffProductivityReport {
             return table;
         }
 
-        public LinkedListInterface<ReportChart> getCharts() {
+        public ListInterface<ReportChart> getCharts() {
             return charts;
         }
 

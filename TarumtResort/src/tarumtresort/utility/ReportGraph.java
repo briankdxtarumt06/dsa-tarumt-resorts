@@ -1,6 +1,6 @@
 package tarumtresort.utility;
 
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.report.ReportChart;
 
 /**
@@ -35,7 +35,7 @@ public class ReportGraph {
         }
     }
 
-    public static void printCallouts(LinkedListInterface<String> callouts) {
+    public static void printCallouts(ListInterface<String> callouts) {
         if (callouts == null || callouts.isEmpty()) {
             return;
         }
@@ -46,7 +46,7 @@ public class ReportGraph {
 
     // -------------------- side-by-side charts --------------------
 
-    public static void printCharts(LinkedListInterface<ReportChart> charts) {
+    public static void printCharts(ListInterface<ReportChart> charts) {
         if (charts == null || charts.isEmpty()) {
             return;
         }
@@ -180,7 +180,7 @@ public class ReportGraph {
         return 10;
     }
 
-    private static int[] computeHeights(LinkedListInterface<ReportChart.Bar> bars, int scaleY) {
+    private static int[] computeHeights(ListInterface<ReportChart.Bar> bars, int scaleY) {
         int n = bars.size();
         int[] heights = new int[n];
         double maxVal = 0;
@@ -219,7 +219,7 @@ public class ReportGraph {
     // wrap labels to max 2 rows of up to 8 chars each; long enum names
     // (STANDARD_SINGLE, MAINTENANCE) are split on '_' where possible so
     // their identity survives the two-row budget
-    private static String[][] wrapLabels(LinkedListInterface<ReportChart.Bar> bars) {
+    private static String[][] wrapLabels(ListInterface<ReportChart.Bar> bars) {
         String[][] result = new String[bars.size()][];
         for (int i = 0; i < bars.size(); i++) {
             result[i] = wrapLabel(bars.get(i).getLabel());

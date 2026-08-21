@@ -1,8 +1,8 @@
 package tarumtresort.report.PriorityReservationReport;
 
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.PriorityReservation;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.enums.PriorityLevel;
@@ -32,23 +32,23 @@ import tarumtresort.utility.Ansi;
  */
 public class PriorityLevelEffectivenessReport {
 
-    private final LinkedListInterface<PriorityReservation> priorityList;
-    private final LinkedListInterface<Reservation> reservationList;
+    private final ListInterface<PriorityReservation> priorityList;
+    private final ListInterface<Reservation> reservationList;
 
-    public PriorityLevelEffectivenessReport(LinkedListInterface<PriorityReservation> priorityList,
-            LinkedListInterface<Reservation> reservationList) {
-        this.priorityList = priorityList == null ? new LinkedList<>() : priorityList;
-        this.reservationList = reservationList == null ? new LinkedList<>() : reservationList;
+    public PriorityLevelEffectivenessReport(ListInterface<PriorityReservation> priorityList,
+            ListInterface<Reservation> reservationList) {
+        this.priorityList = priorityList == null ? new DoublyLinkedList<>() : priorityList;
+        this.reservationList = reservationList == null ? new DoublyLinkedList<>() : reservationList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to,
             ReservationStatus statusFilter, RoomType roomTypeFilter) {
 
         // SORT: index the reservations by id so the join below can binary search
-        ReservationIndex index = new ReservationIndex(reservationList);
+        PriorityReportSupport.ReservationIndex index = new PriorityReportSupport.ReservationIndex(reservationList);
 
         // SORT: build the full VIP queue by rank desc, then FIFO within a tier
-        LinkedListInterface<QueueOrdering.Entry> queue = new LinkedList<>();
+        ListInterface<PriorityReportSupport.QueueEntry> queue = new DoublyLinkedList<>();
         for (int i = 0; i < priorityList.size(); i++) {
             PriorityReservation priority = priorityList.get(i);
             if (priority == null || priority.isDeleted()) {
@@ -59,9 +59,9 @@ public class PriorityLevelEffectivenessReport {
             if (reservation == null || reservation.isDeleted()) {
                 continue;
             }
-            queue.addSorted(new QueueOrdering.Entry(priority, reservation));
+            queue.addSorted(new PriorityReportSupport.QueueEntry(priority, reservation));
         }
-        QueueOrdering.assignPositionsAndDisplacement(queue);
+        PriorityReportSupport.assignPositionsAndDisplacement(queue);
 
         // aggregate the filtered records into one bucket per tier
         TierRow[] buckets = new TierRow[PriorityLevel.values().length];
@@ -69,10 +69,10 @@ public class PriorityLevelEffectivenessReport {
         int totalOverridden = 0;
         int totalBreaches = 0;
         int totalMeasured = 0;
-        QueueOrdering.Entry worstCase = null;
+        PriorityReportSupport.QueueEntry worstCase = null;
 
         for (int i = 0; i < queue.size(); i++) {
-            QueueOrdering.Entry entry = queue.get(i);
+            PriorityReportSupport.QueueEntry entry = queue.get(i);
             if (!passesFilters(entry, from, to, statusFilter, roomTypeFilter)) {
                 continue;
             }
@@ -104,7 +104,7 @@ public class PriorityLevelEffectivenessReport {
         }
 
         // SORT: tier rows by rank descending, via compareTo + addSorted
-        LinkedListInterface<TierRow> rows = new LinkedList<>();
+        ListInterface<TierRow> rows = new DoublyLinkedList<>();
         for (TierRow bucket : buckets) {
             if (bucket != null) {
                 rows.addSorted(bucket);
@@ -120,7 +120,7 @@ public class PriorityLevelEffectivenessReport {
 
     // -------------------- filtering --------------------
 
-    private boolean passesFilters(QueueOrdering.Entry entry, LocalDateTime from, LocalDateTime to,
+    private boolean passesFilters(PriorityReportSupport.QueueEntry entry, LocalDateTime from, LocalDateTime to,
             ReservationStatus statusFilter, RoomType roomTypeFilter) {
         if (!inRange(entry.getRegisteredAt(), from, to)) {
             return false;
@@ -151,7 +151,7 @@ public class PriorityLevelEffectivenessReport {
 
     // -------------------- table --------------------
 
-    private String[][] toTable(LinkedListInterface<TierRow> rows) {
+    private String[][] toTable(ListInterface<TierRow> rows) {
         String[][] table = new String[rows.size() + 1][10];
         // headers kept short so the rendered table stays inside DOC_WIDTH (132)
         table[0] = new String[] { "Tier", "Rank", "Records", "Avg Q.Pos",
@@ -177,8 +177,8 @@ public class PriorityLevelEffectivenessReport {
 
     // -------------------- charts --------------------
 
-    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<TierRow> rows) {
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+    private ListInterface<ReportChart> buildCharts(ListInterface<TierRow> rows) {
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
 
         // Both charts should slope upward from the top tier down. Any tier
         // that breaks the slope is the finding management needs to see.
@@ -196,7 +196,7 @@ public class PriorityLevelEffectivenessReport {
         for (int i = 0; i < rows.size(); i++) {
             TierRow row = rows.get(i);
             waits.addBar(row.level.name(), row.averageServeTime(),
-                    "(target " + QueueOrdering.slaTargetMinutes(row.level) + " min)");
+                    "(target " + PriorityReportSupport.slaTargetMinutes(row.level) + " min)");
         }
         charts.addBack(waits);
 
@@ -205,9 +205,9 @@ public class PriorityLevelEffectivenessReport {
 
     // -------------------- summary --------------------
 
-    private String[] buildSummary(LinkedListInterface<TierRow> rows, int totalRecords,
+    private String[] buildSummary(ListInterface<TierRow> rows, int totalRecords,
             int totalOverridden, int totalBreaches, int totalMeasured,
-            QueueOrdering.Entry worstCase) {
+            PriorityReportSupport.QueueEntry worstCase) {
 
         double compliance = totalMeasured == 0
                 ? 100 : (double) (totalMeasured - totalBreaches) / totalMeasured * 100;
@@ -256,7 +256,7 @@ public class PriorityLevelEffectivenessReport {
      * the rank falls. The first tier that is served FASTER than the tier above
      * it is the point where the ranking stops being honoured.
      */
-    private String rankCorrelation(LinkedListInterface<TierRow> rows) {
+    private String rankCorrelation(ListInterface<TierRow> rows) {
         TierRow previous = null;
         int compared = 0;
         for (int i = 0; i < rows.size(); i++) {
@@ -306,7 +306,7 @@ public class PriorityLevelEffectivenessReport {
             this.level = level;
         }
 
-        void accumulate(QueueOrdering.Entry entry) {
+        void accumulate(PriorityReportSupport.QueueEntry entry) {
             total++;
             if (entry.isOverridden()) {
                 fromOverride++;
@@ -321,7 +321,7 @@ public class PriorityLevelEffectivenessReport {
             if (waited != null) {
                 waitSum += waited;
                 measuredCount++;
-                if (QueueOrdering.isServed(entry.getStatus())) {
+                if (PriorityReportSupport.isServed(entry.getStatus())) {
                     servedWaitSum += waited;
                     servedCount++;
                 }
@@ -370,14 +370,14 @@ public class PriorityLevelEffectivenessReport {
     public static class Result {
 
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
         private final int recordCount;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts,
+        Result(String[][] table, ListInterface<ReportChart> charts,
                 String[] summary, int recordCount) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
             this.recordCount = recordCount;
         }
@@ -386,7 +386,7 @@ public class PriorityLevelEffectivenessReport {
             return table;
         }
 
-        public LinkedListInterface<ReportChart> getCharts() {
+        public ListInterface<ReportChart> getCharts() {
             return charts;
         }
 

@@ -1,7 +1,7 @@
 package tarumtresort.adt;
 
 // Author: Brian Kam Ding Xian, Chai Chee Tong, Fong Wen Ling, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
-public interface LinkedListInterface<T extends Comparable<T>> extends Iterable<T> {
+public interface ListInterface<T extends Comparable<T>> extends Iterable<T> {
     // LIST
 
     void addFront(T element);
@@ -28,7 +28,7 @@ public interface LinkedListInterface<T extends Comparable<T>> extends Iterable<T
 
     T removeIndex(int index);
 
-    boolean merge(LinkedListInterface<T> other);
+    boolean merge(ListInterface<T> other);
 
     // HELPER
 

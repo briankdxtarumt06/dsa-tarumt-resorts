@@ -1,8 +1,8 @@
 package tarumtresort.report.LoyaltyReport;
 
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
@@ -13,18 +13,18 @@ import tarumtresort.utility.Ansi;
 // Simplified to date-range-only filter (like Housekeeping) - no tier/minPoints/status/promo/keyword/sort
 public class MembershipPerformanceReport {
 
-    private final LinkedListInterface<Member> memberList;
-    private final LinkedListInterface<Guest> guestList;
+    private final ListInterface<Member> memberList;
+    private final ListInterface<Guest> guestList;
 
-    public MembershipPerformanceReport(LinkedListInterface<Member> memberList,
-            LinkedListInterface<Guest> guestList) {
-        this.memberList = memberList == null ? new LinkedList<>() : memberList;
-        this.guestList = guestList == null ? new LinkedList<>() : guestList;
+    public MembershipPerformanceReport(ListInterface<Member> memberList,
+            ListInterface<Guest> guestList) {
+        this.memberList = memberList == null ? new DoublyLinkedList<>() : memberList;
+        this.guestList = guestList == null ? new DoublyLinkedList<>() : guestList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to, Tier tierFilter) {
         LocalDateTime now = LocalDateTime.now();
-        LinkedListInterface<Member> filtered = new LinkedList<>();
+        ListInterface<Member> filtered = new DoublyLinkedList<>();
 
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
@@ -46,7 +46,7 @@ public class MembershipPerformanceReport {
 
         // sort by memberId via addSorted (Member implements Comparable by memberId)
         // Use LinkedList addSorted to keep sorted order like RoomCleaning does
-        LinkedListInterface<Member> sorted = new LinkedList<>();
+        ListInterface<Member> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < filtered.size(); i++) {
             sorted.addSorted(filtered.get(i));
         }
@@ -99,7 +99,7 @@ public class MembershipPerformanceReport {
         return 0;
     }
 
-    private String[][] toTable(LinkedListInterface<Member> rows, LocalDateTime now) {
+    private String[][] toTable(ListInterface<Member> rows, LocalDateTime now) {
         String[][] table = new String[rows.size() + 1][9];
         table[0] = new String[]{"No.", "Member ID", "Name", "Tier", "Balance", "Cum Earned", "Txns", "Redemptions", "Status"};
         int[] perTier = new int[Tier.values().length];
@@ -124,8 +124,8 @@ public class MembershipPerformanceReport {
         return table;
     }
 
-    private LinkedListInterface<ReportChart> buildCharts(LinkedListInterface<Member> rows) {
-        LinkedListInterface<ReportChart> charts = new LinkedList<>();
+    private ListInterface<ReportChart> buildCharts(ListInterface<Member> rows) {
+        ListInterface<ReportChart> charts = new DoublyLinkedList<>();
         int[] perTier = new int[Tier.values().length];
         long[] balancePerTier = new long[Tier.values().length];
         for (int i = 0; i < rows.size(); i++) {
@@ -146,7 +146,7 @@ public class MembershipPerformanceReport {
         return charts;
     }
 
-    private String[] buildSummary(LinkedListInterface<Member> rows) {
+    private String[] buildSummary(ListInterface<Member> rows) {
         double balanceSum = 0;
         long cumSum = 0;
         for (int i = 0; i < rows.size(); i++) {
@@ -162,8 +162,8 @@ public class MembershipPerformanceReport {
         };
     }
 
-    private LinkedListInterface<String> buildCallouts(LinkedListInterface<Member> rows) {
-        LinkedListInterface<String> callouts = new LinkedList<>();
+    private ListInterface<String> buildCallouts(ListInterface<Member> rows) {
+        ListInterface<String> callouts = new DoublyLinkedList<>();
         if (rows.isEmpty()) return callouts;
         Member top = rows.get(0);
         for (int i = 1; i < rows.size(); i++) {
@@ -175,27 +175,27 @@ public class MembershipPerformanceReport {
 
     public static class Result {
         private final String[][] table;
-        private final LinkedListInterface<ReportChart> charts;
+        private final ListInterface<ReportChart> charts;
         private final String[] summary;
-        private final LinkedListInterface<String> callouts;
+        private final ListInterface<String> callouts;
         private final String criteria;
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary, ListInterface<String> callouts) {
             this(table, charts, summary, callouts, null);
         }
 
-        Result(String[][] table, LinkedListInterface<ReportChart> charts, String[] summary, LinkedListInterface<String> callouts, String criteria) {
+        Result(String[][] table, ListInterface<ReportChart> charts, String[] summary, ListInterface<String> callouts, String criteria) {
             this.table = table;
-            this.charts = charts == null ? new LinkedList<>() : charts;
+            this.charts = charts == null ? new DoublyLinkedList<>() : charts;
             this.summary = summary;
-            this.callouts = callouts == null ? new LinkedList<>() : callouts;
+            this.callouts = callouts == null ? new DoublyLinkedList<>() : callouts;
             this.criteria = criteria;
         }
 
         public String[][] getTable() { return table; }
-        public LinkedListInterface<ReportChart> getCharts() { return charts; }
+        public ListInterface<ReportChart> getCharts() { return charts; }
         public String[] getSummary() { return summary; }
-        public LinkedListInterface<String> getCallouts() { return callouts; }
+        public ListInterface<String> getCallouts() { return callouts; }
         public String getCriteria() { return criteria; }
     }
 }

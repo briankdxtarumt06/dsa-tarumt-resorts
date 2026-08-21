@@ -2,8 +2,8 @@ package tarumtresort.dao;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.utility.JsonFileHandler;
@@ -15,7 +15,7 @@ public class TaskDAO {
 
     private static final TaskAssignmentDAO TASK_ASSIGNMENT_DAO = new TaskAssignmentDAO();
 
-    public void saveTaskList(LinkedListInterface<Task> taskList) {
+    public void saveTaskList(ListInterface<Task> taskList) {
         try {
             JsonFileHandler.saveListWithNestedIds(
                     taskList, FILE, "taskAssignments",
@@ -26,7 +26,7 @@ public class TaskDAO {
         }
     }
 
-    public LinkedList<Task> retrieveTaskList() {
+    public DoublyLinkedList<Task> retrieveTaskList() {
         try {
             return JsonFileHandler.loadListWithNestedIds(
                     FILE, Task.class, "taskAssignments",
