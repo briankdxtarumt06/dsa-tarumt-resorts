@@ -15,6 +15,8 @@ import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
+// Author: Chai Chee Tong
+
 public class ReservationReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;

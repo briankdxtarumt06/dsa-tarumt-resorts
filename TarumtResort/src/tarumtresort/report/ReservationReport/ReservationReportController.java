@@ -12,6 +12,8 @@ import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.entity.enums.ReservationStatus;
 
+// Author: Chai Chee Tong
+
 public class ReservationReportController {
 
     private final GuestDAO guestDAO = new GuestDAO();

@@ -4,10 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-
-import java.util.Scanner;
-
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.boundary.ReservationUI;
@@ -31,6 +27,8 @@ import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.ReservationReport.ReservationReportController;
+
+// Author: Chai Chee Tong, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
 
 public class ReservationControl {
 

@@ -1,5 +1,7 @@
 package tarumtresort.dao;
 
+// Author: Chai Chee Tong
+
 import java.nio.file.Path;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;

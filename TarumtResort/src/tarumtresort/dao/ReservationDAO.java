@@ -6,6 +6,8 @@ import tarumtresort.adt.LinkedListInterface;
 import tarumtresort.entity.Reservation;
 import tarumtresort.utility.JsonFileHandler;
 
+// Author: Chai Chee Tong
+
 public class ReservationDAO {
     private final String ALL_RESERVATIONS_FILE = "data/allReservationList.json";
 

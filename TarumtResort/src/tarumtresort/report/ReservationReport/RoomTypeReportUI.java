@@ -1,5 +1,7 @@
 package tarumtresort.report.ReservationReport;
 
+// Author: Chai Chee Tong
+
 public class RoomTypeReportUI {
 
     private static final String TITLE = "ROOM TYPE DEMAND REPORT";

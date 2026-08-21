@@ -9,6 +9,8 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
+// Author: Chai Chee Tong
+
 public class NationalityReport {
 
     private final LinkedListInterface<Guest> guestList;
@@ -45,6 +47,7 @@ public class NationalityReport {
 
             NationalityRow row = findOrCreateRow(rows, nationality);
             row.reservationCount++;
+            row.totalNights += r.getNumberOfNights();
             addGuestIdIfNew(row, r.getGuestId());
             totalCounted++;
         }
@@ -147,14 +150,24 @@ public class NationalityReport {
         }
         charts.addBack(reservationsChart);
 
-        ReportChart guestsChart = new ReportChart("Distinct Guests by Nationality");
+        ReportChart avgNightsChart = new ReportChart("Average Length of Stay by Nationality (nights)");
+        for (int i = 0; i < rows.size(); i++) {
+            NationalityRow row = rows.get(i);
+            avgNightsChart.addBar(row.nationality, row.averageNights(),
+                    "(" + row.totalNights + " night" + (row.totalNights == 1 ? "" : "s")
+                            + " / " + row.reservationCount + " reservation" + (row.reservationCount == 1 ? "" : "s") + ")");
+        }
+        charts.addBack(avgNightsChart);
+
+        ReportChart repeatRateChart = new ReportChart("Repeat Guest Rate by Nationality");
         for (int i = 0; i < rows.size(); i++) {
             NationalityRow row = rows.get(i);
             int guestCount = row.distinctGuestIds.size();
-            guestsChart.addBar(row.nationality, guestCount,
-                    "(" + guestCount + " guest" + (guestCount == 1 ? "" : "s") + ")");
+            repeatRateChart.addBar(row.nationality, row.repeatRate(),
+                    "(" + row.reservationCount + " reservation" + (row.reservationCount == 1 ? "" : "s")
+                            + " / " + guestCount + " guest" + (guestCount == 1 ? "" : "s") + ")");
         }
-        charts.addBack(guestsChart);
+        charts.addBack(repeatRateChart);
 
         return charts;
     }
@@ -162,8 +175,9 @@ public class NationalityReport {
     // -------------------- output --------------------
 
     private String[][] toTable(LinkedListInterface<NationalityRow> rows, int totalCounted) {
-        String[][] table = new String[rows.size() + 1][4];
-        table[0] = new String[] { "Nationality", "Total Reservations", "% of Matched Reservations", "Distinct Guests" };
+        String[][] table = new String[rows.size() + 1][6];
+        table[0] = new String[] { "Nationality", "Total Reservations", "% of Matched Reservations",
+                "Distinct Guests", "Avg Nights", "Repeat Rate" };
         for (int i = 0; i < rows.size(); i++) {
             NationalityRow row = rows.get(i);
             double percent = totalCounted == 0 ? 0 : (double) row.reservationCount / totalCounted * 100;
@@ -171,7 +185,9 @@ public class NationalityReport {
                     row.nationality,
                     String.valueOf(row.reservationCount),
                     String.format("%.1f%%", percent),
-                    String.valueOf(row.distinctGuestIds.size())
+                    String.valueOf(row.distinctGuestIds.size()),
+                    String.format("%.1f", row.averageNights()),
+                    String.format("%.2f", row.repeatRate())
             };
         }
         return table;
@@ -183,13 +199,32 @@ public class NationalityReport {
         }
         NationalityRow top = rows.get(0);
         NationalityRow bottom = rows.get(rows.size() - 1);
+
+        NationalityRow longestStay = rows.get(0);
+        NationalityRow mostRepeat = rows.get(0);
+        for (int i = 1; i < rows.size(); i++) {
+            NationalityRow row = rows.get(i);
+            if (row.averageNights() > longestStay.averageNights()) {
+                longestStay = row;
+            }
+            if (row.repeatRate() > mostRepeat.repeatRate()) {
+                mostRepeat = row;
+            }
+        }
+
         return new String[] {
                 Ansi.bold("Total Reservations Matched: ") + totalCounted,
                 Ansi.bold("Nationalities Represented: ") + rows.size(),
                 Ansi.bold("Most Reservations: ")
                         + Ansi.color(Ansi.GREEN, top.nationality + " (" + top.reservationCount + ")"),
                 Ansi.bold("Fewest Reservations: ")
-                        + Ansi.color(Ansi.YELLOW, bottom.nationality + " (" + bottom.reservationCount + ")")
+                        + Ansi.color(Ansi.YELLOW, bottom.nationality + " (" + bottom.reservationCount + ")"),
+                Ansi.bold("Longest Average Stay: ")
+                        + Ansi.color(Ansi.GREEN, longestStay.nationality + " ("
+                                + String.format("%.1f", longestStay.averageNights()) + " nights)"),
+                Ansi.bold("Highest Repeat Guest Rate: ")
+                        + Ansi.color(Ansi.GREEN, mostRepeat.nationality + " ("
+                                + String.format("%.2f", mostRepeat.repeatRate()) + " reservations per guest)")
         };
     }
 
@@ -198,10 +233,22 @@ public class NationalityReport {
     private static class NationalityRow implements Comparable<NationalityRow> {
         final String nationality;
         int reservationCount;
+        int totalNights;
         final LinkedListInterface<String> distinctGuestIds = new LinkedList<>();
 
         NationalityRow(String nationality) {
             this.nationality = nationality;
+        }
+
+        double averageNights() {
+            return reservationCount == 0 ? 0 : (double) totalNights / reservationCount;
+        }
+
+        // reservations per distinct guest - close to 1 means mostly one-time
+        // visitors, higher means guests from this nationality come back
+        double repeatRate() {
+            int guestCount = distinctGuestIds.size();
+            return guestCount == 0 ? 0 : (double) reservationCount / guestCount;
         }
 
         @Override
