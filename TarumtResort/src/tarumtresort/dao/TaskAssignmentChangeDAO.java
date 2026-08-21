@@ -16,7 +16,7 @@ public class TaskAssignmentChangeDAO {
         try {
             JsonFileHandler.saveList(changeList, FILE);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to save change history data: " + e.getMessage());
+            System.err.println(" ?! Failed to save change history data !? : " + e.getMessage());
         }
     }
 
@@ -24,7 +24,7 @@ public class TaskAssignmentChangeDAO {
         try {
             return JsonFileHandler.loadList(FILE, TaskAssignmentChange.class);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to load change history data: " + e.getMessage());
+            System.err.println(" ?! Failed to load change history data !? : " + e.getMessage());
             return new DoublyLinkedList<>();
         }
     }

@@ -331,13 +331,13 @@ public int getStaffActionChoice() {
 
     public TaskType inputTaskType() {
         System.out.println("\nSelect Task Type:");
-        System.out.println("  1. CHECKOUT_CLEAN");
-        System.out.println("  2. MAINTENANCE");
-        System.out.println("  3. INSPECTION");
-        System.out.println("  4. ROOM_SERVICE");
+        System.out.println("  1. Cleaning");
+        System.out.println("  2. Maintenance");
+        System.out.println("  3. Inspection");
+        System.out.println("  4. Room Service");
         int choice = inputIntChoice("Enter task type", 1, 4);
         return switch (choice) {
-            case 1 -> TaskType.CHECKOUT_CLEAN;
+            case 1 -> TaskType.CLEANING;
             case 2 -> TaskType.MAINTENANCE;
             case 3 -> TaskType.INSPECTION;
             default -> TaskType.ROOM_SERVICE;
@@ -346,19 +346,19 @@ public int getStaffActionChoice() {
 
     public TaskPriority inputTaskPriority() {
         System.out.println("\nSelect Task Priority:");
-        System.out.println("  1. HIGH");
-        System.out.println("  2. MEDIUM");
-        System.out.println("  3. LOW");
+        System.out.println("  1. High");
+        System.out.println("  2. Medium");
+        System.out.println("  3. Low");
         int choice = inputIntChoice("Enter task priority", 1, 3);
         return choice == 1 ? TaskPriority.HIGH : choice == 2 ? TaskPriority.MEDIUM : TaskPriority.LOW;
     }
 
     public TaskStatus inputTaskStatusFilter() {
         System.out.println("\nSelect Task Status:");
-        System.out.println("  1. PENDING");
-        System.out.println("  2. IN_PROGRESS");
-        System.out.println("  3. COMPLETED");
-        System.out.println("  4. CANCELLED");
+        System.out.println("  1. Pending");
+        System.out.println("  2. In Progress");
+        System.out.println("  3. Completed");
+        System.out.println("  4. Cancelled");
         int choice = inputIntChoice("Enter task status", 1, 4);
         return switch (choice) {
             case 1 -> TaskStatus.PENDING;

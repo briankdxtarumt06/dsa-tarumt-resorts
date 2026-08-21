@@ -1,21 +1,20 @@
 package tarumtresort.report.InquiryReport;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Scanner;
 import tarumtresort.adt.ListInterface;
-import tarumtresort.entity.enums.InquiryType;
-import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Scanner;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class InquiryReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
@@ -29,6 +28,11 @@ public class InquiryReportUI {
     private static final DateTimeFormatter TIMESTAMP_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    private static final String[] MONTHS = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
     private static final int[] NICE_STEPS = {
         1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000
     };
@@ -39,28 +43,126 @@ public class InquiryReportUI {
         this.scanner = scanner;
     }
 
-    // -------------------- filter input --------------------
+    // -------------------- filter prompts --------------------
 
-    public InquiryType inputInquiryTypeFilter() {
-        System.out.println("\nFilter by Query Type:");
-        InquiryType[] types = InquiryType.values();
-        for (int i = 0; i < types.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + types[i]);
+    public LocalDateTime[] inputOptionalDateTimeRange(String fieldLabel) {
+        System.out.println("\n========================================");
+        System.out.println("  " + fieldLabel.toUpperCase() + " - DATE RANGE");
+        System.out.println("========================================");
+        System.out.println("  1. This Month");
+        System.out.println("  2. Last Month");
+        System.out.println("  3. Specific Month (pick month & year)");
+        System.out.println("  4. This Week (Mon - Sun)");
+        System.out.println("  5. Last 7 Days");
+        System.out.println("  6. Today");
+        System.out.println("  7. All Time (no limit)");
+        System.out.println("  8. Custom Range (type manually)");
+        System.out.println("========================================");
+        int choice = getIntInput("Enter option", 1, 8);
+
+        switch (choice) {
+            case 1: return rangeThisMonth();
+            case 2: return rangeLastMonth();
+            case 3: return rangeSpecificMonth();
+            case 4: return rangeThisWeek();
+            case 5: return rangeLast7Days();
+            case 6: return rangeToday();
+            case 7: return new LocalDateTime[] { null, null };
+            default: return rangeCustom(fieldLabel);
         }
-        System.out.println("  0. All Types");
-        int choice = getIntInput("Enter choice", 0, types.length);
-        return choice == 0 ? null : types[choice - 1];
     }
 
-    public RoomType inputRoomTypeFilter() {
-        System.out.println("\nFilter by Room Type:");
-        RoomType[] types = RoomType.values();
-        for (int i = 0; i < types.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + types[i]);
+    private LocalDateTime inputOptionalDateTime(String prompt) {
+        System.out.print(prompt + ": ");
+        String input = scanner.nextLine().trim();
+        if (input.isEmpty()) {
+            return null;
         }
-        System.out.println("  0. All Room Types");
-        int choice = getIntInput("Enter choice", 0, types.length);
-        return choice == 0 ? null : types[choice - 1];
+        try {
+            return LocalDateTime.parse(input, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        } catch (DateTimeParseException e) {
+            ConsoleUtil.printError("Invalid format! Please use yyyy-MM-dd HH:mm (blank = no limit).");
+            return inputOptionalDateTime(prompt);
+        }
+    }
+
+    private LocalDateTime[] rangeThisMonth() {
+        YearMonth ym = YearMonth.now();
+        return new LocalDateTime[] {
+            ym.atDay(1).atStartOfDay(),
+            ym.atEndOfMonth().atTime(23, 59, 59, 999_999_999)
+        };
+    }
+
+    private LocalDateTime[] rangeLastMonth() {
+        YearMonth ym = YearMonth.now().minusMonths(1);
+        return new LocalDateTime[] {
+            ym.atDay(1).atStartOfDay(),
+            ym.atEndOfMonth().atTime(23, 59, 59, 999_999_999)
+        };
+    }
+
+    private LocalDateTime[] rangeSpecificMonth() {
+        System.out.println("\nSelect Month:");
+        for (int i = 0; i < MONTHS.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + MONTHS[i]);
+        }
+        int month = getIntInput("Enter month", 1, 12);
+
+        int currentYear = YearMonth.now().getYear();
+        System.out.print("Enter year (" + currentYear + " = default): ");
+        String yearInput = scanner.nextLine().trim();
+        int year;
+        if (yearInput.isEmpty()) {
+            year = currentYear;
+        } else {
+            try {
+                year = Integer.parseInt(yearInput);
+                if (year < 2000 || year > 2100) {
+                    ConsoleUtil.printWarning("Year out of range, using " + currentYear + ".");
+                    year = currentYear;
+                }
+            } catch (NumberFormatException e) {
+                ConsoleUtil.printWarning("Invalid year, using " + currentYear + ".");
+                year = currentYear;
+            }
+        }
+
+        YearMonth ym = YearMonth.of(year, month);
+        return new LocalDateTime[] {
+            ym.atDay(1).atStartOfDay(),
+            ym.atEndOfMonth().atTime(23, 59, 59, 999_999_999)
+        };
+    }
+
+    private LocalDateTime[] rangeThisWeek() {
+        LocalDate today = LocalDate.now();
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate sunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        return new LocalDateTime[] {
+            monday.atStartOfDay(),
+            sunday.atTime(23, 59, 59, 999_999_999)
+        };
+    }
+
+    private LocalDateTime[] rangeLast7Days() {
+        return new LocalDateTime[] {
+            LocalDateTime.now().minusDays(7),
+            LocalDateTime.now()
+        };
+    }
+
+    private LocalDateTime[] rangeToday() {
+        return new LocalDateTime[] {
+            LocalDate.now().atStartOfDay(),
+            LocalDateTime.now()
+        };
+    }
+
+    private LocalDateTime[] rangeCustom(String fieldLabel) {
+        LocalDateTime from = inputOptionalDateTime("Enter " + fieldLabel + " FROM (yyyy-MM-dd HH:mm)");
+        LocalDateTime to = inputOptionalDateTime("Enter " + fieldLabel + " TO (yyyy-MM-dd HH:mm)");
+        return new LocalDateTime[] { from, to };
     }
 
     private int getIntInput(String prompt, int min, int max) {

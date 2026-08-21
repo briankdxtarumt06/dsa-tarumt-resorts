@@ -22,7 +22,7 @@ public class StaffDAO {
                     Staff::getTaskAssignments,
                     TaskAssignment::getTaskAssignmentId);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to save staff data: " + e.getMessage());
+            System.err.println(" ?! Failed to save staff data !? : " + e.getMessage());
         }
     }
 
@@ -33,7 +33,7 @@ public class StaffDAO {
                     TASK_ASSIGNMENT_DAO::getTaskAssignmentById,
                     Staff::setTaskAssignments);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to load staff data: " + e.getMessage());
+            System.err.println(" ?! Failed to load staff data !? : " + e.getMessage());
             return new DoublyLinkedList<>();
         }
     }

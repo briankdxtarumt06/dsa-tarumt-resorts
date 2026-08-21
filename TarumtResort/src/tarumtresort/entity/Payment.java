@@ -1,14 +1,10 @@
 package tarumtresort.entity;
-import tarumtresort.adt.ListInterface;
-import tarumtresort.adt.DoublyLinkedList;
-import tarumtresort.entity.enums.*;
 import java.time.LocalDateTime;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
+import tarumtresort.entity.enums.*;
 
-/**
- *
- * @author Wen Ling
- */
-
+// Author: Fong Wen Ling
 public class Payment implements Comparable<Payment> {
     private String paymentID;
     private double roomCharge;

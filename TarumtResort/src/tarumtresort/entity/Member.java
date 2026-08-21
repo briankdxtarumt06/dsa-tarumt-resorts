@@ -74,10 +74,6 @@ public class Member implements Comparable<Member> {
         this.guestId = guestId;
     }
 
-    /**
-     * Soft-delete flag: the record stays for history/audit but is hidden from
-     * active views.
-     */
     public boolean isDeleted() {
         return isDeleted;
     }

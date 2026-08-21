@@ -3,7 +3,6 @@ package tarumtresort.boundary;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-
 import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Payment;
@@ -101,10 +100,6 @@ public class ReservationUI {
         return inputIntChoice("Enter choice", 0, 2);
     }
 
-    /**
-     * Prints a guest's notifications (newest last; deleted ones are already
-     * filtered out).
-     */
     public void printGuestNotifications(ListInterface<tarumtresort.entity.Notification> list) {
         if (list.size() == 0) {
             ConsoleUtil.printWarning("\nNo notifications for this guest.");
@@ -783,10 +778,6 @@ public class ReservationUI {
         TablePrinter.displayTable(header, rowsArray);
     }
 
-    /**
-     * Lists the applicable vouchers and returns the chosen redemption id,
-     * or null when the staff picks 0 (no more vouchers).
-     */
     public String selectVoucher(ListInterface<RedemptionRecord> vouchers) {
         System.out.println();
         String[] header = { "#", "Voucher", "Room Type", "Value" };

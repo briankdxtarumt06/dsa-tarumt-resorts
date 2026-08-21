@@ -8,10 +8,7 @@ import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class InquiryDAO {
 
     private static final Path INQUIRY_FILE = Path.of("data/inquiries.json");

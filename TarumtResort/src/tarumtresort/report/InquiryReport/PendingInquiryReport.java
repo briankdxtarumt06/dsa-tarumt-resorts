@@ -12,11 +12,7 @@ import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
-/**
- *
- * @author Wen Ling
- *
- */
+// Author: Fong Wen Ling
 public class PendingInquiryReport {
 
     private final ListInterface<Inquiry> inquiryList;
@@ -27,7 +23,8 @@ public class PendingInquiryReport {
         this.guestList = guestList == null ? new DoublyLinkedList<>() : guestList;
     }
 
-    public Result generate(InquiryType filterType) {
+
+    public Result generate(LocalDateTime from, LocalDateTime to) {
 
         // collect + sort matching pending inquiries
         ListInterface<Inquiry> pending = new DoublyLinkedList<>();
@@ -36,7 +33,7 @@ public class PendingInquiryReport {
             if (inq.getStatus() != InquiryStatus.PENDING) {
                 continue;
             }
-            if (filterType != null && inq.getInquiryType() != filterType) {
+            if (!inRange(inq.getCreatedTime(), from, to)) {
                 continue;
             }
             pending.addSorted(inq);
@@ -111,6 +108,19 @@ public class PendingInquiryReport {
                         + (mostCommonType == null ? "-" : mostCommonType + " (" + mostCommonCount
                                 + " inquir" + (mostCommonCount == 1 ? "y" : "ies") + ")")
         };
+    }
+
+    private boolean inRange(LocalDateTime value, LocalDateTime from, LocalDateTime to) {
+        if (value == null) {
+            return false;
+        }
+        if (from != null && value.isBefore(from)) {
+            return false;
+        }
+        if (to != null && value.isAfter(to)) {
+            return false;
+        }
+        return true;
     }
 
     private Guest findGuest(String guestId) {

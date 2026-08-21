@@ -7,7 +7,6 @@ import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.ReportChart;
-import tarumtresort.utility.Ansi;
 
 // Author: Brian - extracted from LoyaltyController for Housekeeping-style reports
 // Simplified to date-range-only filter (like Housekeeping) - no tier/minPoints/status/promo/keyword/sort
@@ -45,7 +44,7 @@ public class MembershipPerformanceReport {
         }
 
         // sort by memberId via addSorted (Member implements Comparable by memberId)
-        // Use LinkedList addSorted to keep sorted order like RoomCleaning does
+        // Use DoublyLinkedList addSorted to keep sorted order like RoomCleaning does
         ListInterface<Member> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < filtered.size(); i++) {
             sorted.addSorted(filtered.get(i));

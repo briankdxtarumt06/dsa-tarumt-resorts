@@ -1,9 +1,6 @@
 package tarumtresort.report.InquiryReport;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class RoomTypeInquiryDistributionUI {
 
     private static final String TITLE = "ROOM TYPE INQUIRY DISTRIBUTION REPORT";

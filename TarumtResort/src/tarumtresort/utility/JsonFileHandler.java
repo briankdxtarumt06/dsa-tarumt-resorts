@@ -39,7 +39,7 @@ public class JsonFileHandler {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .registerTypeHierarchyAdapter(ListInterface.class, new LinkedListInterfaceAdapter())
+            .registerTypeHierarchyAdapter(ListInterface.class, new ListInterfaceAdapter())
             .registerTypeAdapter(TaskType.class, new EnumNormalizerAdapter<>(TaskType::fromString, TaskType.UNKNOWN))
             .registerTypeAdapter(AvailabilityStatus.class,
                     new EnumNormalizerAdapter<>(AvailabilityStatus::fromString, AvailabilityStatus.AVAILABLE))
@@ -113,17 +113,6 @@ public class JsonFileHandler {
         return result;
     }
 
-    /**
-     * Saves a list of entities where one nested field holds a list of other
-     * entities: only their ids are written to disk (no duplicate data).
-     * Shared by any entity type with a nested entity list.
-     *
-     * @param list        the entity list to save
-     * @param file        target json file
-     * @param fieldName   name of the nested field in the entity class
-     * @param listGetter  extracts the nested entity list from an entity
-     * @param idGetter    extracts the id from a nested entity
-     */
     public static <T extends Comparable<T>, E extends Comparable<E>> void saveListWithNestedIds(
             ListInterface<T> list, 
             Path file,
@@ -157,16 +146,6 @@ public class JsonFileHandler {
         save(objects, file);
     }
 
-    /**
-     * Loads a list of entities whose nested id list is resolved back into
-     * full entities, fetching each entity from its json file via the resolver.
-     *
-     * @param file         source json file
-     * @param entityType   the entity class
-     * @param fieldName    name of the nested field in the entity class
-     * @param idResolver   resolves an id to the full nested entity
-     * @param listSetter   attaches the resolved entity list back onto the entity
-     */
     public static <T extends Comparable<T>, E extends Comparable<E>> DoublyLinkedList<T> loadListWithNestedIds(
             Path file, 
             Class<T> entityType,
@@ -241,8 +220,8 @@ public class JsonFileHandler {
         }
     }
 
-    // Gson adapter for LinkedListInterface
-    private static class LinkedListInterfaceAdapter
+    // Gson adapter for ListInterface
+    private static class ListInterfaceAdapter
             implements JsonSerializer<ListInterface<?>>, JsonDeserializer<ListInterface<?>> {
 
         @Override
@@ -278,12 +257,6 @@ public class JsonFileHandler {
         }
     }
 
-    /**
-     * Enum adapter that reads legacy JSON strings through each enum's
-     * fromString normalizer (e.g. "In Progress" -> IN_PROGRESS,
-     * "Housekeeping" -> CHECKOUT_CLEAN) instead of requiring exact enum
-     * names. Writes the canonical enum name back to disk.
-     */
     private static class EnumNormalizerAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 
         private final Function<String, T> parser;

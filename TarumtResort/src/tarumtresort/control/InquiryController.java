@@ -22,16 +22,21 @@ import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.report.InquiryReport.InquiryReportController;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class InquiryController {
+
+    private static final int PAGE_SIZE = 20;
 
     // controller (dependencies on other modules)
     private ReservationControl reservationControl = new ReservationControl();
     private HousekeepingController housekeepingController = new HousekeepingController();
 
+    // ui
+    private final Scanner scanner = new Scanner(System.in);
+    private InquiryUI ui = new InquiryUI(scanner);
+    private ReservationUI reservationUI = new ReservationUI();
+
+    // adt
     private ListInterface<Inquiry> inquiryList = new DoublyLinkedList<>();
 
     // dao
@@ -39,11 +44,6 @@ public class InquiryController {
     private static final ReservationDAO reservationDAO = new ReservationDAO();
     private static final GuestDAO guestDAO = new GuestDAO();
     private static final PaymentDAO paymentDAO = new PaymentDAO();
-
-    // ui
-    private final Scanner scanner = new Scanner(System.in);
-    private InquiryUI ui = new InquiryUI(scanner);
-    private ReservationUI reservationUI = new ReservationUI();
 
     // report generation
     private InquiryReportController inquiryReportController = new InquiryReportController(scanner);
@@ -81,9 +81,6 @@ public class InquiryController {
                         viewAllInquiries();
                         break;
                     case 6:
-                        searchInquiry();
-                        break;
-                    case 7:
                         generateReport();
                         break;
                     case 0:
@@ -175,12 +172,12 @@ public class InquiryController {
 
     // case 3
     public void viewPendingQueue() {
-        ui.listAllInquiries(buildInquiryTableData(getInquiriesByStatus(InquiryStatus.PENDING)));
+        ui.listAllInquiries(buildInquiryTableData(getFilteredInquiries(InquiryStatus.PENDING, null)));
     }
 
     // case 4
     public void cancelInquiry() {
-        ListInterface<Inquiry> pendingOnly = getInquiriesByStatus(InquiryStatus.PENDING);
+        ListInterface<Inquiry> pendingOnly = getFilteredInquiries(InquiryStatus.PENDING, null);
         if (pendingOnly.isEmpty()) {
             ui.printMessage("No pending inquiries to cancel.");
             return;
@@ -210,8 +207,104 @@ public class InquiryController {
 
     // case 5
     public void viewAllInquiries() {
-        InquiryStatus filter = ui.inputInquiryStatusFilter();
-        ui.listAllInquiries(buildInquiryTableData(getInquiriesByStatus(filter)));
+        InquiryStatus statusFilter = null;
+        InquiryType typeFilter = null;
+        int page = 0;
+
+        while (true) {
+            ListInterface<Inquiry> display = getFilteredInquiries(statusFilter, typeFilter);
+
+            boolean hasFilter = statusFilter != null || typeFilter != null;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+            ListInterface<Inquiry> pageList = pageOfInquiries(display, page);
+            int choice = ui.printInquiryListMenu(pageList, page, pageCount, hasFilter);
+
+            if (choice == 0) {
+                break;
+            }
+
+            int action = 1;
+            if (choice == action++) { // 1. View Details
+                viewInquiryDetails(pageList);
+            } else if (choice == action++) { // 2. Filter by Inquiry Status
+                statusFilter = ui.inputInquiryStatusFilter();
+                page = 0;
+            } else if (choice == action++) { // 3. Filter by Inquiry Type
+                typeFilter = ui.inputInquiryTypeFilter();
+                page = 0;
+            } else if (choice == action++) { // 4. Search by Inquiry ID
+                searchByInquiryId();
+            } else if (choice == action++) { // 5. Search by Confirmation Number
+                searchByConfirmationNumber();
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) {
+                    matched = choice == action;
+                    action++;
+                    if (matched)
+                        page++;
+                }
+                if (!matched && page > 0) {
+                    matched = choice == action;
+                    action++;
+                    if (matched)
+                        page--;
+                }
+                if (!matched && hasFilter) {
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        statusFilter = null;
+                        typeFilter = null;
+                        page = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    private void viewInquiryDetails(ListInterface<Inquiry> pageList) {
+        if (pageList.isEmpty()) {
+            ui.printNotFound();
+            ui.pressEnterToContinue();
+            return;
+        }
+        int num = ui.inputListIndex("inquiry", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        Inquiry inquiry = pageList.get(num - 1);
+        ui.printInquiryDetails(ui.buildInquiryDetails(inquiry));
+        ui.pressEnterToContinue();
+    }
+
+    private void searchByInquiryId() {
+        String inquiryId = ui.inputInquiryId();
+        Inquiry found = searchInquiryById(inquiryId);
+        if (found == null) {
+            ui.printNotFound();
+            ui.pressEnterToContinue();
+            return;
+        }
+        ListInterface<Inquiry> result = new DoublyLinkedList<>();
+        result.addBack(found);
+        ui.listAllInquiries(buildInquiryTableData(result));
+        ui.pressEnterToContinue();
+    }
+
+    private void searchByConfirmationNumber() {
+        String confirmationNumber = ui.inputConfirmationNumber();
+        ListInterface<Inquiry> matches = searchInquiriesByConfirmationNumber(confirmationNumber);
+        if (matches.isEmpty()) {
+            ui.printNotFound();
+            ui.pressEnterToContinue();
+            return;
+        }
+        ui.listAllInquiries(buildInquiryTableData(matches));
+        ui.pressEnterToContinue();
     }
 
     // case 6
@@ -224,38 +317,6 @@ public class InquiryController {
             case 2:
                 inquiryReportController.generateRoomTypeInquiryDistributionReport();
                 break;
-            case 0:
-            default:
-                break;
-        }
-    }
-
-    // case 6 
-    public void searchInquiry() {
-        int choice = ui.getSearchMenuChoice();
-        switch (choice) {
-            case 1: {
-                String inquiryId = ui.inputInquiryId();
-                Inquiry found = searchInquiryById(inquiryId);
-                if (found == null) {
-                    ui.printNotFound();
-                    return;
-                }
-                ListInterface<Inquiry> result = new DoublyLinkedList<>();
-                result.addBack(found);
-                ui.listAllInquiries(buildInquiryTableData(result));
-                break;
-            }
-            case 2: {
-                String confirmationNumber = ui.inputConfirmationNumber();
-                ListInterface<Inquiry> matches = searchInquiriesByConfirmationNumber(confirmationNumber);
-                if (matches.isEmpty()) {
-                    ui.printNotFound();
-                    return;
-                }
-                ui.listAllInquiries(buildInquiryTableData(matches));
-                break;
-            }
             case 0:
             default:
                 break;
@@ -386,14 +447,28 @@ public class InquiryController {
         return null;
     }
 
-    // filterStatus == null returns every inquiry regardless of status
-    private ListInterface<Inquiry> getInquiriesByStatus(InquiryStatus filterStatus) {
+    // filterStatus == null / filterType == null means that dimension is unfiltered
+    private ListInterface<Inquiry> getFilteredInquiries(InquiryStatus filterStatus, InquiryType filterType) {
         ListInterface<Inquiry> result = new DoublyLinkedList<>();
         for (int i = 0; i < inquiryList.size(); i++) {
             Inquiry inq = inquiryList.get(i);
-            if (filterStatus == null || inq.getStatus() == filterStatus) {
-                result.addBack(inq);
+            if (filterStatus != null && inq.getStatus() != filterStatus) {
+                continue;
             }
+            if (filterType != null && inq.getInquiryType() != filterType) {
+                continue;
+            }
+            result.addBack(inq);
+        }
+        return result;
+    }
+
+    private ListInterface<Inquiry> pageOfInquiries(ListInterface<Inquiry> source, int page) {
+        ListInterface<Inquiry> result = new DoublyLinkedList<>();
+        int startIndex = page * PAGE_SIZE;
+        int endIndex = Math.min(startIndex + PAGE_SIZE, source.size());
+        for (int i = startIndex; i < endIndex; i++) {
+            result.addBack(source.get(i));
         }
         return result;
     }

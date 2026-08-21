@@ -160,8 +160,6 @@ public class DoublyLinkedList<T extends Comparable<T>> implements ListInterface<
         nodeAt(index).setData(element);
     }
 
-    // LIST END
-
     // HELPER
 
     @Override
@@ -205,23 +203,6 @@ public class DoublyLinkedList<T extends Comparable<T>> implements ListInterface<
     }
 
     @Override
-    public String toString() {
-        if (isEmpty()) {
-            return "[]";
-        }
-        StringBuilder sb = new StringBuilder("[");
-        Node<T> current = head;
-        while (current != null) {
-            sb.append(current.getData());
-            if (current.getNext() != null) {
-                sb.append(", ");
-            }
-            current = current.getNext();
-        }
-        return sb.append("]").toString();
-    }
-
-    @Override
     public int size() {
         return size;
     }
@@ -254,6 +235,24 @@ public class DoublyLinkedList<T extends Comparable<T>> implements ListInterface<
         return current;
     }
 
+    // convert list to string
+    @Override
+    public String toString() {
+        if (isEmpty()) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder("[");
+        Node<T> current = head;
+        while (current != null) {
+            sb.append(current.getData());
+            if (current.getNext() != null) {
+                sb.append(", ");
+            }
+            current = current.getNext();
+        }
+        return sb.append("]").toString();
+    }
+
     // private helper method to remove node from list
     private T removeNode(Node<T> node) {
         if (size == 1) {
@@ -273,8 +272,7 @@ public class DoublyLinkedList<T extends Comparable<T>> implements ListInterface<
         return node.getData();
     }
 
-    // HELPER END
-
+    // iterator to iterate through list
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {

@@ -22,7 +22,7 @@ public class TaskDAO {
                     Task::getTaskAssignments,
                     TaskAssignment::getTaskAssignmentId);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to save task data: " + e.getMessage());
+            System.err.println(" ?! Failed to save task data !? : " + e.getMessage());
         }
     }
 
@@ -33,7 +33,7 @@ public class TaskDAO {
                     TASK_ASSIGNMENT_DAO::getTaskAssignmentById,
                     Task::setTaskAssignments);
         } catch (IOException e) {
-            System.err.println("  ✗ Failed to load task data: " + e.getMessage());
+            System.err.println(" ?! Failed to load task data !? : " + e.getMessage());
             return new DoublyLinkedList<>();
         }
     }
