@@ -1,9 +1,11 @@
 package tarumtresort.utility;
 
+// Author: Brian Kam Ding Xian, Imam Mahdi Ali Ang Attuko
 public class TablePrinter {
 
     public static final int DOC_WIDTH = 132;
 
+    // Not Supported by NetBeans
     private static final char HORIZONTAL = '═';
     private static final char VERTICAL = '║';
     private static final char CORNER_TL = '╔';
@@ -15,6 +17,19 @@ public class TablePrinter {
     private static final char T_RIGHT = '╠';
     private static final char T_LEFT = '╣';
     private static final char CROSS = '╬';
+
+    // Supported by NetBeans
+    // private static final char HORIZONTAL = '-';
+    // private static final char VERTICAL = '|';
+    // private static final char CORNER_TL = '+';
+    // private static final char CORNER_TR = '+';
+    // private static final char CORNER_BL = '+';
+    // private static final char CORNER_BR = '+';
+    // private static final char T_DOWN = '+';
+    // private static final char T_UP = '+';
+    // private static final char T_RIGHT = '+';
+    // private static final char T_LEFT = '+';
+    // private static final char CROSS = '+';
 
     private TablePrinter() {
     }

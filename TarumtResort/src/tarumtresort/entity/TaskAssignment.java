@@ -2,21 +2,24 @@ package tarumtresort.entity;
 
 // imports
 import java.time.LocalDateTime;
+import tarumtresort.adt.LinkedList;
+import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.enums.TaskStatus;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class TaskAssignment implements Comparable<TaskAssignment> {
     private String taskAssignmentId;
-    private String status;
+    private TaskStatus status;
     private LocalDateTime dateTimeAssigned;
+    private LocalDateTime dateTimeEnded;
+    private boolean isDeleted;
     private String assignedStaffId;
     private String assignedTaskId;
+    private LinkedListInterface<TaskAssignmentChange> changes;
 
     public TaskAssignment() { }
 
-    public TaskAssignment(String taskAssignmentId, String status, LocalDateTime dateTimeAssigned, String assignedStaffId, String assignedTaskId) {
+    public TaskAssignment(String taskAssignmentId, TaskStatus status, LocalDateTime dateTimeAssigned, String assignedStaffId, String assignedTaskId) {
         this.taskAssignmentId = taskAssignmentId;
         this.status = status;
         this.dateTimeAssigned = dateTimeAssigned;
@@ -32,11 +35,11 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         this.taskAssignmentId = taskAssignmentId;
     }
 
-    public String getStatus() {
+    public TaskStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(TaskStatus status) {
         this.status = status;
     }
 
@@ -46,6 +49,22 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
 
     public void setDateTimeAssigned(LocalDateTime dateTimeAssigned) {
         this.dateTimeAssigned = dateTimeAssigned;
+    }
+
+    public LocalDateTime getDateTimeEnded() {
+        return dateTimeEnded;
+    }
+
+    public void setDateTimeEnded(LocalDateTime dateTimeEnded) {
+        this.dateTimeEnded = dateTimeEnded;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public String getAssignedStaffId() {
@@ -64,11 +83,41 @@ public class TaskAssignment implements Comparable<TaskAssignment> {
         this.assignedTaskId = assignedTaskId;
     }
 
+    /** True when the assignment is still active (not completed / cancelled). */
+    public boolean isActive() {
+        return status != TaskStatus.COMPLETED && status != TaskStatus.CANCELLED;
+    }
+
+    public LinkedListInterface<TaskAssignmentChange> getChanges() {
+        if (changes == null) {
+            changes = new LinkedList<>();
+        }
+        return changes;
+    }
+
+    public void setChanges(LinkedListInterface<TaskAssignmentChange> changes) {
+        this.changes = changes;
+    }
+
+    public void addChange(TaskAssignmentChange change) {
+        if (change == null || change.getChangeId() == null) {
+            return;
+        }
+        if (changes == null) {
+            changes = new LinkedList<>();
+        }
+        if (changes.contains(change)) {
+            return; // duplicate change id
+        }
+        changes.addBack(change);
+    }
+
 @Override
     public String toString() {
         return "Task Assignment Details:" + 
                "\nstatus=" + status +
                ",\ndateTimeAssigned=" + dateTimeAssigned + 
+               ",\ndateTimeEnded=" + dateTimeEnded +
                ",\nassignedStaffId=" + assignedStaffId + 
                ",\nassignedTaskId=" + assignedTaskId;
     }

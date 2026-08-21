@@ -1,14 +1,22 @@
 package tarumtresort.entity.enums;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public enum TaskStatus {
-    PENDING,
-    IN_PROGRESS,
-    COMPLETED,
-    CANCELLED;
+    PENDING("Pending"),
+    IN_PROGRESS("In Progress"),
+    COMPLETED("Completed"),
+    CANCELLED("Cancelled");
+
+    private final String label;
+
+    TaskStatus(String label) {
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
 
     public static TaskStatus fromString(String status) {
         if (status == null) {
@@ -19,6 +27,10 @@ public enum TaskStatus {
             case "IN_PROGRESS" -> IN_PROGRESS;
             case "COMPLETED" -> COMPLETED;
             case "CANCELLED" -> CANCELLED;
+            case "WORK_FINISHED" -> COMPLETED;
+            case "INSPECTED" -> COMPLETED;
+            case "HANDED_OFF" -> IN_PROGRESS;
+            case "PAUSED" -> IN_PROGRESS;
             default -> null;
         };
     }

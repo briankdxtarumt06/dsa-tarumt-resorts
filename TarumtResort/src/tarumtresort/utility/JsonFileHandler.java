@@ -22,19 +22,31 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.Department;
+import tarumtresort.entity.enums.RoomStatus;
+import tarumtresort.entity.enums.StaffRole;
+import tarumtresort.entity.enums.TaskStatus;
+import tarumtresort.entity.enums.TaskType;
 
+// Author: Brian Kam Ding Xian, Imam Mahdi Ali Ang Attuko
 public class JsonFileHandler {
     // object to json, json to object builder
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .registerTypeHierarchyAdapter(LinkedListInterface.class, new LinkedListInterfaceAdapter())
+            .registerTypeAdapter(TaskType.class, new EnumNormalizerAdapter<>(TaskType::fromString, TaskType.UNKNOWN))
+            .registerTypeAdapter(AvailabilityStatus.class,
+                    new EnumNormalizerAdapter<>(AvailabilityStatus::fromString, AvailabilityStatus.AVAILABLE))
+            .registerTypeAdapter(TaskStatus.class, new EnumNormalizerAdapter<>(TaskStatus::fromString, null))
+            .registerTypeAdapter(RoomStatus.class, new EnumNormalizerAdapter<>(RoomStatus::fromString, null))
+            .registerTypeAdapter(StaffRole.class, new EnumNormalizerAdapter<>(StaffRole::fromString, StaffRole.UNKNOWN))
+            .registerTypeAdapter(Department.class, new EnumNormalizerAdapter<>(Department::fromString, Department.UNKNOWN))
             .create();
 
     private JsonFileHandler() { 
@@ -119,7 +131,7 @@ public class JsonFileHandler {
             Function<T, LinkedListInterface<E>> listGetter,
             Function<E, String> idGetter) throws IOException {
 
-        List<JsonObject> objects = new ArrayList<>();
+        JsonArray objects = new JsonArray();
         // iterate through list of entity
         for (int i = 0; i < list.size(); i++) {
             T entity = list.get(i);
@@ -263,6 +275,42 @@ public class JsonFileHandler {
                 result.addBack(context.deserialize(element, elementType));
             }
             return result;
+        }
+    }
+
+    /**
+     * Enum adapter that reads legacy JSON strings through each enum's
+     * fromString normalizer (e.g. "In Progress" -> IN_PROGRESS,
+     * "Housekeeping" -> CHECKOUT_CLEAN) instead of requiring exact enum
+     * names. Writes the canonical enum name back to disk.
+     */
+    private static class EnumNormalizerAdapter<T extends Enum<T>> extends TypeAdapter<T> {
+
+        private final Function<String, T> parser;
+        private final T fallback;
+
+        EnumNormalizerAdapter(Function<String, T> parser, T fallback) {
+            this.parser = parser;
+            this.fallback = fallback;
+        }
+
+        @Override
+        public void write(JsonWriter out, T value) throws IOException {
+            if (value == null) {
+                out.nullValue();
+                return;
+            }
+            out.value(value.name());
+        }
+
+        @Override
+        public T read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+            T parsed = parser.apply(in.nextString());
+            return parsed == null ? fallback : parsed;
         }
     }
 }

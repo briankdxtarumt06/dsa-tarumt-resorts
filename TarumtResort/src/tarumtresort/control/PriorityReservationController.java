@@ -7,11 +7,14 @@ import tarumtresort.entity.*;
 import tarumtresort.entity.enums.*;
 
 import tarumtresort.dao.*;
+import tarumtresort.report.PriorityReservationReport.PriorityReservationReportController;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class PriorityReservationController {
+    private static final int PAGE_SIZE = 20;
+
     // ADT declaration
     private LinkedListInterface<PriorityReservation> priorityReservations = new LinkedList<>();
     private LinkedListInterface<Reservation> vipQueue = new LinkedList<>();
@@ -19,12 +22,16 @@ public class PriorityReservationController {
     // DAO
     private PriorityReservationDAO priorityReservationDAO = new PriorityReservationDAO();
     private ReservationDAO reservationDAO = new ReservationDAO();
+    private StaffDAO staffDAO = new StaffDAO();
 
     // Controllers
     private LoyaltyController loyaltyController;
 
     // Boundary
     private PriorityReservationUI priorityReservationUI = new PriorityReservationUI();
+
+    // Reports - all report calculation lives in the report package
+    private PriorityReservationReportController reportController;
 
     public PriorityReservationController() {
         this(new Scanner(System.in));
@@ -33,10 +40,14 @@ public class PriorityReservationController {
     public PriorityReservationController(Scanner scanner) {
         this.loyaltyController = new LoyaltyController(scanner);
         this.priorityReservationUI = new PriorityReservationUI(scanner);
+        this.reportController = new PriorityReservationReportController(scanner);
         this.priorityReservations = priorityReservationDAO.loadFromFile();
     }
 
     public boolean addPriorityReservation(String reservationId, String guestId) {
+        if (searchPriorityReservationById(reservationId) != null) {
+            return true; // record already exists (e.g. created at booking, again at arrival)
+        }
         Member member = loyaltyController.findMember(guestId);
         if (member == null) {
             return false;
@@ -179,91 +190,308 @@ public class PriorityReservationController {
 
     // UI
     public void run() {
-        int choice;
-        do {
-            choice = priorityReservationUI.getMenuChoice();
-            switch (choice) {
-                case 1:
-                    viewVIPQueueFlow();
+        PriorityLevel levelFilter = null;
+        int page = 0;
+
+        while (true) {
+            LinkedListInterface<Reservation> history = loadHistory();
+
+            LinkedListInterface<PriorityReservation> display = (levelFilter == null) ? activePriorityReservations()
+                    : filterByLevel(levelFilter);
+            boolean hasFilter = levelFilter != null;
+
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+            LinkedListInterface<PriorityReservation> pageList = pageOf(display, page);
+
+            int choice = priorityReservationUI.printPriorityListMenu(
+                    buildPriorityRows(pageList, history), page, pageCount, hasFilter);
+            if (choice == 0) {
+                return;
+            }
+
+            int action = 1;
+            if (choice == action++) { // View Details
+                viewPriority(pageList);
+            } else if (choice == action++) { // Add Priority Reservation
+                addPriorityFlow();
+            } else if (choice == action++) { // Delete Priority Reservation
+                deletePriorityFlow(pageList);
+            } else if (choice == action++) { // View VIP Queue
+                viewVIPQueueFlow();
+            } else if (choice == action++) { // Filter by Priority Level
+                PriorityLevel level = priorityReservationUI.selectPriorityLevel("Select a level to filter by");
+                if (level != null) {
+                    levelFilter = level;
+                    page = 0;
+                }
+            } else if (choice == action++) { // Search Priority Reservation
+                searchFlow();
+            } else if (choice == action++) { // Priority Level Effectiveness Report
+                reportController.generatePriorityLevelEffectivenessReport();
+            } else if (choice == action++) { // VIP Queue & Override Governance Report
+                reportController.generateVipQueueGovernanceReport();
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) {
+                    matched = choice == action;
+                    action++;
+                    if (matched)
+                        page++;
+                }
+                if (!matched && page > 0) {
+                    matched = choice == action;
+                    action++;
+                    if (matched)
+                        page--;
+                }
+                if (!matched && hasFilter) {
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        levelFilter = null;
+                        page = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    private void viewPriority(LinkedListInterface<PriorityReservation> pageList) {
+        if (pageList.isEmpty()) {
+            priorityReservationUI.showMessage("No priority reservations to view.");
+            return;
+        }
+        int num = priorityReservationUI.inputListIndex("record", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        handlePriorityActions(pageList.get(num - 1).getReservationId());
+    }
+
+    private void handlePriorityActions(String reservationId) {
+        while (true) {
+            PriorityReservation pr = searchPriorityReservationById(reservationId);
+            if (pr == null) {
+                priorityReservationUI.showError("Record no longer exists.");
+                return;
+            }
+            Reservation reservation = getReservation(loadHistory(), reservationId);
+            priorityReservationUI.printPriorityDetail(pr, reservation);
+
+            int action = priorityReservationUI.getPriorityActionChoice();
+            if (action == 0) {
+                return;
+            }
+            switch (action) {
+                case 1: // Update Priority Level
+                    overrideFlow(pr);
                     break;
-                case 2:
-                    listAllFlow();
+                case 2: // Delete Priority Record
+                    if (priorityReservationUI.confirm("Delete this priority record?")) {
+                        removePriorityReservationById(reservationId);
+                        priorityReservationUI.showMessage("Priority record deleted.");
+                        return; // record removed - go back to the list
+                    }
                     break;
-                case 3:
-                    filterFlow();
-                    break;
-                case 4:
-                    //overrideFlow();
-                    break;
-                case 5:
+                case 3: // View VIP Queue Position
+                    viewQueuePosition(reservationId);
                     break;
                 default:
-                    priorityReservationUI.showError("Invalid choice. Please enter 1 - 5.");
+                    break;
             }
-        } while (choice != 5);
+        }
+    }
+
+    // Staff-authorized EMERGENCY priority for a non-member waiting reservation.
+    private void addPriorityFlow() {
+        Reservation reservation = priorityReservationUI.selectReservation(nonMemberWaiting());
+        if (reservation == null) {
+            return; // cancelled or none eligible
+        }
+        Staff staff = priorityReservationUI.selectStaff(staffDAO.retrieveStaffList());
+        if (staff == null) {
+            return;
+        }
+        String reason = priorityReservationUI.readNonEmpty("Enter the reason for emergency priority");
+
+        if (!priorityReservationUI.confirm("Grant EMERGENCY priority to " + reservation.getReservationId() + "?")) {
+            priorityReservationUI.showMessage("Cancelled. Nothing was changed.");
+            return;
+        }
+
+        PriorityReservation pr = new PriorityReservation(
+                reservation.getReservationId(), PriorityLevel.EMERGENCY, staff.getStaffId(), reason, false);
+        priorityReservations.addBack(pr);
+        priorityReservationDAO.saveToFile(priorityReservations);
+        priorityReservationUI.showMessage(
+                "EMERGENCY priority granted to " + reservation.getReservationId() + " by " + staff.getStaffId() + ".");
+    }
+
+    // non-member waiting reservations = WAITING, not deleted, and no priority record yet
+    private LinkedListInterface<Reservation> nonMemberWaiting() {
+        LinkedListInterface<Reservation> history = loadHistory();
+        LinkedListInterface<Reservation> result = new LinkedList<>();
+        for (int i = 0; i < history.size(); i++) {
+            Reservation r = history.get(i);
+            if (!r.isDeleted() && r.getStatus() == ReservationStatus.WAITING
+                    && searchPriorityReservationById(r.getReservationId()) == null) {
+                result.addBack(r);
+            }
+        }
+        return result;
+    }
+
+    private void deletePriorityFlow(LinkedListInterface<PriorityReservation> pageList) {
+        if (pageList.isEmpty()) {
+            priorityReservationUI.showMessage("No priority reservations to delete.");
+            return;
+        }
+        int num = priorityReservationUI.inputListIndex("record", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        PriorityReservation pr = pageList.get(num - 1);
+        if (!priorityReservationUI.confirm("Delete priority record for " + pr.getReservationId() + "?")) {
+            return;
+        }
+        if (removePriorityReservationById(pr.getReservationId())) {
+            priorityReservationUI.showMessage("Priority record deleted.");
+        } else {
+            priorityReservationUI.showError("Delete failed - record not found.");
+        }
+    }
+
+    private void searchFlow() {
+        String reservationId = priorityReservationUI.readNonEmpty("Enter reservation ID to search");
+        if (searchPriorityReservationById(reservationId) == null) {
+            priorityReservationUI.showError("No priority record found for " + reservationId + ".");
+            return;
+        }
+        handlePriorityActions(reservationId);
+    }
+
+    private void viewQueuePosition(String reservationId) {
+        LinkedListInterface<Reservation> waiting = waitingReservations();
+        LinkedListInterface<Reservation> queue = generateVIPQueue(waiting);
+        int position = -1;
+        for (int i = 0; i < queue.size(); i++) {
+            if (queue.get(i).getReservationId().equals(reservationId)) {
+                position = i + 1;
+                break;
+            }
+        }
+        if (position == -1) {
+            priorityReservationUI.showMessage(
+                    "This reservation is not in the VIP queue (only WAITING members are queued).");
+        } else {
+            priorityReservationUI.showMessage(
+                    "VIP queue position for " + reservationId + ": #" + position + " of " + queue.size() + ".");
+        }
+    }
+
+    private void overrideFlow(PriorityReservation pr) {
+        PriorityLevel newLevel = priorityReservationUI.selectPriorityLevel("Select the new priority level");
+        if (newLevel == null) {
+            return;
+        }
+        Staff staff = priorityReservationUI.selectStaff(staffDAO.retrieveStaffList());
+        if (staff == null) {
+            return; // cancelled or no staff on record
+        }
+        String staffId = staff.getStaffId();
+        String reason = priorityReservationUI.readNonEmpty("Enter the reason for this override");
+
+        priorityReservationUI.displayOverridePreview(pr, newLevel, staffId, reason);
+
+        if (!priorityReservationUI.confirm("Apply this override?")) {
+            priorityReservationUI.showMessage("Override cancelled. Nothing was changed.");
+            return;
+        }
+
+        boolean updated = updatePriorityReservation(
+                new PriorityReservation(pr.getReservationId(), newLevel, staffId, reason, false));
+
+        if (updated) {
+            priorityReservationUI
+                    .showMessage("Priority for " + pr.getReservationId() + " updated to " + newLevel + ".");
+        } else {
+            priorityReservationUI.showError("Update failed - the record no longer exists.");
+        }
     }
 
     private void viewVIPQueueFlow() {
-        LinkedListInterface<Reservation> guestQueue = new LinkedList<>();
-        reservationDAO.loadGuestQueue(guestQueue);
-        priorityReservationUI.displayVIPQueue(
-                generateVIPQueue(guestQueue), priorityReservations);
+        priorityReservationUI.displayVIPQueue(generateVIPQueue(waitingReservations()), priorityReservations);
         priorityReservationUI.pause();
     }
 
-    private void listAllFlow() {
-        priorityReservationUI.displayPriorityReservations(priorityReservations);
-        priorityReservationUI.pause();
+    // ===== UI HELPERS =====
+    private LinkedListInterface<Reservation> loadHistory() {
+        LinkedListInterface<Reservation> history = new LinkedList<>();
+        reservationDAO.loadAllReservations(history);
+        return history;
     }
 
-    private void filterFlow() {
-        PriorityLevel level = priorityReservationUI.selectPriorityLevel("Select a level to filter by");
-        if (level == null) {
-            return; // cancelled - the UI already paused
+    // only WAITING (and not soft-deleted) reservations are eligible for the VIP queue
+    private LinkedListInterface<Reservation> waitingReservations() {
+        LinkedListInterface<Reservation> history = loadHistory();
+        LinkedListInterface<Reservation> waiting = new LinkedList<>();
+        for (int i = 0; i < history.size(); i++) {
+            Reservation r = history.get(i);
+            if (!r.isDeleted() && r.getStatus() == ReservationStatus.WAITING) {
+                waiting.addBack(r);
+            }
         }
-        priorityReservationUI.displayPriorityReservations(filterByLevel(level));
-        priorityReservationUI.pause();
+        return waiting;
     }
 
-    // private void overrideFlow() {
-    //     String reservationId = priorityReservationUI.selectPriorityReservation(
-    //             priorityReservations, "Select a record to override");
-    //     if (reservationId == null) {
-    //         return;
-    //     }
+    // active (not soft-deleted) priority records - the landing list hides deleted ones
+    private LinkedListInterface<PriorityReservation> activePriorityReservations() {
+        LinkedListInterface<PriorityReservation> result = new LinkedList<>();
+        for (int i = 0; i < priorityReservations.size(); i++) {
+            PriorityReservation pr = priorityReservations.get(i);
+            if (!pr.isDeleted()) {
+                result.addBack(pr);
+            }
+        }
+        return result;
+    }
 
-    //     PriorityReservation pr = searchById(reservationId);
-    //     if (pr == null) {
-    //         priorityReservationUI.showError("Record not found.");
-    //         return;
-    //     }
+    private LinkedList<PriorityReservation> pageOf(LinkedListInterface<PriorityReservation> list, int page) {
+        LinkedList<PriorityReservation> result = new LinkedList<>();
+        int start = page * PAGE_SIZE;
+        int end = Math.min(list.size(), start + PAGE_SIZE);
+        for (int i = start; i < end; i++) {
+            result.addBack(list.get(i));
+        }
+        return result;
+    }
 
-    //     priorityReservationUI.displayDetails(pr);
+    private String[][] buildPriorityRows(LinkedListInterface<PriorityReservation> list,
+            LinkedListInterface<Reservation> history) {
+        String[][] data = new String[list.size() + 1][7];
+        data[0] = new String[] { "No.", "Reservation ID", "Guest ID", "Priority", "Rank", "Status", "Overridden By" };
+        for (int i = 0; i < list.size(); i++) {
+            PriorityReservation pr = list.get(i);
+            Reservation r = getReservation(history, pr.getReservationId());
+            data[i + 1] = new String[] {
+                    String.valueOf(i + 1),
+                    pr.getReservationId(),
+                    r == null ? "-" : r.getGuestId(),
+                    pr.getPriorityLevel().name(),
+                    String.valueOf(pr.getPriorityLevel().getRank()),
+                    (r == null || r.getStatus() == null) ? "-" : r.getStatus().name(),
+                    orDash(pr.getOverriddenBy())
+            };
+        }
+        return data;
+    }
 
-    //     PriorityLevel newLevel = priorityReservationUI.selectPriorityLevel("Select the new priority level");
-    //     if (newLevel == null) {
-    //         return;
-    //     }
-
-    //     String staffId = priorityReservationUI.readNonEmpty("Enter your staff ID");
-    //     String reason = priorityReservationUI.readNonEmpty("Enter the reason for this override");
-
-    //     priorityReservationUI.displayOverridePreview(pr, newLevel, staffId, reason);
-
-    //     if (!priorityReservationUI.confirm("Apply this override?")) {
-    //         priorityReservationUI.showMessage("Override cancelled. Nothing was changed.");
-    //         return;
-    //     }
-
-    //     boolean updated = updatePriorityReservation(
-    //             new PriorityReservation(reservationId, newLevel, staffId, reason));
-
-    //     if (updated) {
-    //         priorityReservationUI.showMessage("Priority for " + reservationId + " updated to " + newLevel + ".");
-    //     } else {
-    //         priorityReservationUI.showError("Update failed - the record no longer exists.");
-    //     }
-    // }
+    private String orDash(String value) {
+        return (value == null || value.isEmpty()) ? "-" : value;
+    }
 }
 
-// todo validation, report
+// todo validation

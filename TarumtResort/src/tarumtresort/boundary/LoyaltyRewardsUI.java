@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import tarumtresort.adt.LinkedListInterface;
-import tarumtresort.control.LoyaltyController;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Notification;
@@ -17,16 +16,8 @@ import tarumtresort.utility.TablePrinter;
 
 /**
  *
- * @author Brian
+ * @author Imam Mahdi Ali Ang Attuko
  *
- * Module driver for the Loyalty & Rewards subsystem.
- * Launched from TarumtResort via MainMenuUI case 5.
- *
- * Contains all four loyalty UI classes in one file:
- *   - LoyaltyRewardsUI     (module menu)
- *   - MemberManagementUI   (member CRUD + paginated list + profile)
- *   - PointsManagementUI   (points, transactions, notifications, redemptions)
- *   - RewardManagementUI   (reward catalogue CRUD)
  */
 public class LoyaltyRewardsUI {
 
@@ -36,32 +27,11 @@ public class LoyaltyRewardsUI {
         this.scanner = scanner;
     }
 
-    public void run() {
-        int choice;
-        do {
-            printMenu();
-            choice = getIntInput("Enter choice (0-3): ", 0, 3);
-
-            switch (choice) {
-                case 1:
-                    new LoyaltyController(scanner).runMemberMenu();
-                    break;
-                case 2:
-                    new LoyaltyController(scanner).runRewardMenu();
-                    break;
-                case 3:
-                    new LoyaltyController(scanner).runPointsMenu();
-                    break;
-                case 0:
-                    System.out.println("\n  Returning to main menu...");
-                    break;
-                default:
-                    System.out.println("\n  ✗ Invalid choice! Please try again.");
-            }
-        } while (choice != 0);
+    public Scanner getScanner() {
+        return scanner;
     }
 
-    private void printMenu() {
+    public int getMenuChoice() {
         ConsoleUtil.clearScreen();
         System.out.println();
         System.out.println("========================================");
@@ -72,6 +42,15 @@ public class LoyaltyRewardsUI {
         System.out.println("  3. Points & Redemption Management");
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
+        return getIntInput("Enter choice (0-3): ", 0, 3);
+    }
+
+    public void printExitMessage() {
+        System.out.println("\n  Returning to main menu...");
+    }
+
+    public void printInvalidChoice() {
+        System.out.println("\n  Invalid choice! Please try again.");
     }
 
     private int getIntInput(String prompt, int min, int max) {

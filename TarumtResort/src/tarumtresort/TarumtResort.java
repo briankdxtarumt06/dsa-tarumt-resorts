@@ -6,14 +6,12 @@ import tarumtresort.boundary.LoyaltyRewardsUI;
 import tarumtresort.boundary.MainMenuUI;
 import tarumtresort.control.HousekeepingController;
 import tarumtresort.control.InquiryController;
+import tarumtresort.control.LoyaltyController;
 import tarumtresort.control.PriorityReservationController;
 import tarumtresort.control.ReservationControl;
 import tarumtresort.utility.ConsoleUtil;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class TarumtResort {
 
     private static final Scanner scanner = new Scanner(System.in);
@@ -50,7 +48,7 @@ public class TarumtResort {
 
                     // Loyalty & Rewards module
                     case 5:
-                        new LoyaltyRewardsUI(scanner).run();
+                        new LoyaltyController(new LoyaltyRewardsUI(scanner)).runLoyaltyRewards();
                         break;
 
                     case 0:
@@ -62,7 +60,7 @@ public class TarumtResort {
                 }
             } while (choice != 0);
         } catch (Exception e) {
-            ConsoleUtil.printError("\n  ✗ An unexpected error occurred: " + e.getMessage());
+            ConsoleUtil.printError("\n?! An unexpected error occurred !?: " + e.getMessage());
         }
     }
 }

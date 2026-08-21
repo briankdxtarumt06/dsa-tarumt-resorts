@@ -2,26 +2,27 @@ package tarumtresort.entity;
 
 import tarumtresort.adt.LinkedList;
 import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.Department;
+import tarumtresort.entity.enums.StaffRole;
 
-/**
- *
- * @author Brian
- */
+// Author: Brian Kam Ding Xian
 public class Staff implements Comparable<Staff> {
     private String staffId;
     private String staffName;
-    private String department;
-    private String staffRole;
-    private String availabilityStatus;
+    private Department department;
+    private StaffRole staffRole;
+    private AvailabilityStatus availabilityStatus;
+    private boolean isDeleted;
     private LinkedListInterface<TaskAssignment> taskAssignments;
     
     public Staff(){ }
 
-    public Staff(String staffId, String staffName, String department, String staffRole, String availabilityStatus) {
+    public Staff(String staffId, String staffName, Department department, StaffRole staffRole, AvailabilityStatus availabilityStatus) {
         this.staffId = staffId;
         this.staffName = staffName;
-        this.department = department; // Housekeeping
-        this.staffRole = staffRole; // Supervisor, Cleaner
+        this.department = department; // Housekeeping, Front Office, Maintenance
+        this.staffRole = staffRole; // Supervisor, Cleaner, Receptionist
         this.availabilityStatus = availabilityStatus;
     }
 
@@ -41,28 +42,36 @@ public class Staff implements Comparable<Staff> {
         this.staffName = staffName;
     }
 
-    public String getDepartment() {
+    public Department getDepartment() {
         return department;
     }
 
-    public void setDepartment(String department) {
+    public void setDepartment(Department department) {
         this.department = department;
     }
 
-    public String getStaffRole() {
+    public StaffRole getStaffRole() {
         return staffRole;
     }
 
-    public void setStaffRole(String staffRole) {
+    public void setStaffRole(StaffRole staffRole) {
         this.staffRole = staffRole;
     }
 
-    public String getAvailabilityStatus() {
+    public AvailabilityStatus getAvailabilityStatus() {
         return availabilityStatus;
     }
 
-    public void setAvailabilityStatus(String availabilityStatus) {
+    public void setAvailabilityStatus(AvailabilityStatus availabilityStatus) {
         this.availabilityStatus = availabilityStatus;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public LinkedListInterface<TaskAssignment> getTaskAssignments() {
