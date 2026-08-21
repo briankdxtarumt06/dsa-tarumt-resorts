@@ -2,8 +2,8 @@ package tarumtresort.report.HousekeepingReport;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.TaskAssignment;
 import tarumtresort.entity.TaskAssignmentChange;
@@ -15,18 +15,18 @@ import tarumtresort.utility.Ansi;
 // Author: Brian Kam Ding Xian
 public class StaffProductivityReport {
 
-    private final LinkedListInterface<Staff> staffList;
-    private final LinkedListInterface<TaskAssignment> assignmentList;
-    private final LinkedListInterface<TaskAssignmentChange> changeList;
+    private final ListInterface<Staff> staffList;
+    private final ListInterface<TaskAssignment> assignmentList;
+    private final ListInterface<TaskAssignmentChange> changeList;
 
     public StaffProductivityReport(
-        LinkedListInterface<Staff> staffList,
-        LinkedListInterface<TaskAssignment> assignmentList,
-        LinkedListInterface<TaskAssignmentChange> changeList
+        ListInterface<Staff> staffList,
+        ListInterface<TaskAssignment> assignmentList,
+        ListInterface<TaskAssignmentChange> changeList
     ) {
-        this.staffList = staffList == null ? new LinkedList<>() : staffList;
-        this.assignmentList = assignmentList == null ? new LinkedList<>() : assignmentList;
-        this.changeList = changeList == null ? new LinkedList<>() : changeList;
+        this.staffList = staffList == null ? new DoublyLinkedList<>() : staffList;
+        this.assignmentList = assignmentList == null ? new DoublyLinkedList<>() : assignmentList;
+        this.changeList = changeList == null ? new DoublyLinkedList<>() : changeList;
     }
 
     public Result generate(LocalDateTime from, LocalDateTime to) {
@@ -155,7 +155,7 @@ public class StaffProductivityReport {
 
     private ReportChart buildCompletedChart(ListInterface<StaffRow> rows) {
         ReportChart chart = new ReportChart("Completed Tasks per Staff");
-        LinkedListInterface<StaffRow> sorted = new LinkedList<>();
+        ListInterface<StaffRow> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < rows.size(); i++) {
             sorted.addSorted(rows.get(i));
         }
@@ -170,7 +170,7 @@ public class StaffProductivityReport {
 
     private ReportChart buildAverageChart(ListInterface<StaffRow> rows) {
         ReportChart chart = new ReportChart("Average Completion Time per Staff (min)");
-        LinkedListInterface<AverageSortRow> sorted = new LinkedList<>();
+        ListInterface<AverageSortRow> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < rows.size(); i++) {
             sorted.addSorted(new AverageSortRow(rows.get(i)));
         }

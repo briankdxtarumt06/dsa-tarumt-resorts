@@ -25,7 +25,7 @@ public class TaskAssignmentChangeDAO {
             return JsonFileHandler.loadList(FILE, TaskAssignmentChange.class);
         } catch (IOException e) {
             System.err.println(" ?! Failed to load change history data !? : " + e.getMessage());
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
     }
 

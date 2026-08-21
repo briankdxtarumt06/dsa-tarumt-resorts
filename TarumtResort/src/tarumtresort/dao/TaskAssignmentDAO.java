@@ -34,7 +34,7 @@ public class TaskAssignmentDAO {
                     TaskAssignment::setChanges);
         } catch (IOException e) {
             System.err.println(" ?! Failed to load assignment data !? : " + e.getMessage());
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
     }
 

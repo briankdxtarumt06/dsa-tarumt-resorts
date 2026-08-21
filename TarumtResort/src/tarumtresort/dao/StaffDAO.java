@@ -34,7 +34,7 @@ public class StaffDAO {
                     Staff::setTaskAssignments);
         } catch (IOException e) {
             System.err.println(" ?! Failed to load staff data !? : " + e.getMessage());
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
     }
 }

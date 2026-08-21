@@ -38,7 +38,7 @@ public class InquiryController {
     private ReservationUI reservationUI = new ReservationUI();
 
     // adt
-    private LinkedListInterface<Inquiry> inquiryList = new LinkedList<>();
+    private ListInterface<Inquiry> inquiryList = new DoublyLinkedList<>();
 
     // dao
     private static final InquiryDAO inquiryDAO = new InquiryDAO();

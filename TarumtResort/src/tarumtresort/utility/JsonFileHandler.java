@@ -39,7 +39,7 @@ public class JsonFileHandler {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .registerTypeHierarchyAdapter(ListInterface.class, new LinkedListInterfaceAdapter())
+            .registerTypeHierarchyAdapter(ListInterface.class, new ListInterfaceAdapter())
             .registerTypeAdapter(TaskType.class, new EnumNormalizerAdapter<>(TaskType::fromString, TaskType.UNKNOWN))
             .registerTypeAdapter(AvailabilityStatus.class,
                     new EnumNormalizerAdapter<>(AvailabilityStatus::fromString, AvailabilityStatus.AVAILABLE))
@@ -146,7 +146,7 @@ public class JsonFileHandler {
         save(objects, file);
     }
 
-    public static <T extends Comparable<T>, E extends Comparable<E>> LinkedList<T> loadListWithNestedIds(
+    public static <T extends Comparable<T>, E extends Comparable<E>> DoublyLinkedList<T> loadListWithNestedIds(
             Path file, 
             Class<T> entityType,
             String fieldName,
@@ -220,8 +220,8 @@ public class JsonFileHandler {
         }
     }
 
-    // Gson adapter for LinkedListInterface
-    private static class LinkedListInterfaceAdapter
+    // Gson adapter for ListInterface
+    private static class ListInterfaceAdapter
             implements JsonSerializer<ListInterface<?>>, JsonDeserializer<ListInterface<?>> {
 
         @Override

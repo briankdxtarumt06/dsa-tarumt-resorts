@@ -100,7 +100,7 @@ public final class PriorityReportSupport {
     }
 
     /**
-     * One queued priority reservation. Sorting these into a LinkedList via
+     * One queued priority reservation. Sorting these into a DoublyLinkedList via
      * addSorted produces the VIP queue order directly - highest rank first,
      * ties broken by earliest registration (FIFO within a tier).
      */

@@ -53,9 +53,9 @@ public class HousekeepingReportController {
             return;
         }
 
-        LinkedListInterface<Staff> staffs = staffDAO.retrieveStaffList();
-        LinkedListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
-        LinkedListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
+        ListInterface<Staff> staffs = staffDAO.retrieveStaffList();
+        ListInterface<TaskAssignment> assignments = taskAssignmentDAO.retrieveTaskAssignmentList();
+        ListInterface<TaskAssignmentChange> changes = taskAssignmentChangeDAO.retrieveTaskAssignmentChangeList();
 
         StaffProductivityReport.Result result = new StaffProductivityReport(
                 staffs, assignments, changes).generate(range[0], range[1]);
