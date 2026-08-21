@@ -62,7 +62,7 @@ public class PriorityReservationController {
         return true;
     }
 
-    // soft-delete: flag the record but keep it on file for the reports' history
+    // soft-delete
     public boolean removePriorityReservationById(String reservationId) {
         PriorityReservation pr = searchPriorityReservationById(reservationId);
         if (pr != null) {
@@ -311,11 +311,10 @@ public class PriorityReservationController {
         }
     }
 
-    // Staff-authorized EMERGENCY priority for a non-member waiting reservation.
     private void addPriorityFlow() {
         Reservation reservation = priorityReservationUI.selectReservation(nonMemberWaiting());
         if (reservation == null) {
-            return; // cancelled or none eligible
+            return; 
         }
         Staff staff = priorityReservationUI.selectStaff(staffDAO.retrieveStaffList());
         if (staff == null) {
@@ -336,7 +335,6 @@ public class PriorityReservationController {
                 "EMERGENCY priority granted to " + reservation.getReservationId() + " by " + staff.getStaffId() + ".");
     }
 
-    // non-member waiting reservations = WAITING, not deleted, and no priority record yet
     private ListInterface<Reservation> nonMemberWaiting() {
         ListInterface<Reservation> history = loadHistory();
         ListInterface<Reservation> result = new DoublyLinkedList<>();
@@ -440,7 +438,6 @@ public class PriorityReservationController {
         return history;
     }
 
-    // only WAITING (and not soft-deleted) reservations are eligible for the VIP queue
     private ListInterface<Reservation> waitingReservations() {
         ListInterface<Reservation> history = loadHistory();
         ListInterface<Reservation> waiting = new DoublyLinkedList<>();
@@ -453,7 +450,6 @@ public class PriorityReservationController {
         return waiting;
     }
 
-    // active (not soft-deleted) priority records - the landing list hides deleted ones
     private ListInterface<PriorityReservation> activePriorityReservations() {
         ListInterface<PriorityReservation> result = new DoublyLinkedList<>();
         for (int i = 0; i < priorityReservations.size(); i++) {
