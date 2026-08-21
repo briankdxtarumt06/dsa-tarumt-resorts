@@ -82,6 +82,31 @@ public class ReservationControl {
         }
 
         roomDAO.loadFromFile(roomList);
+
+        relinkReservationReferences();
+    }
+
+    // list declaration
+    public LinkedListInterface<Reservation> getReservations() { return reservations; }
+    public LinkedListInterface<Reservation> getBookingList() { return bookingList; }
+    public LinkedListInterface<Reservation> getGuestQueue() { return guestQueue; }
+    public LinkedListInterface<Reservation> getVipList() { return vipList; }
+    public LinkedListInterface<Reservation> getAssignedList() { return assignedList; }
+
+    private void relinkReservationReferences() {
+        for (int i = 0; i < reservations.size(); i++) {
+            Reservation r = reservations.get(i);
+
+            Guest guest = getGuestById(r.getGuestId());
+            if (guest != null) {
+                guest.getReservations().addBack(r);
+            }
+
+            Room room = getRoomById(r.getRoomId());
+            if (room != null) {
+                room.getReservations().addBack(r);
+            }
+        }
     }
 
     private void rebuildWorkingLists() {
@@ -117,12 +142,6 @@ public class ReservationControl {
             }
         }
     }
-
-    public LinkedListInterface<Reservation> getReservations() { return reservations; }
-    public LinkedListInterface<Reservation> getBookingList() { return bookingList; }
-    public LinkedListInterface<Reservation> getGuestQueue() { return guestQueue; }
-    public LinkedListInterface<Reservation> getVipList() { return vipList; }
-    public LinkedListInterface<Reservation> getAssignedList() { return assignedList; }
 
     // ===== ENTRY POINT =====
 
@@ -269,7 +288,7 @@ public class ReservationControl {
         String guestId = generateGuestId();
         Guest guest = new Guest(guestId, name, icOrPassport, contactNumber, nationality, address);
         guestList.addBack(guest);
-        guestDAO.saveToFile(guestList);
+        saveGuestList();
         reservationUI.printGuestDetails(guest);
         reservationUI.printSuccess();
         reservationUI.pressEnterToContinue();
@@ -1356,7 +1375,7 @@ public class ReservationControl {
             return false;
         }
         room.setRoomStatus(roomStatus);
-        roomDAO.saveToFile(roomList);
+        saveRoomList();
         return true;
     }
 

@@ -83,6 +83,8 @@ public class PriorityReservationUI {
         System.out.println("  " + action++ + ". View VIP Queue");
         System.out.println("  " + action++ + ". Filter by Priority Level");
         System.out.println("  " + action++ + ". Search Priority Reservation");
+        System.out.println("  " + action++ + ". Priority Level Effectiveness Report");
+        System.out.println("  " + action++ + ". VIP Queue & Override Governance Report");
 
         if (page < pageCount - 1) {
             System.out.println("  " + action++ + ". Next Page");

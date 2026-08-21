@@ -7,6 +7,7 @@ import tarumtresort.entity.*;
 import tarumtresort.entity.enums.*;
 
 import tarumtresort.dao.*;
+import tarumtresort.report.PriorityReservationReport.PriorityReservationReportController;
 
 import java.time.LocalDateTime;
 import java.util.Scanner;
@@ -29,6 +30,9 @@ public class PriorityReservationController {
     // Boundary
     private PriorityReservationUI priorityReservationUI = new PriorityReservationUI();
 
+    // Reports - all report calculation lives in the report package
+    private PriorityReservationReportController reportController;
+
     public PriorityReservationController() {
         this(new Scanner(System.in));
     }
@@ -36,6 +40,7 @@ public class PriorityReservationController {
     public PriorityReservationController(Scanner scanner) {
         this.loyaltyController = new LoyaltyController(scanner);
         this.priorityReservationUI = new PriorityReservationUI(scanner);
+        this.reportController = new PriorityReservationReportController(scanner);
         this.priorityReservations = priorityReservationDAO.loadFromFile();
     }
 
@@ -224,6 +229,10 @@ public class PriorityReservationController {
                 }
             } else if (choice == action++) { // Search Priority Reservation
                 searchFlow();
+            } else if (choice == action++) { // Priority Level Effectiveness Report
+                reportController.generatePriorityLevelEffectivenessReport();
+            } else if (choice == action++) { // VIP Queue & Override Governance Report
+                reportController.generateVipQueueGovernanceReport();
             } else {
                 boolean matched = false;
                 if (page < pageCount - 1) {
@@ -485,4 +494,4 @@ public class PriorityReservationController {
     }
 }
 
-// todo validation, report
+// todo validation
