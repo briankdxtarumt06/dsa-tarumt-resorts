@@ -1,6 +1,7 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Payment;
@@ -10,6 +11,7 @@ import tarumtresort.entity.Task;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
+import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
 /**
@@ -37,19 +39,10 @@ public class InquiryUI {
         System.out.println("  3. View Pending Queue");
         System.out.println("  4. Cancel Inquiry");
         System.out.println("  5. View All Inquiries");
-        System.out.println("  6. Search Inquiry");
-        System.out.println("  7. Generate Report");
+        System.out.println("  6. Generate Report");
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
-        return readIntInRange("Enter choice (0-7): ", 0, 7);
-}
-
-    public int getSearchMenuChoice() {
-        System.out.println("\n--- Search Inquiry ---");
-        System.out.println("  1. By Inquiry ID");
-        System.out.println("  2. By Confirmation Number");
-        System.out.println("  0. Back");
-        return readIntInRange("Enter choice (0-2): ", 0, 2);
+        return readIntInRange("Enter choice (0-6): ", 0, 6);
     }
 
     public int getReportMenuChoice() {
@@ -89,6 +82,17 @@ public class InquiryUI {
         System.out.println("  0. All Statuses");
         int choice = readIntInRange("Enter choice (0-" + statuses.length + "): ", 0, statuses.length);
         return choice == 0 ? null : statuses[choice - 1];
+    }
+
+    public InquiryType inputInquiryTypeFilter() {
+        System.out.println("Filter by Query Type:");
+        InquiryType[] types = InquiryType.values();
+        for (int i = 0; i < types.length; i++) {
+            System.out.println("  " + (i + 1) + ". " + types[i]);
+        }
+        System.out.println("  0. All Types");
+        int choice = readIntInRange("Enter choice (0-" + types.length + "): ", 0, types.length);
+        return choice == 0 ? null : types[choice - 1];
     }
 
     public String inputDescription() {
@@ -191,6 +195,55 @@ public class InquiryUI {
         }
         System.out.println();
         printTable(data);
+    }
+
+    // INQUIRY LIST (paginated)
+    public int printInquiryListMenu(ListInterface<Inquiry> pageList, int page, int pageCount, boolean hasFilter) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  INQUIRY MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+
+        if (pageList.isEmpty()) {
+            System.out.println("  (No inquiry records)");
+        } else {
+            String[] header = { "No.", "Inquiry ID", "Confirm No.", "Type", "Priority", "Status" };
+            String[][] rows = new String[pageList.size()][6];
+            for (int i = 0; i < pageList.size(); i++) {
+                Inquiry inq = pageList.get(i);
+                rows[i] = new String[] {
+                        String.valueOf(i + 1), inq.getInquiryId(), inq.getConfirmationNumber(),
+                        inq.getInquiryType().toString(), inq.getInquiryType().getPriority().toString(),
+                        inq.getStatus().toString()
+                };
+            }
+            TablePrinter.displayTable(header, rows);
+        }
+
+        System.out.println("==========Actions==========");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Filter by Inquiry Status");
+        System.out.println("  " + action++ + ". Filter by Inquiry Type");
+        System.out.println("  " + action++ + ". Search by Inquiry ID");
+        System.out.println("  " + action++ + ". Search by Confirmation Number");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
+        }
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
+        }
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
+        }
+        System.out.println("  0. Back");
+
+        System.out.println("===========================");
+        return readIntInRange("Enter choice (0-" + (action - 1) + "): ", 0, action - 1);
+    }
+
+    public int inputListIndex(String entityLabel, int max) {
+        return readIntInRange("Enter " + entityLabel + " number to select (0 = cancel) (0-" + max + "): ", 0, max);
     }
 
     private void printTable(String[][] data) {

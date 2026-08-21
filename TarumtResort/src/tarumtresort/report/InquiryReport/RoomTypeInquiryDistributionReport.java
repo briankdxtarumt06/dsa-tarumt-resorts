@@ -1,5 +1,6 @@
 package tarumtresort.report.InquiryReport;
 
+import java.time.LocalDateTime;
 import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Inquiry;
@@ -14,9 +15,6 @@ import tarumtresort.utility.Ansi;
  *
  * @author Wen Ling
  *
- * Room Type Inquiry Distribution Report (Inquiry + Reservation).
- * Filter: room type. Only RESOLVED (not PENDING / IN_PROGRESS / CANCELLED)
- * inquiries are counted.
  */
 public class RoomTypeInquiryDistributionReport {
 
@@ -29,7 +27,7 @@ public class RoomTypeInquiryDistributionReport {
         this.reservationList = reservationList == null ? new DoublyLinkedList<>() : reservationList;
     }
 
-    public Result generate(RoomType filterType) {
+    public Result generate(LocalDateTime from, LocalDateTime to) {
 
         RoomType[] types = RoomType.values();
         int[] totalCount = new int[types.length];
@@ -43,14 +41,14 @@ public class RoomTypeInquiryDistributionReport {
             if (inq.getStatus() != InquiryStatus.RESOLVED) {
                 continue; // exclude PENDING / IN_PROGRESS / CANCELLED
             }
+            if (!inRange(inq.getCreatedTime(), from, to)) {
+                continue;
+            }
             Reservation reservation = findReservation(inq.getConfirmationNumber());
             if (reservation == null) {
                 continue;
             }
             RoomType type = reservation.getRoomTypeRequested();
-            if (filterType != null && type != filterType) {
-                continue;
-            }
             int idx = indexOfRoomType(types, type);
             if (idx < 0) {
                 continue;
@@ -167,6 +165,19 @@ public class RoomTypeInquiryDistributionReport {
             order[maxIdx] = temp;
         }
         return order;
+    }
+
+    private boolean inRange(LocalDateTime value, LocalDateTime from, LocalDateTime to) {
+        if (value == null) {
+            return false;
+        }
+        if (from != null && value.isBefore(from)) {
+            return false;
+        }
+        if (to != null && value.isAfter(to)) {
+            return false;
+        }
+        return true;
     }
 
     private Reservation findReservation(String confirmationNumber) {
