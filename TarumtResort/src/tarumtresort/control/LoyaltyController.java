@@ -16,6 +16,7 @@ import tarumtresort.entity.Notification;
 import tarumtresort.entity.PointTransaction;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reward;
+import tarumtresort.entity.enums.NotificationType;
 import tarumtresort.entity.enums.RoomType;
 import tarumtresort.entity.enums.Tier;
 import tarumtresort.report.LoyaltyReport.LoyaltyReportController;
@@ -939,7 +940,7 @@ public class LoyaltyController {
             for (int k = 0; k < rows.length; k++) {
                 Notification n = list.get(from + k);
                 rows[k] = new String[] {
-                    String.valueOf(k + 1), n.getType(),
+                    String.valueOf(k + 1), n.getType().name(),
                     truncate(n.getMessage(), 48),
                     n.getDate() == null ? "-" : n.getDate().format(NOTIF_DATE_FMT),
                     n.isRead() ? "READ" : "UNREAD"
@@ -1560,7 +1561,7 @@ public class LoyaltyController {
                     + " (worth " + record.getDiscountPercent() + "% off "
                     + (record.getRoomType() == null ? "any room" : record.getRoomType().name()) + ").";
         }
-        notifyMember(member, "REDEMPTION_APPROVED",
+        notifyMember(member, NotificationType.REDEMPTION_APPROVED,
                 "Your redemption request " + redemptionId + " (" + reward.getName() + ") has been approved."
                         + voucherNote, now);
         persistMembers();
@@ -1662,7 +1663,7 @@ public class LoyaltyController {
         if (member != null) {
             Reward reward = findReward(record.getRewardId());
             String rewardName = reward == null ? record.getRewardId() : reward.getName();
-            notifyMember(member, "REDEMPTION_REJECTED",
+            notifyMember(member, NotificationType.REDEMPTION_REJECTED,
                     "Your redemption request " + redemptionId + " (" + rewardName + ") has been rejected.", now);
         }
         persistMembers();
@@ -1812,7 +1813,7 @@ public class LoyaltyController {
             if (hasNotification(member.getGuestId(), message)) {
                 continue; // already alerted
             }
-            notifyMember(member, "POINT_EXPIRY", message, now);
+            notifyMember(member, NotificationType.POINT_EXPIRY, message, now);
             created++;
             summary.append("  - ").append(message).append("\n");
             }
@@ -1955,7 +1956,7 @@ public class LoyaltyController {
             if (member.getGuestId() != null) {
                 String message = "Congratulations! You have been upgraded to " + current
                         + "! You now enjoy " + current.getDiscountPercent() + "% off stays & dining.";
-                notifyMember(member, "TIER_UPGRADE", message, now);
+                notifyMember(member, NotificationType.TIER_UPGRADE, message, now);
             }
             return true;
         }
@@ -1983,7 +1984,7 @@ public class LoyaltyController {
         return line;
     }
 
-    private void notifyMember(Member member, String type, String message, LocalDateTime now) {
+    private void notifyMember(Member member, NotificationType type, String message, LocalDateTime now) {
         if (member == null || member.getGuestId() == null) {
             return;
         }

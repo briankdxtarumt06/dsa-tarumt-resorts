@@ -115,7 +115,7 @@ public class ReservationUI {
             rows[i] = new String[]{
                 String.valueOf(i + 1),
                 n.getNotificationId(),
-                n.getType(),
+                n.getType().name(),
                 n.getMessage(),
                 n.getDate() == null ? "-" : n.getDate().format(fmt),
                 n.isRead() ? "READ" : "UNREAD"
