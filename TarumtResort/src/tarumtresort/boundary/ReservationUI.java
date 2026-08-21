@@ -16,6 +16,10 @@ public class ReservationUI {
 
     Scanner scanner = new Scanner(System.in);
 
+    public Scanner getScanner() {
+        return scanner;
+    }
+
     private static final DateTimeFormatter DATE_TIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public String formatDateTime(LocalDateTime dateTime) {
@@ -220,14 +224,15 @@ public class ReservationUI {
         System.out.println("  9. Check Out");
         System.out.println("  10. Check Queue Position");
         System.out.println("  11. Cancel Reservation");
+        System.out.println("  12. Delete Reservation");
         if (hasFilter) {
-            System.out.println("  12. Clear Filter");
-            return inputIntChoice("Enter choice", 0, 12);
+            System.out.println("  13. Clear Filter");
+            return inputIntChoice("Enter choice", 0, 13);
         }
         System.out.println("  0. Back to Main Menu");
 
         System.out.println("===========================");
-        return inputIntChoice("Enter choice", 0, 11);
+        return inputIntChoice("Enter choice", 0, 12);
     }
 
     public int inputNumberOfGuests() {
@@ -369,6 +374,22 @@ public class ReservationUI {
         }
 
         System.out.println("\nAdvance Bookings (soonest check-in first):");
+        TablePrinter.displayTable(header, rows);
+    }
+
+    public void printQueuedGuestList(String[][] data) {
+        if (data.length <= 1) {
+            System.out.println("\nNo guests currently in queue.");
+            return;
+        }
+
+        String[] header = data[0];
+        String[][] rows = new String[data.length - 1][];
+        for (int i = 1; i < data.length; i++) {
+            rows[i - 1] = data[i];
+        }
+
+        System.out.println("\nGuests Currently in Queue:");
         TablePrinter.displayTable(header, rows);
     }
 
