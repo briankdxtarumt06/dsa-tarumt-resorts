@@ -12,6 +12,7 @@ import tarumtresort.report.PriorityReservationReport.PriorityReservationReportCo
 import java.time.LocalDateTime;
 import java.util.Scanner;
 
+// Author: Lee Boon Yew
 public class PriorityReservationController {
     private static final int PAGE_SIZE = 20;
 
@@ -30,7 +31,7 @@ public class PriorityReservationController {
     // Boundary
     private PriorityReservationUI priorityReservationUI = new PriorityReservationUI();
 
-    // Reports - all report calculation lives in the report package
+    // Reports
     private PriorityReservationReportController reportController;
 
     public PriorityReservationController() {
@@ -44,9 +45,11 @@ public class PriorityReservationController {
         this.priorityReservations = priorityReservationDAO.loadFromFile();
     }
 
+    // -------------------- CRUD operations --------------------
+
     public boolean addPriorityReservation(String reservationId, String guestId) {
         if (searchPriorityReservationById(reservationId) != null) {
-            return true; // record already exists (e.g. created at booking, again at arrival)
+            return true; // record already exists 
         }
         Member member = loyaltyController.findMember(guestId);
         if (member == null) {
@@ -59,6 +62,7 @@ public class PriorityReservationController {
         return true;
     }
 
+    // soft-delete: flag the record but keep it on file for the reports' history
     public boolean removePriorityReservationById(String reservationId) {
         PriorityReservation pr = searchPriorityReservationById(reservationId);
         if (pr != null) {
@@ -82,6 +86,7 @@ public class PriorityReservationController {
         return true;
     }
 
+    // linear search by reservation id over the full list (includes soft-deleted)
     public PriorityReservation searchPriorityReservationById(String reservationId) {
         for (int i = 0; i < priorityReservations.size(); i++) {
             PriorityReservation pr = priorityReservations.get(i);
@@ -103,10 +108,11 @@ public class PriorityReservationController {
         return result;
     }
 
+    // -------------------- VIP queue generation --------------------
     public ListInterface<Reservation> generateVIPQueue(ListInterface<Reservation> reservations) {
         vipQueue = new DoublyLinkedList<>();
         int n = priorityReservations.size();
-        boolean[] used = new boolean[n];
+        boolean[] used = new boolean[n]; // marks records already pulled into the queue
 
         for (int count = 0; count < n; count++) {
             int bestIndex = -1;
@@ -188,7 +194,7 @@ public class PriorityReservationController {
         return priorityReservations.size();
     }
 
-    // UI
+    // -------------------- menu flow --------------------
     public void run() {
         PriorityLevel levelFilter = null;
         int page = 0;
@@ -427,7 +433,7 @@ public class PriorityReservationController {
         priorityReservationUI.pause();
     }
 
-    // ===== UI HELPERS =====
+    // -------------------- data helpers --------------------
     private ListInterface<Reservation> loadHistory() {
         ListInterface<Reservation> history = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(history);
@@ -493,5 +499,3 @@ public class PriorityReservationController {
         return (value == null || value.isEmpty()) ? "-" : value;
     }
 }
-
-// todo validation

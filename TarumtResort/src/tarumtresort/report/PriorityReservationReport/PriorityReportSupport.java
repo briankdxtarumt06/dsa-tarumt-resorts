@@ -18,14 +18,6 @@ public final class PriorityReportSupport {
     }
 
     // ==================== QUEUE MECHANICS ====================
-    // Kept inside this report so the file is self-contained: the ordering
-    // rule, the sorted index it searches, and the displacement measurements
-    // all belong to this report's calculation.
-
-    /**
-     * Service-level promise per tier, in minutes. Management sets these: the
-     * higher the tier, the shorter the wait the resort has committed to.
-     */
     public static int slaTargetMinutes(PriorityLevel level) {
         if (level == null) {
             return Integer.MAX_VALUE;
@@ -40,21 +32,12 @@ public final class PriorityReportSupport {
         };
     }
 
-    /** A reservation that has already been given a room or checked in/out. */
     public static boolean isServed(ReservationStatus status) {
         return status == ReservationStatus.ASSIGNED
                 || status == ReservationStatus.CHECKED_IN
                 || status == ReservationStatus.CHECKED_OUT;
     }
 
-    /**
-     * Assigns 1-based queue positions, then computes guestsDisplaced and
-     * timesOvertaken in a single pass over every ordered pair.
-     *
-     * For each pair (i, j) with i ahead of j, if j registered EARLIER than i
-     * then i has displaced j: i jumped the queue past a guest who was already
-     * waiting. That increments i's displacement and j's overtaken count.
-     */
     public static void assignPositionsAndDisplacement(ListInterface<QueueEntry> queue) {
         if (queue == null) {
             return;
@@ -81,11 +64,6 @@ public final class PriorityReportSupport {
         }
     }
 
-    /**
-     * Self-check on the ordering: counts places where a LOWER rank sits ahead
-     * of a HIGHER rank. On a correctly ordered queue this is always 0, so any
-     * other number printed in a report means compareTo is wrong.
-     */
     public static int countPriorityInversions(ListInterface<QueueEntry> queue) {
         if (queue == null || queue.size() < 2) {
             return 0;
@@ -99,11 +77,6 @@ public final class PriorityReportSupport {
         return inversions;
     }
 
-    /**
-     * One queued priority reservation. Sorting these into a LinkedList via
-     * addSorted produces the VIP queue order directly - highest rank first,
-     * ties broken by earliest registration (FIFO within a tier).
-     */
     public static class QueueEntry implements Comparable<QueueEntry> {
 
         private final PriorityReservation priority;
@@ -170,12 +143,6 @@ public final class PriorityReportSupport {
             return level == null ? Integer.MIN_VALUE : level.getRank();
         }
 
-        /**
-         * Minutes the guest has waited.
-         *   served   registration to assignedTime, falling back to check-in
-         *   waiting  registration to now (still accruing)
-         *   other    null, so cancelled records never distort an average
-         */
         public Long waitingMinutes() {
             if (registeredAt == null) {
                 return null;
@@ -203,8 +170,6 @@ public final class PriorityReportSupport {
             return waited != null && waited > slaTargetMinutes(getLevel());
         }
 
-        // highest rank first, then earliest registration (FIFO inside a tier),
-        // then reservation id so the order is fully deterministic
         @Override
         public int compareTo(QueueEntry other) {
             int comparison = Integer.compare(other.rank(), rank());
@@ -225,18 +190,6 @@ public final class PriorityReportSupport {
         }
     }
 
-    /**
-     * Sorted reservation index - the searching half of this report.
-     *
-     * Reservations are inserted in reservationId order with addSorted (an
-     * insertion sort), which is what makes a binary search by id possible
-     * afterwards: binary search is only correct on sorted input, so the sort
-     * is what buys the O(log n) comparison count.
-     *
-     * Honest caveat: the underlying ADT is a linked list, so get(i) still
-     * walks the chain. The saving is in the NUMBER OF COMPARISONS (log n
-     * instead of n), not in the number of node hops.
-     */
     public static class ReservationIndex {
 
         private final ListInterface<Key> keys = new DoublyLinkedList<>();
@@ -303,11 +256,6 @@ public final class PriorityReportSupport {
         }
     }
 
-    /**
-     * Sorted staff index - same sort-then-binary-search pairing as
-     * ReservationIndex, used to resolve the staff id stored in
-     * PriorityReservation.getOverriddenBy() into a real name.
-     */
     public static class StaffIndex {
 
         private final ListInterface<Key> keys = new DoublyLinkedList<>();

@@ -2,6 +2,7 @@ package tarumtresort.entity;
 
 import tarumtresort.entity.enums.*;
 
+// Author: Lee Boon Yew
 public class PriorityReservation implements Comparable<PriorityReservation> {
 
     private String reservationId;

@@ -11,24 +11,6 @@ import tarumtresort.report.ReportChart;
 import tarumtresort.utility.Ansi;
 
 // Author: Lee Boon Yew
-/**
- * VIP QUEUE AND OVERRIDE GOVERNANCE REPORT
- *
- * Management question: who is bypassing the loyalty tier rules, and at whose
- * expense?
- *
- * A staff override is the one place in this system where a person can hand
- * edit the service order. This report is the audit trail for that power. Each
- * row is one queued reservation in service order, and the GUESTS DISPLACED
- * column turns a placement into a cost counted in real guests - the number of
- * people who were already waiting and got pushed behind this record.
- *
- * That converts "Amir approved 3 overrides" into "Amir's overrides pushed 27
- * guests down the queue", which is the number management can actually act on.
- *
- * Dependencies: PriorityReservation + Reservation + Staff.
- * Filters: registration date range, minimum priority level, override scope.
- */
 public class VipQueueGovernanceReport {
 
     private static final int REASON_WIDTH = 18;
@@ -45,10 +27,6 @@ public class VipQueueGovernanceReport {
         this.staffList = staffList == null ? new DoublyLinkedList<>() : staffList;
     }
 
-    /**
-     * @param minLevel      rank threshold, e.g. GOLD means "GOLD and above". null = no threshold
-     * @param overrideScope 0 = all records, 1 = overridden only, 2 = non-overridden only
-     */
     public Result generate(LocalDateTime from, LocalDateTime to,
             PriorityLevel minLevel, int overrideScope) {
 
@@ -74,8 +52,6 @@ public class VipQueueGovernanceReport {
         int inversions = PriorityReportSupport.countPriorityInversions(queue);
         int queueDepth = queue.size();
 
-        // select the rows this run reports on; positions stay true to the
-        // full queue so a filtered view never invents a better position
         ListInterface<PriorityReportSupport.QueueEntry> shown = new DoublyLinkedList<>();
         int overriddenCount = 0;
         int emergencyGrants = 0;

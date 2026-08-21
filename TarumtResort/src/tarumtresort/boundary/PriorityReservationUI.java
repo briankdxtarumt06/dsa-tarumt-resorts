@@ -11,6 +11,7 @@ import tarumtresort.entity.enums.PriorityLevel;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
+// Author: Lee Boon Yew
 public class PriorityReservationUI {
 
     private static final int BANNER_WIDTH = 60;
@@ -25,6 +26,8 @@ public class PriorityReservationUI {
     public PriorityReservationUI(Scanner scanner) {
         this.scanner = scanner;
     }
+
+    // -------------------- banners & layout --------------------
 
     public static void printBanner(String title) {
         System.out.println("\n" + BANNER_LINE);
@@ -61,6 +64,8 @@ public class PriorityReservationUI {
         int left = pad / 2;
         return " ".repeat(left) + text + " ".repeat(pad - left);
     }
+
+    // -------------------- menus --------------------
 
     public int printPriorityListMenu(String[][] tableData, int page, int pageCount, boolean hasFilter) {
         clearScreen();
@@ -110,6 +115,8 @@ public class PriorityReservationUI {
         return inputIntChoice("Enter choice", 0, 3);
     }
 
+    // -------------------- detail views --------------------
+
     public static void printDetails(String[][] details) {
         if (details == null || details.length == 0) {
             return;
@@ -147,7 +154,8 @@ public class PriorityReservationUI {
         });
     }
 
-    // VIP QUEUE (waiting members only)
+    // -------------------- VIP queue (waiting members only) --------------------
+
     public void displayVIPQueue(ListInterface<Reservation> queue,
             ListInterface<PriorityReservation> priorities) {
         ConsoleUtil.clearScreen();
@@ -175,7 +183,8 @@ public class PriorityReservationUI {
         printSeparator();
     }
 
-    // OVERRIDE
+    // -------------------- override selection & preview --------------------
+
     public Reservation selectReservation(ListInterface<Reservation> reservations) {
         clearScreen();
         printBanner("SELECT RESERVATION (Non-Member, Waiting)");
@@ -280,7 +289,8 @@ public class PriorityReservationUI {
         printSeparator();
     }
 
-    // INPUT / MESSAGES
+    // -------------------- input & messages --------------------
+
     public int inputListIndex(String label, int max) {
         return inputIntChoice("Enter " + label + " number (0 = cancel)", 0, max);
     }
@@ -356,6 +366,8 @@ public class PriorityReservationUI {
             ConsoleUtil.printError("Please enter a number between " + min + " and " + max + "!");
         }
     }
+
+    // -------------------- private helpers --------------------
 
     private PriorityLevel findLevel(ListInterface<PriorityReservation> priorities, String reservationId) {
         for (int i = 0; i < priorities.size(); i++) {

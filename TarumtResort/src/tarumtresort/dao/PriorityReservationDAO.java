@@ -6,6 +6,7 @@ import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.*;
 import tarumtresort.utility.JsonFileHandler;
 
+// Author: Lee Boon Yew
 public class PriorityReservationDAO {
     private final String FILE_NAME = "data/priorityReservations.json";
     private final ListInterface<PriorityReservation> priorityReservations = new DoublyLinkedList<>();
