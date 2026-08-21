@@ -940,7 +940,7 @@ public class LoyaltyController {
             for (int k = 0; k < rows.length; k++) {
                 Notification n = list.get(from + k);
                 rows[k] = new String[] {
-                    String.valueOf(k + 1), n.getType().name(),
+                    String.valueOf(k + 1), n.getType() == null ? "-" : n.getType().name(),
                     truncate(n.getMessage(), 48),
                     n.getDate() == null ? "-" : n.getDate().format(NOTIF_DATE_FMT),
                     n.isRead() ? "READ" : "UNREAD"
