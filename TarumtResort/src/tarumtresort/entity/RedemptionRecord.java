@@ -1,6 +1,7 @@
 package tarumtresort.entity;
 
 import java.time.LocalDateTime;
+import tarumtresort.entity.enums.RoomType;
 
 public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private String redemptionId;
@@ -12,6 +13,10 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private String voucherCode;
     /** Cash value (RM) locked in at approval time for voucher-type rewards. */
     private Double voucherValue;
+    /** Room type locked in at approval time (null = generic voucher). */
+    private RoomType roomType;
+    /** Percentage discount locked in at approval time (null = not a % voucher). */
+    private Integer discountPercent;
     /** Whether the voucher has already been used at payment. */
     private boolean used;
 
@@ -82,6 +87,22 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
         this.voucherValue = voucherValue;
     }
 
+    public RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
     public boolean isUsed() {
         return used;
     }
@@ -92,10 +113,21 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
 
     @Override
     public int compareTo(RedemptionRecord other) {
-        int byDate = this.redeemedDate.compareTo(other.redeemedDate);
-        if (byDate != 0) {
-            return byDate;
+        if (this.redeemedDate == null && other.redeemedDate == null) {
+            // both null
+        } else if (this.redeemedDate == null) {
+            return -1;
+        } else if (other.redeemedDate == null) {
+            return 1;
+        } else {
+            int byDate = this.redeemedDate.compareTo(other.redeemedDate);
+            if (byDate != 0) {
+                return byDate;
+            }
         }
+        if (this.redemptionId == null && other.redemptionId == null) return 0;
+        if (this.redemptionId == null) return -1;
+        if (other.redemptionId == null) return 1;
         return this.redemptionId.compareTo(other.redemptionId);
     }
 

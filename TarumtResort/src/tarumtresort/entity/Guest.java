@@ -15,7 +15,7 @@ public class Guest implements Comparable<Guest> {
     private String nationality;
     private String address;
     private LinkedListInterface<Notification> notificationList = new LinkedList<>();
-    private LinkedListInterface<Reservation> reservations;
+    private transient LinkedListInterface<Reservation> reservations;
 
     // constructor (no arguments) - used by Gson when loading from JSON
     public Guest() {

@@ -1,10 +1,10 @@
 package tarumtresort.entity.enums;
 
 public enum Tier {
-    SILVER(10),
-    GOLD(15),
-    PLATINUM(20),
-    DIAMOND(25);
+    SILVER(5),
+    GOLD(8),
+    PLATINUM(12),
+    DIAMOND(15);
 
     private final int discountPercent;
 

@@ -1,6 +1,7 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+import tarumtresort.utility.ConsoleUtil;
 
 // Author: Brian Kam Ding Xian
 public class MainMenuUI {
@@ -16,6 +17,7 @@ public class MainMenuUI {
     }
 
     public int getModuleChoice() {
+        ConsoleUtil.clearScreen();
         System.out.println("\n========================================");
         System.out.println("  TARUMT RESORT MANAGEMENT SYSTEM");
         System.out.println("========================================");

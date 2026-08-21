@@ -11,6 +11,7 @@ public class Member implements Comparable<Member> {
     private Tier tier;
     private LocalDateTime enrollmentDate;
     private String guestId;
+    private boolean isDeleted;
     private LinkedListInterface<PointTransaction> pointTransactionList = new LinkedList<>();
     private LinkedListInterface<RedemptionRecord> redemptionRecordList = new LinkedList<>();
 
@@ -71,6 +72,18 @@ public class Member implements Comparable<Member> {
 
     public void setGuestId(String guestId) {
         this.guestId = guestId;
+    }
+
+    /**
+     * Soft-delete flag: the record stays for history/audit but is hidden from
+     * active views.
+     */
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public LinkedListInterface<PointTransaction> getPointTransactionList() {
