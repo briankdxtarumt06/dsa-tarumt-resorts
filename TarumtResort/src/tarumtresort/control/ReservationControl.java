@@ -4,10 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-
-import java.util.Scanner;
-
 import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.ReservationUI;
@@ -30,10 +26,9 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-// import tarumtresort.report.NationalityReport;
-import tarumtresort.report.ReportResult;
-//import tarumtresort.report.ReportUI;
-// import tarumtresort.report.RoomTypeReport;
+import tarumtresort.report.ReservationReport.ReservationReportController;
+
+// Author: Chai Chee Tong, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
 
 public class ReservationControl {
 
@@ -78,6 +73,9 @@ public class ReservationControl {
     private PriorityReservationController priorityReservationController = new PriorityReservationController();
     private LoyaltyController loyaltyController = new LoyaltyController();
     private HousekeepingController housekeepingController = new HousekeepingController();
+
+    // Reports - all report calculation lives in the report package
+    private ReservationReportController reservationReportController = new ReservationReportController(reservationUI.getScanner());
 
     // Constructors
     public ReservationControl() {
@@ -191,7 +189,8 @@ public class ReservationControl {
                 case 3:
                     runRoomManagement();
                     break;
-                case 4: // generateReport();
+                case 4:
+                    generateReport();
                     break;
                 default:
                     break;
@@ -1477,62 +1476,24 @@ public class ReservationControl {
     }
 
     // ===== REPORTS =====
-    // public void generateReport() {
-    // ReportUI reportUI = new ReportUI(reservationUI.getScanner());
+    public void generateReport() {
+        int choice;
+        do {
+            System.out.println("\n========================================");
+            System.out.println("  RESERVATION REPORTS");
+            System.out.println("========================================");
+            System.out.println("  1. Nationality Demand Report");
+            System.out.println("  2. Room Type Demand Report");
+            System.out.println("  0. Back");
+            System.out.println("========================================");
+            choice = reservationUI.inputListIndex("report option", 2);
 
-    // int choice;
-    // do {
-    // System.out.println("\n========================================");
-    // System.out.println(" RESERVATION REPORTS");
-    // System.out.println("========================================");
-    // System.out.println(" 1. Nationality Demand Report");
-    // System.out.println(" 2. Room Type Demand Report");
-    // System.out.println(" 0. Back");
-    // System.out.println("========================================");
-    // choice = reservationUI.inputListIndex("report option", 2);
-
-    // if (choice == 1) {
-    // LinkedListInterface<Guest> reportGuests = new LinkedList<>();
-    // guestDAO.loadFromFile(reportGuests);
-    // LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-    // reservationDAO.loadAllReservations(reportReservations);
-
-    // LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration
-    // timestamp");
-    // ReservationStatus status = inputReportStatusFilter();
-    // ReportResult result = new NationalityReport(reportGuests, reportReservations)
-    // .generate(range[0], range[1], status);
-    // reportUI.printReport(result, "NATIONALITY DEMAND REPORT");
-    // reportUI.pressEnterToContinue();
-    // } else if (choice == 2) {
-    // LinkedListInterface<Room> reportRooms = new LinkedList<>();
-    // roomDAO.loadFromFile(reportRooms);
-    // LinkedListInterface<Reservation> reportReservations = new LinkedList<>();
-    // reservationDAO.loadAllReservations(reportReservations);
-
-    // LocalDateTime[] range = reportUI.inputOptionalDateTimeRange("registration
-    // timestamp");
-    // ReservationStatus status = inputReportStatusFilter();
-    // ReportResult result = new RoomTypeReport(reportRooms, reportReservations)
-    // .generate(range[0], range[1], status);
-    // reportUI.printReport(result, "ROOM TYPE DEMAND REPORT");
-    // reportUI.pressEnterToContinue();
-    // }
-    // } while (choice != 0);
-    // }
-
-    private ReservationStatus inputReportStatusFilter() {
-        ReservationStatus[] values = ReservationStatus.values();
-        System.out.println("\nFilter by reservation status:");
-        System.out.println("  0. All statuses (no filter)");
-        for (int i = 0; i < values.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + values[i]);
-        }
-        int choice = reservationUI.inputListIndex("status option", values.length);
-        if (choice == 0) {
-            return null;
-        }
-        return values[choice - 1];
+            if (choice == 1) {
+                reservationReportController.generateNationalityDemandReport();
+            } else if (choice == 2) {
+                reservationReportController.generateRoomTypeDemandReport();
+            }
+        } while (choice != 0);
     }
 
     // ===== HELPERS =====

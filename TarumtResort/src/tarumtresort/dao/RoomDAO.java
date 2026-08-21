@@ -6,6 +6,8 @@ import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Room;
 import tarumtresort.utility.JsonFileHandler;
 
+// Author: Chai Chee Tong
+
 public class RoomDAO {
     private final String FILE_NAME = "data/roomList.json";
 

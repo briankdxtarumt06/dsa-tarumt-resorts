@@ -3,10 +3,8 @@ package tarumtresort.entity;
 import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 
-/**
- * Guest entity. Combines the member/points module needs (notificationList)
- * with the room/reservation module needs (reservations).
- */
+// Author: Chai Chee Tong
+
 public class Guest implements Comparable<Guest> {
     private String guestId;
     private String name;
@@ -17,7 +15,7 @@ public class Guest implements Comparable<Guest> {
     private ListInterface<Notification> notificationList = new DoublyLinkedList<>();
     private transient ListInterface<Reservation> reservations;
 
-    // constructor (no arguments) - used by Gson when loading from JSON
+    // constructor 
     public Guest() {
     }
 

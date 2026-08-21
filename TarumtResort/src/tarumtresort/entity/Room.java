@@ -5,6 +5,8 @@ import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.*;
 
+// Author: Chai Chee Tong
+
 public class Room implements Comparable<Room>{
     private String roomId;
     private String roomNumber;
