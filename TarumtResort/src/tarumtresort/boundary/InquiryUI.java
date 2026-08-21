@@ -10,14 +10,12 @@ import tarumtresort.entity.Task;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
-import tarumtresort.entity.enums.RoomType;
-import tarumtresort.report.ReportChart;
-import tarumtresort.report.ReportResult;
 import tarumtresort.utility.TablePrinter;
 
 /**
  *
  * @author Wen Ling
+ *
  */
 public class InquiryUI {
 
@@ -39,11 +37,20 @@ public class InquiryUI {
         System.out.println("  3. View Pending Queue");
         System.out.println("  4. Cancel Inquiry");
         System.out.println("  5. View All Inquiries");
-        System.out.println("  6. Generate Report");
+        System.out.println("  6. Search Inquiry");
+        System.out.println("  7. Generate Report");
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
-        return readIntInRange("Enter choice (0-6): ", 0, 6);
+        return readIntInRange("Enter choice (0-7): ", 0, 7);
 }
+
+    public int getSearchMenuChoice() {
+        System.out.println("\n--- Search Inquiry ---");
+        System.out.println("  1. By Inquiry ID");
+        System.out.println("  2. By Confirmation Number");
+        System.out.println("  0. Back");
+        return readIntInRange("Enter choice (0-2): ", 0, 2);
+    }
 
     public int getReportMenuChoice() {
         System.out.println("\n--- Reports ---");
@@ -73,17 +80,6 @@ public class InquiryUI {
         return types[choice - 1];
     }
 
-    public InquiryType inputInquiryTypeFilter() {
-        System.out.println("Filter by Query Type:");
-        InquiryType[] types = InquiryType.values();
-        for (int i = 0; i < types.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + types[i]);
-        }
-        System.out.println("  0. All Types");
-        int choice = readIntInRange("Enter choice (0-" + types.length + "): ", 0, types.length);
-        return choice == 0 ? null : types[choice - 1];
-    }
-
     public InquiryStatus inputInquiryStatusFilter() {
         System.out.println("Filter by Status:");
         InquiryStatus[] statuses = InquiryStatus.values();
@@ -93,17 +89,6 @@ public class InquiryUI {
         System.out.println("  0. All Statuses");
         int choice = readIntInRange("Enter choice (0-" + statuses.length + "): ", 0, statuses.length);
         return choice == 0 ? null : statuses[choice - 1];
-    }
-
-    public RoomType inputRoomTypeFilter() {
-        System.out.println("Filter by Room Type:");
-        RoomType[] types = RoomType.values();
-        for (int i = 0; i < types.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + types[i]);
-        }
-        System.out.println("  0. All Room Types");
-        int choice = readIntInRange("Enter choice (0-" + types.length + "): ", 0, types.length);
-        return choice == 0 ? null : types[choice - 1];
     }
 
     public String inputDescription() {
@@ -208,47 +193,6 @@ public class InquiryUI {
         printTable(data);
     }
 
-    public void printReport(ReportResult report) {
-        if (report == null || report.isEmpty()) {
-            System.out.println("\nNo data available for this report.");
-            return;
-        }
-
-        System.out.println();
-        printDelimitedTable(report.getTable());
-
-        for (String line : report.getSummary()) {
-            System.out.println(line);
-        }
-
-        for (ReportChart chart : report.getCharts()) {
-            printChart(chart);
-        }
-
-        for (String callout : report.getCallouts()) {
-            System.out.println("  ! " + callout);
-        }
-    }
-
-    private void printChart(ReportChart chart) {
-        if (chart.isEmpty()) {
-            return;
-        }
-        System.out.println("\n" + chart.getTitle());
-        double max = 0;
-        for (ReportChart.Bar bar : chart.getBars()) {
-            max = Math.max(max, bar.getValue());
-        }
-        for (ReportChart.Bar bar : chart.getBars()) {
-            int barLength = max == 0 ? 0 : (int) Math.round((bar.getValue() / max) * 30);
-            StringBuilder bars = new StringBuilder();
-            for (int i = 0; i < barLength; i++) {
-                bars.append("█");
-            }
-            System.out.printf("  %-20s %-30s %s%n", bar.getLabel(), bars, bar.getDetail());
-        }
-    }
-
     private void printTable(String[][] data) {
         if (data.length == 0) {
             return;
@@ -257,16 +201,6 @@ public class InquiryUI {
         String[][] rows = new String[data.length - 1][];
         System.arraycopy(data, 1, rows, 0, data.length - 1);
         TablePrinter.displayTable(header, rows);
-    }
-
-    private void printDelimitedTable(String[][] data) {
-        if (data.length == 0) {
-            return;
-        }
-        String[] header = data[0];
-        String[][] rows = new String[data.length - 1][];
-        System.arraycopy(data, 1, rows, 0, data.length - 1);
-        TablePrinter.displayDelimitedTable(header, rows);
     }
 
     public void printMessage(String message) {
