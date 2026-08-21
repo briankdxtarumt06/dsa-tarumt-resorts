@@ -30,10 +30,10 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-import tarumtresort.report.NationalityReport;
+// import tarumtresort.report.NationalityReport;
 import tarumtresort.report.ReportResult;
 //import tarumtresort.report.ReportUI;
-import tarumtresort.report.RoomTypeReport;
+// import tarumtresort.report.RoomTypeReport;
 
 public class ReservationControl {
 
