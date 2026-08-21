@@ -12,7 +12,6 @@ import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
-import tarumtresort.utility.SharedServices;
 import tarumtresort.utility.TablePrinter;
 
 public class ReservationUI {
@@ -159,7 +158,7 @@ public class ReservationUI {
     }
 
     public String inputName() {
-        return SharedServices.askNonEmptyInput(scanner, "Name (0 = cancel)");
+        return askNonEmptyInput(scanner, "Name (0 = cancel)");
     }
 
     public String inputNationality(String[] nationalityOptions) {
@@ -179,7 +178,7 @@ public class ReservationUI {
         int choice = inputIntChoice("Enter Choice", 1, otherChoice);
 
         if (choice == otherChoice) {
-            String typed = SharedServices.askNonEmptyInput(
+            String typed = askNonEmptyInput(
                     scanner,
                     "Please specify nationality");
 
@@ -197,19 +196,19 @@ public class ReservationUI {
     }
 
     public String inputIc() {
-        return SharedServices.askNonEmptyInput(scanner, "IC Number (XXXXXXXXXXXX)");
+        return askNonEmptyInput(scanner, "IC Number (XXXXXXXXXXXX)");
     }
 
     public String inputPassport() {
-        return SharedServices.askNonEmptyInput(scanner, "Passport Number");
+        return askNonEmptyInput(scanner, "Passport Number");
     }
 
     public String inputContactNumber() {
-        return SharedServices.askNonEmptyInput(scanner, "Contact Number");
+        return askNonEmptyInput(scanner, "Contact Number");
     }
 
     public String inputAddress() {
-        return SharedServices.askNonEmptyInput(scanner, "Address");
+        return askNonEmptyInput(scanner, "Address");
     }
 
     public void printInvalidInput(String message) {
@@ -304,7 +303,7 @@ public class ReservationUI {
     }
 
     public String inputDate(String prompt) {
-        return SharedServices.askNonEmptyInput(scanner, prompt + " (YYYY-MM-DD)");
+        return askNonEmptyInput(scanner, prompt + " (YYYY-MM-DD)");
     }
 
     public String inputIcOrPassport() {
@@ -312,7 +311,7 @@ public class ReservationUI {
     }
 
     public String inputConfirmationNumber() {
-        return SharedServices.askNonEmptyInput(scanner, "Enter confirmation number (0 = cancel)");
+        return askNonEmptyInput(scanner, "Enter confirmation number (0 = cancel)");
     }
 
     public void printQueuePosition(String confirmationNumber, int position) {
@@ -714,7 +713,7 @@ public class ReservationUI {
     }
 
     public String askNonEmptyInput(String prompt) {
-        return SharedServices.askNonEmptyInput(scanner, prompt);
+        return askNonEmptyInput(scanner, prompt);
     }
 
     public void printSuccess() {
@@ -867,5 +866,24 @@ public class ReservationUI {
 
         System.out.println("\nPayment & Refund Records");
         TablePrinter.displayTable(header, rows);
+    }
+
+    public static String askNonEmptyInput(Scanner scanner, String prompt) {
+        String userInput;
+        boolean validInput;
+
+        do {
+            System.out.print(prompt + ": ");
+            userInput = scanner.nextLine().trim();
+
+            if (userInput.isEmpty()) {
+                validInput = false;
+                System.out.println("Error: Input cannot be empty! Please try again.");
+            } else {
+                validInput = true;
+            }
+        } while (!validInput);
+
+        return userInput;
     }
 }
