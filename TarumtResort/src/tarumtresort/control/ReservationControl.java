@@ -713,6 +713,8 @@ public class ReservationControl {
                         reservation.getReservationId(), reservation.getGuestId());
             } else {
                 reservation.setStatus(ReservationStatus.BOOKED);
+                priorityReservationController.addPriorityReservation(
+                        reservation.getReservationId(), reservation.getGuestId());
             }
 
             reservations.addBack(reservation);
