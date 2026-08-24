@@ -23,7 +23,7 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
         this.redeemedDate = redeemedDate;
         this.memberId = memberId;
         this.rewardId = rewardId;
-        this.status = "PENDING"; // new redemptions start as requests
+        this.status = "PENDING";
     }
 
     public String getRedemptionId() {
