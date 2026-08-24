@@ -1,0 +1,332 @@
+[
+  {
+    "taskAssignmentId": "ASG0001",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-14T09:05",
+    "dateTimeEnded": "2026-08-14T10:30",
+    "isDeleted": false,
+    "assignedStaffId": "STF0003",
+    "assignedTaskId": "TSK0001",
+    "changes": [
+      "CHG0002",
+      "CHG0003",
+      "CHG0004"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0002",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-14T10:48",
+    "dateTimeEnded": "2026-08-14T11:15",
+    "isDeleted": false,
+    "assignedStaffId": "STF0008",
+    "assignedTaskId": "TSK0002",
+    "changes": [
+      "CHG0007",
+      "CHG0008",
+      "CHG0009"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0003",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-14T12:02",
+    "dateTimeEnded": "2026-08-14T12:40",
+    "isDeleted": false,
+    "assignedStaffId": "STF0001",
+    "assignedTaskId": "TSK0003",
+    "changes": [
+      "CHG0012",
+      "CHG0013",
+      "CHG0014"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0004",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-15T09:03",
+    "dateTimeEnded": "2026-08-15T10:00",
+    "isDeleted": false,
+    "assignedStaffId": "STF0011",
+    "assignedTaskId": "TSK0004",
+    "changes": [
+      "CHG0017",
+      "CHG0018",
+      "CHG0019"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0005",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-15T11:04",
+    "dateTimeEnded": "2026-08-15T13:30",
+    "isDeleted": false,
+    "assignedStaffId": "STF0002",
+    "assignedTaskId": "TSK0005",
+    "changes": [
+      "CHG0022",
+      "CHG0023",
+      "CHG0024"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0006",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-16T09:04",
+    "dateTimeEnded": "2026-08-16T10:15",
+    "isDeleted": false,
+    "assignedStaffId": "STF0003",
+    "assignedTaskId": "TSK0006",
+    "changes": [
+      "CHG0027",
+      "CHG0028",
+      "CHG0029"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0007",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-16T15:03",
+    "dateTimeEnded": "2026-08-16T15:25",
+    "isDeleted": false,
+    "assignedStaffId": "STF0007",
+    "assignedTaskId": "TSK0007",
+    "changes": [
+      "CHG0032",
+      "CHG0033",
+      "CHG0034"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0008",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-17T09:03",
+    "dateTimeEnded": "2026-08-17T09:55",
+    "isDeleted": false,
+    "assignedStaffId": "STF0001",
+    "assignedTaskId": "TSK0008",
+    "changes": [
+      "CHG0037",
+      "CHG0038",
+      "CHG0039"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0009",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-18T09:33",
+    "dateTimeEnded": "2026-08-18T10:20",
+    "isDeleted": false,
+    "assignedStaffId": "STF0011",
+    "assignedTaskId": "TSK0009",
+    "changes": [
+      "CHG0042",
+      "CHG0043",
+      "CHG0044"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0010",
+    "status": "CANCELLED",
+    "dateTimeAssigned": "2026-08-19T16:03",
+    "dateTimeEnded": "2026-08-19T16:45",
+    "isDeleted": false,
+    "assignedStaffId": "STF0005",
+    "assignedTaskId": "TSK0010",
+    "changes": [
+      "CHG0047",
+      "CHG0048"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0011",
+    "status": "CANCELLED",
+    "dateTimeAssigned": "2026-08-20T08:33",
+    "dateTimeEnded": "2026-08-20T08:50",
+    "isDeleted": false,
+    "assignedStaffId": "STF0001",
+    "assignedTaskId": "TSK0011",
+    "changes": [
+      "CHG0051",
+      "CHG0052"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0012",
+    "status": "CANCELLED",
+    "dateTimeAssigned": "2026-08-20T09:04",
+    "dateTimeEnded": "2026-08-20T09:30",
+    "isDeleted": false,
+    "assignedStaffId": "STF0011",
+    "assignedTaskId": "TSK0012",
+    "changes": [
+      "CHG0055",
+      "CHG0056"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0013",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-20T09:35",
+    "dateTimeEnded": "2026-08-20T12:00",
+    "isDeleted": false,
+    "assignedStaffId": "STF0003",
+    "assignedTaskId": "TSK0012",
+    "changes": [
+      "CHG0057",
+      "CHG0058",
+      "CHG0059"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0014",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-20T13:03",
+    "dateTimeEnded": "2026-08-20T13:20",
+    "isDeleted": false,
+    "assignedStaffId": "STF0007",
+    "assignedTaskId": "TSK0013",
+    "changes": [
+      "CHG0062",
+      "CHG0063",
+      "CHG0064"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0015",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-20T14:03",
+    "dateTimeEnded": "2026-08-20T14:50",
+    "isDeleted": false,
+    "assignedStaffId": "STF0005",
+    "assignedTaskId": "TSK0014",
+    "changes": [
+      "CHG0067",
+      "CHG0068",
+      "CHG0069"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0016",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-20T16:03",
+    "dateTimeEnded": "2026-08-20T16:40",
+    "isDeleted": false,
+    "assignedStaffId": "STF0004",
+    "assignedTaskId": "TSK0015",
+    "changes": [
+      "CHG0072",
+      "CHG0073",
+      "CHG0074"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0017",
+    "status": "IN_PROGRESS",
+    "dateTimeAssigned": "2026-08-21T08:03",
+    "isDeleted": false,
+    "assignedStaffId": "STF0001",
+    "assignedTaskId": "TSK0016",
+    "changes": [
+      "CHG0077",
+      "CHG0078"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0018",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-21T09:03",
+    "dateTimeEnded": "2026-08-21T09:15",
+    "isDeleted": false,
+    "assignedStaffId": "STF0001",
+    "assignedTaskId": "TSK0017",
+    "changes": [
+      "CHG0080",
+      "CHG0081",
+      "CHG0082"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0019",
+    "status": "IN_PROGRESS",
+    "dateTimeAssigned": "2026-08-21T09:23",
+    "isDeleted": false,
+    "assignedStaffId": "STF0004",
+    "assignedTaskId": "TSK0018",
+    "changes": [
+      "CHG0085",
+      "CHG0086"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0020",
+    "status": "COMPLETED",
+    "dateTimeAssigned": "2026-08-21T10:03",
+    "dateTimeEnded": "2026-08-21T10:30",
+    "isDeleted": false,
+    "assignedStaffId": "STF0002",
+    "assignedTaskId": "TSK0019",
+    "changes": [
+      "CHG0088",
+      "CHG0089",
+      "CHG0090"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0021",
+    "status": "IN_PROGRESS",
+    "dateTimeAssigned": "2026-08-21T12:48",
+    "isDeleted": false,
+    "assignedStaffId": "STF0002",
+    "assignedTaskId": "TSK0020",
+    "changes": [
+      "CHG0093",
+      "CHG0094"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0022",
+    "status": "IN_PROGRESS",
+    "dateTimeAssigned": "2026-08-21T17:32",
+    "isDeleted": false,
+    "assignedStaffId": "STF0005",
+    "assignedTaskId": "TSK0021",
+    "changes": [
+      "CHG0096",
+      "CHG0097"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0023",
+    "status": "PENDING",
+    "dateTimeAssigned": "2026-08-21T18:02",
+    "isDeleted": false,
+    "assignedStaffId": "STF0003",
+    "assignedTaskId": "TSK0022",
+    "changes": [
+      "CHG0099"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0024",
+    "status": "PENDING",
+    "dateTimeAssigned": "2026-08-21T18:08",
+    "isDeleted": false,
+    "assignedStaffId": "STF0007",
+    "assignedTaskId": "TSK0023",
+    "changes": [
+      "CHG0101"
+    ]
+  },
+  {
+    "taskAssignmentId": "ASG0025",
+    "status": "PENDING",
+    "dateTimeAssigned": "2026-08-21T23:39:25.617713600",
+    "isDeleted": false,
+    "assignedStaffId": "STF0008",
+    "assignedTaskId": "TSK0028",
+    "changes": [
+      "CHG0110"
+    ]
+  }
+]

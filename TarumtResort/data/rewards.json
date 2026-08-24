@@ -1,0 +1,172 @@
+[
+  {
+    "rewardId": "R008",
+    "name": "20% OFF STANDARD_SINGLE",
+    "description": "20% off the room charge for Stan  dard Single bookings",
+    "pointCost": 500,
+    "minTier": "SILVER",
+    "roomType": "STANDARD_SINGLE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R009",
+    "name": "20% OFF STANDARD_DOUBLE",
+    "description": "20% off the room charge for Standard Double bookings",
+    "pointCost": 625,
+    "minTier": "SILVER",
+    "roomType": "STANDARD_DOUBLE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R010",
+    "name": "20% OFF STANDARD_TRIPLE",
+    "description": "20% off the room charge for Standard Triple bookings",
+    "pointCost": 750,
+    "minTier": "GOLD",
+    "roomType": "STANDARD_TRIPLE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R011",
+    "name": "20% OFF DELUXE_SINGLE",
+    "description": "20% off the room charge for Deluxe Single bookings",
+    "pointCost": 850,
+    "minTier": "GOLD",
+    "roomType": "DELUXE_SINGLE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R012",
+    "name": "20% OFF DELUXE_DOUBLE",
+    "description": "20% off the room charge for Deluxe Double bookings",
+    "pointCost": 1050,
+    "minTier": "GOLD",
+    "roomType": "DELUXE_DOUBLE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R013",
+    "name": "20% OFF DELUXE_TRIPLE",
+    "description": "20% off the room charge for Deluxe Triple bookings",
+    "pointCost": 1250,
+    "minTier": "PLATINUM",
+    "roomType": "DELUXE_TRIPLE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R015",
+    "name": "50% OFF STANDARD_TRIPLE",
+    "description": "50% off the room charge for Standard Triple bookings",
+    "pointCost": 1650,
+    "minTier": "GOLD",
+    "roomType": "STANDARD_TRIPLE",
+    "discountPercent": 50,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R014",
+    "name": "20% OFF SUITE",
+    "description": "20% off the room charge for Suite bookings",
+    "pointCost": 1875,
+    "minTier": "PLATINUM",
+    "roomType": "SUITE",
+    "discountPercent": 20,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R001",
+    "name": "1-Night STANDARD_SINGLE Voucher",
+    "description": "One night stay in a Standard Single room, fully covered",
+    "pointCost": 2000,
+    "voucherValue": 120.0,
+    "minTier": "SILVER",
+    "roomType": "STANDARD_SINGLE",
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R002",
+    "name": "1-Night STANDARD_DOUBLE Voucher",
+    "description": "One night stay in a Standard Double room, fully covered",
+    "pointCost": 2500,
+    "voucherValue": 150.0,
+    "minTier": "SILVER",
+    "roomType": "STANDARD_DOUBLE",
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R016",
+    "name": "50% OFF DELUXE_TRIPLE",
+    "description": "50% off the room charge for Deluxe Triple bookings",
+    "pointCost": 2750,
+    "minTier": "PLATINUM",
+    "roomType": "DELUXE_TRIPLE",
+    "discountPercent": 50,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R003",
+    "name": "1-Night STANDARD_TRIPLE Voucher",
+    "description": "One night stay in a Standard Triple room, fully covered",
+    "pointCost": 3000,
+    "voucherValue": 180.0,
+    "minTier": "GOLD",
+    "roomType": "STANDARD_TRIPLE",
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R004",
+    "name": "1-Night DELUXE_SINGLE Voucher",
+    "description": "One night stay in a Deluxe Single room, fully covered",
+    "pointCost": 3300,
+    "voucherValue": 200.0,
+    "minTier": "GOLD",
+    "roomType": "DELUXE_SINGLE",
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R017",
+    "name": "50% OFF SUITE",
+    "description": "50% off the room charge for Suite bookings",
+    "pointCost": 4125,
+    "minTier": "DIAMOND",
+    "roomType": "SUITE",
+    "discountPercent": 50,
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R005",
+    "name": "1-Night DELUXE_DOUBLE Voucher",
+    "description": "One night stay in a Deluxe Double room, fully covered",
+    "pointCost": 4200,
+    "voucherValue": 250.0,
+    "minTier": "GOLD",
+    "roomType": "DELUXE_DOUBLE",
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R006",
+    "name": "1-Night DELUXE_TRIPLE Voucher",
+    "description": "One night stay in a Deluxe Triple room, fully covered",
+    "pointCost": 5000,
+    "voucherValue": 300.0,
+    "minTier": "PLATINUM",
+    "roomType": "DELUXE_TRIPLE",
+    "isDeleted": false
+  },
+  {
+    "rewardId": "R007",
+    "name": "1-Night SUITE Voucher",
+    "description": "One night stay in a Suite, fully covered",
+    "pointCost": 7500,
+    "voucherValue": 450.0,
+    "minTier": "DIAMOND",
+    "roomType": "SUITE",
+    "isDeleted": false
+  }
+]

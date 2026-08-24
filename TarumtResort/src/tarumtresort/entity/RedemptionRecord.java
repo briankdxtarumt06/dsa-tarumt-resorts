@@ -9,15 +9,10 @@ public class RedemptionRecord implements Comparable<RedemptionRecord> {
     private String memberId;
     private String rewardId;
     private String status;
-    /** Voucher code issued when an approved redemption is a voucher-type reward. */
     private String voucherCode;
-    /** Cash value (RM) locked in at approval time for voucher-type rewards. */
     private Double voucherValue;
-    /** Room type locked in at approval time (null = generic voucher). */
     private RoomType roomType;
-    /** Percentage discount locked in at approval time (null = not a % voucher). */
     private Integer discountPercent;
-    /** Whether the voucher has already been used at payment. */
     private boolean used;
 
     public RedemptionRecord() {
