@@ -4,10 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-
-import java.util.Scanner;
-
 import tarumtresort.adt.DoublyLinkedList;
 import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.ReservationUI;
@@ -19,8 +15,8 @@ import tarumtresort.dao.RoomDAO;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Member;
 import tarumtresort.entity.Payment;
-import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.PriorityReservation;
+import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.ReservationTimestamps;
 import tarumtresort.entity.Room;
@@ -30,8 +26,6 @@ import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.ReservationType;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-// import tarumtresort.report.NationalityReport;
-import tarumtresort.report.ReportResult;
 //import tarumtresort.report.ReportUI;
 // import tarumtresort.report.RoomTypeReport;
 
@@ -1104,6 +1098,7 @@ public class ReservationControl {
             r.setStatus(ReservationStatus.CHECKED_OUT);
             r.getTimestamps().setActualCheckOutTime(now);
             updateRoomStatus(r.getRoomId(), RoomStatus.CLEANING);
+            housekeepingController.createCheckoutTask(r.getRoomId());
         }
 
         System.out.println("\nCheck-Out Summary:");
