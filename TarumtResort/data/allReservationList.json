@@ -1,0 +1,464 @@
+[
+  {
+    "reservationId": "RES001",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "CANCELLED",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:30:52.305040500",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES002",
+    "confirmationNumber": "16750637",
+    "guestId": "GST001",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "WAITING",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:30:55.780309900",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES003",
+    "confirmationNumber": "74600753",
+    "guestId": "GST001",
+    "roomId": "R002",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CHECKED_OUT",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:35:01.012814100",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T12:35:41.071708600",
+      "actualCheckInTime": "2026-08-21T12:38:38.608119300",
+      "actualCheckOutTime": "2026-08-21T12:39:29.419138700"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES004",
+    "confirmationNumber": "97269365",
+    "guestId": "GST001",
+    "roomId": "R003",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CHECKED_IN",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:35:06.380543600",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T12:40:54.120401",
+      "actualCheckInTime": "2026-08-21T12:41:05.866921200"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES005",
+    "confirmationNumber": "86271204",
+    "guestId": "GST004",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "CANCELLED",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:34:47.256556800",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES006",
+    "confirmationNumber": "35877897",
+    "guestId": "GST004",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "WAITING",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:42:28.900799800",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES007",
+    "confirmationNumber": "94870053",
+    "guestId": "GST004",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "WAITING",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T12:42:33.643688300",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES008",
+    "confirmationNumber": "64773181",
+    "guestId": "GST003",
+    "roomId": "R007",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "CHECKED_IN",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:36:06.408765300",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T16:47:14.616145400",
+      "actualCheckInTime": "2026-08-21T16:47:51.671185500"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES009",
+    "confirmationNumber": "28655322",
+    "guestId": "GST003",
+    "roomId": "R008",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "CHECKED_IN",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:36:09.914470400",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T16:47:17.739447900",
+      "actualCheckInTime": "2026-08-21T16:47:56.612946100"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES010",
+    "confirmationNumber": "55596186",
+    "guestId": "GST005",
+    "roomId": "R004",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 2,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CHECKED_IN",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:46:34.728251300",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 23
+      },
+      "assignedTime": "2026-08-21T16:48:31.194109500",
+      "actualCheckInTime": "2026-08-21T16:48:51.985509900"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES011",
+    "confirmationNumber": "85428392",
+    "guestId": "GST005",
+    "roomId": "R006",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CHECKED_IN",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:46:40.450023100",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T16:47:10.417738200",
+      "actualCheckInTime": "2026-08-21T16:48:18.234993900"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES012",
+    "confirmationNumber": "94988930",
+    "guestId": "GST005",
+    "roomId": "R005",
+    "roomTypeRequested": "STANDARD_SINGLE",
+    "numberOfGuests": 1,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CHECKED_IN",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:46:42.971630400",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T16:48:33.796570900",
+      "actualCheckInTime": "2026-08-21T16:48:55.122077900"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES013",
+    "confirmationNumber": "41090704",
+    "guestId": "GST005",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CANCELLED",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:38:18.573035300",
+      "expectedCheckInDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES014",
+    "confirmationNumber": "99490324",
+    "guestId": "GST005",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CANCELLED",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:38:21.651647200",
+      "expectedCheckInDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES015",
+    "confirmationNumber": "59498683",
+    "guestId": "GST005",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CANCELLED",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:38:30.665933400",
+      "expectedCheckInDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES016",
+    "confirmationNumber": "62968768",
+    "guestId": "GST005",
+    "roomTypeRequested": "STANDARD_DOUBLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "ADVANCE_BOOKING",
+    "status": "CANCELLED",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T16:38:33.774293300",
+      "expectedCheckInDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2027,
+        "month": 8,
+        "day": 22
+      }
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES017",
+    "confirmationNumber": "05580525",
+    "guestId": "GST007",
+    "roomId": "R032",
+    "roomTypeRequested": "SUITE",
+    "numberOfGuests": 3,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "CHECKED_OUT",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T23:29:33.186049900",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T23:33:29.720994100",
+      "actualCheckInTime": "2026-08-21T23:36:17.088582900",
+      "actualCheckOutTime": "2026-08-21T23:39:24.194932500"
+    },
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES018",
+    "confirmationNumber": "14417689",
+    "guestId": "GST007",
+    "roomId": "R026",
+    "roomTypeRequested": "DELUXE_TRIPLE",
+    "numberOfGuests": 2,
+    "numberOfNights": 1,
+    "reservationType": "WALK_IN",
+    "status": "CHECKED_OUT",
+    "timestamps": {
+      "registrationTimestamp": "2026-08-21T23:29:41.141830900",
+      "expectedCheckInDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 21
+      },
+      "expectedCheckOutDate": {
+        "year": 2026,
+        "month": 8,
+        "day": 22
+      },
+      "assignedTime": "2026-08-21T23:34:58.708422100",
+      "actualCheckInTime": "2026-08-21T23:35:58.268383200",
+      "actualCheckOutTime": "2026-08-21T23:39:24.194932500"
+    },
+    "isDeleted": false
+  }
+]

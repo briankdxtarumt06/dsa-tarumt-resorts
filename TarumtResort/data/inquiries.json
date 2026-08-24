@@ -1,0 +1,234 @@
+[
+  {
+    "inquiryId": "INQ004",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "ROOMSERVICE",
+    "description": "room",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:18:55.254943600",
+    "resolvedTime": "2026-08-21T14:24:37.844163700"
+  },
+  {
+    "inquiryId": "INQ013",
+    "confirmationNumber": "94870053",
+    "guestId": "GST004",
+    "inquiryType": "ROOMSERVICE",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T15:31:18.772317300",
+    "resolvedTime": "2026-08-21T15:31:25.519047700"
+  },
+  {
+    "inquiryId": "INQ021",
+    "confirmationNumber": "16750637",
+    "guestId": "GST001",
+    "inquiryType": "ROOMSERVICE",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T18:57:11.574974200",
+    "resolvedTime": "2026-08-21T23:44:57.903233300"
+  },
+  {
+    "inquiryId": "INQ023",
+    "confirmationNumber": "05580525",
+    "guestId": "GST007",
+    "inquiryType": "ROOMSERVICE",
+    "description": "0",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T23:44:11.319024300",
+    "resolvedTime": "2026-08-21T23:45:20.364987300"
+  },
+  {
+    "inquiryId": "INQ024",
+    "confirmationNumber": "94988930",
+    "guestId": "GST005",
+    "inquiryType": "ROOMSERVICE",
+    "description": "clean room",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T23:45:14.540892200"
+  },
+  {
+    "inquiryId": "INQ003",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "BILLINGDETAILS",
+    "description": "bill",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:18:45.934850200",
+    "resolvedTime": "2026-08-21T14:25:33.575258400"
+  },
+  {
+    "inquiryId": "INQ007",
+    "confirmationNumber": "74600753",
+    "guestId": "GST001",
+    "inquiryType": "BILLINGDETAILS",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:19:49.089182900",
+    "resolvedTime": "2026-08-21T14:25:40.832412600"
+  },
+  {
+    "inquiryId": "INQ016",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "BILLINGDETAILS",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T18:56:30.881102900"
+  },
+  {
+    "inquiryId": "INQ020",
+    "confirmationNumber": "16750637",
+    "guestId": "GST001",
+    "inquiryType": "BILLINGDETAILS",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T18:57:04.221892800"
+  },
+  {
+    "inquiryId": "INQ002",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "room",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:18:26.078536400",
+    "resolvedTime": "2026-08-21T14:25:43.134143700"
+  },
+  {
+    "inquiryId": "INQ006",
+    "confirmationNumber": "74600753",
+    "guestId": "GST001",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:19:41.988277100",
+    "resolvedTime": "2026-08-21T14:26:16.175173900"
+  },
+  {
+    "inquiryId": "INQ008",
+    "confirmationNumber": "97269365",
+    "guestId": "GST001",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:20:11.829078600",
+    "resolvedTime": "2026-08-21T14:26:22.118038700"
+  },
+  {
+    "inquiryId": "INQ010",
+    "confirmationNumber": "86271204",
+    "guestId": "GST004",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:20:32.349042300",
+    "resolvedTime": "2026-08-21T14:26:31.942412200"
+  },
+  {
+    "inquiryId": "INQ012",
+    "confirmationNumber": "16750637",
+    "guestId": "GST001",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:22:49.131642600",
+    "resolvedTime": "2026-08-21T14:27:20.958998500"
+  },
+  {
+    "inquiryId": "INQ015",
+    "confirmationNumber": "94870053",
+    "guestId": "GST004",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "",
+    "status": "CANCELLED",
+    "createdTime": "2026-08-21T15:32:40.255486",
+    "resolvedTime": "2026-08-21T15:32:58.709967600"
+  },
+  {
+    "inquiryId": "INQ018",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "ROOMAVAILABILITY",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T18:56:39.726393700"
+  },
+  {
+    "inquiryId": "INQ001",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "guest",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:17:48.267645300",
+    "resolvedTime": "2026-08-21T14:28:25.039190900"
+  },
+  {
+    "inquiryId": "INQ005",
+    "confirmationNumber": "16750637",
+    "guestId": "GST001",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:19:08.854007100",
+    "resolvedTime": "2026-08-21T14:28:30.148028400"
+  },
+  {
+    "inquiryId": "INQ009",
+    "confirmationNumber": "97269365",
+    "guestId": "GST001",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "RESOLVED",
+    "createdTime": "2026-08-21T14:20:16.542455800",
+    "resolvedTime": "2026-08-21T14:28:45.452948"
+  },
+  {
+    "inquiryId": "INQ011",
+    "confirmationNumber": "86271204",
+    "guestId": "GST004",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "CANCELLED",
+    "createdTime": "2026-08-21T14:20:36.452379800",
+    "resolvedTime": "2026-08-21T14:23:42.005467600"
+  },
+  {
+    "inquiryId": "INQ014",
+    "confirmationNumber": "94870053",
+    "guestId": "GST004",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T15:31:35.590441600"
+  },
+  {
+    "inquiryId": "INQ017",
+    "confirmationNumber": "67935761",
+    "guestId": "GST001",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T18:56:35.245745300"
+  },
+  {
+    "inquiryId": "INQ019",
+    "confirmationNumber": "16750637",
+    "guestId": "GST001",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T18:56:50.205143500"
+  },
+  {
+    "inquiryId": "INQ022",
+    "confirmationNumber": "74600753",
+    "guestId": "GST001",
+    "inquiryType": "GUESTIDENTIFICATION",
+    "description": "",
+    "status": "PENDING",
+    "createdTime": "2026-08-21T18:57:36.211544900"
+  }
+]

@@ -12,9 +12,7 @@ import tarumtresort.entity.Member;
 import tarumtresort.entity.Reward;
 import tarumtresort.entity.enums.Tier;
 
-// Loyalty report facade - mirrors HousekeepingReport/HousekeepingReportController:
-// per-report flow = date range (0 = Back aborts) -> secondary filters -> generate
-// -> dedicated per-report UI render -> press Enter.
+// Author: Imam Mahdi Ali Ang Attuko
 public class LoyaltyReportController {
 
     private final MemberDAO memberDAO = new MemberDAO();

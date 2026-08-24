@@ -15,13 +15,7 @@ import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- * Loyalty report UI - mirrors HousekeepingReportUI: date-range input
- * (blank = All Time, 0 = Back), secondary filters, section-based formal document
- * printing, and a self-contained centered ASCII bar-chart engine.
- *
- * @author Brian
- */
+// Author: Imam Mahdi Ali Ang Attuko
 public class LoyaltyReportUI {
 
     private static final int DOC_WIDTH = TablePrinter.DOC_WIDTH;
@@ -115,7 +109,6 @@ public class LoyaltyReportUI {
 
     // -------------------- secondary filters (loyalty-specific) --------------------
 
-    /** Asks for a tier filter; returns null when "All tiers" is chosen. */
     public Tier inputTierFilter() {
         System.out.println("\n========================================");
         System.out.println("  TIER FILTER");
@@ -133,7 +126,6 @@ public class LoyaltyReportUI {
         return tiers[choice - 1];
     }
 
-    /** Asks for a redemption-status filter; returns null when "All statuses" is chosen. */
     public String inputStatusFilter() {
         System.out.println("\n========================================");
         System.out.println("  REDEMPTION STATUS FILTER");
@@ -152,7 +144,6 @@ public class LoyaltyReportUI {
         }
     }
 
-    /** Asks a yes/no question for boolean report options. */
     public boolean inputYesNo(String prompt) {
         System.out.print(prompt + " (y/n): ");
         String line = scanner.nextLine().trim();
@@ -331,8 +322,7 @@ public class LoyaltyReportUI {
             }
         }
     }
-
-    /** Loyalty-specific: management callouts (top member, most-redeemed reward, expiry warnings). */
+    
     public void printCalloutsSection(ListInterface<String> callouts) {
         if (callouts == null || callouts.isEmpty()) {
             return;

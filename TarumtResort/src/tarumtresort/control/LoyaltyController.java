@@ -2,7 +2,6 @@ package tarumtresort.control;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 import tarumtresort.adt.DoublyLinkedList;

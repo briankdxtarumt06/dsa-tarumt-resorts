@@ -1,0 +1,84 @@
+[
+  {
+    "reservationId": "RES001",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES002",
+    "priorityLevel": "EMERGENCY",
+    "overriddenBy": "STF0009",
+    "overrideReason": "Guest requested urgent room assignment",
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES003",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES004",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES005",
+    "priorityLevel": "DIAMOND",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES006",
+    "priorityLevel": "DIAMOND",
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES007",
+    "priorityLevel": "DIAMOND",
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES008",
+    "priorityLevel": "PLATINUM",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES009",
+    "priorityLevel": "PLATINUM",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES010",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES011",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES012",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES013",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES014",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES015",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  },
+  {
+    "reservationId": "RES016",
+    "priorityLevel": "SLIVER",
+    "isDeleted": true
+  }
+]

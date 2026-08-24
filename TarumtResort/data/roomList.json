@@ -1,0 +1,247 @@
+[
+  {
+    "roomId": "R001",
+    "roomNumber": "101",
+    "roomType": "STANDARD_SINGLE",
+    "roomStatus": "CLEANING",
+    "pricePerNight": 120.0
+  },
+  {
+    "roomId": "R002",
+    "roomNumber": "102",
+    "roomType": "STANDARD_SINGLE",
+    "roomStatus": "CLEANING",
+    "pricePerNight": 120.0
+  },
+  {
+    "roomId": "R003",
+    "roomNumber": "103",
+    "roomType": "STANDARD_SINGLE",
+    "roomStatus": "OCCUPIED",
+    "pricePerNight": 120.0
+  },
+  {
+    "roomId": "R004",
+    "roomNumber": "104",
+    "roomType": "STANDARD_SINGLE",
+    "roomStatus": "OCCUPIED",
+    "pricePerNight": 120.0
+  },
+  {
+    "roomId": "R005",
+    "roomNumber": "105",
+    "roomType": "STANDARD_SINGLE",
+    "roomStatus": "OCCUPIED",
+    "pricePerNight": 120.0
+  },
+  {
+    "roomId": "R006",
+    "roomNumber": "106",
+    "roomType": "STANDARD_DOUBLE",
+    "roomStatus": "OCCUPIED",
+    "pricePerNight": 150.0
+  },
+  {
+    "roomId": "R007",
+    "roomNumber": "107",
+    "roomType": "STANDARD_DOUBLE",
+    "roomStatus": "OCCUPIED",
+    "pricePerNight": 150.0
+  },
+  {
+    "roomId": "R008",
+    "roomNumber": "108",
+    "roomType": "STANDARD_DOUBLE",
+    "roomStatus": "OCCUPIED",
+    "pricePerNight": 150.0
+  },
+  {
+    "roomId": "R009",
+    "roomNumber": "109",
+    "roomType": "STANDARD_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 150.0
+  },
+  {
+    "roomId": "R010",
+    "roomNumber": "110",
+    "roomType": "STANDARD_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 150.0
+  },
+  {
+    "roomId": "R011",
+    "roomNumber": "111",
+    "roomType": "STANDARD_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 180.0
+  },
+  {
+    "roomId": "R012",
+    "roomNumber": "112",
+    "roomType": "STANDARD_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 180.0
+  },
+  {
+    "roomId": "R013",
+    "roomNumber": "113",
+    "roomType": "STANDARD_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 180.0
+  },
+  {
+    "roomId": "R014",
+    "roomNumber": "114",
+    "roomType": "STANDARD_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 180.0
+  },
+  {
+    "roomId": "R015",
+    "roomNumber": "115",
+    "roomType": "STANDARD_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 180.0
+  },
+  {
+    "roomId": "R016",
+    "roomNumber": "201",
+    "roomType": "DELUXE_SINGLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 200.0
+  },
+  {
+    "roomId": "R017",
+    "roomNumber": "202",
+    "roomType": "DELUXE_SINGLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 200.0
+  },
+  {
+    "roomId": "R018",
+    "roomNumber": "203",
+    "roomType": "DELUXE_SINGLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 200.0
+  },
+  {
+    "roomId": "R019",
+    "roomNumber": "204",
+    "roomType": "DELUXE_SINGLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 200.0
+  },
+  {
+    "roomId": "R020",
+    "roomNumber": "205",
+    "roomType": "DELUXE_SINGLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 200.0
+  },
+  {
+    "roomId": "R021",
+    "roomNumber": "206",
+    "roomType": "DELUXE_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 250.0
+  },
+  {
+    "roomId": "R022",
+    "roomNumber": "207",
+    "roomType": "DELUXE_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 250.0
+  },
+  {
+    "roomId": "R023",
+    "roomNumber": "208",
+    "roomType": "DELUXE_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 250.0
+  },
+  {
+    "roomId": "R024",
+    "roomNumber": "209",
+    "roomType": "DELUXE_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 250.0
+  },
+  {
+    "roomId": "R025",
+    "roomNumber": "210",
+    "roomType": "DELUXE_DOUBLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 250.0
+  },
+  {
+    "roomId": "R026",
+    "roomNumber": "211",
+    "roomType": "DELUXE_TRIPLE",
+    "roomStatus": "CLEANING",
+    "pricePerNight": 300.0
+  },
+  {
+    "roomId": "R027",
+    "roomNumber": "212",
+    "roomType": "DELUXE_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 300.0
+  },
+  {
+    "roomId": "R028",
+    "roomNumber": "213",
+    "roomType": "DELUXE_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 300.0
+  },
+  {
+    "roomId": "R029",
+    "roomNumber": "214",
+    "roomType": "DELUXE_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 300.0
+  },
+  {
+    "roomId": "R030",
+    "roomNumber": "215",
+    "roomType": "DELUXE_TRIPLE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 300.0
+  },
+  {
+    "roomId": "R031",
+    "roomNumber": "301",
+    "roomType": "SUITE",
+    "roomStatus": "CLEANING",
+    "pricePerNight": 450.0
+  },
+  {
+    "roomId": "R032",
+    "roomNumber": "302",
+    "roomType": "SUITE",
+    "roomStatus": "CLEANING",
+    "pricePerNight": 450.0
+  },
+  {
+    "roomId": "R033",
+    "roomNumber": "303",
+    "roomType": "SUITE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 450.0
+  },
+  {
+    "roomId": "R034",
+    "roomNumber": "304",
+    "roomType": "SUITE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 450.0
+  },
+  {
+    "roomId": "R035",
+    "roomNumber": "305",
+    "roomType": "SUITE",
+    "roomStatus": "AVAILABLE",
+    "pricePerNight": 450.0
+  }
+]
