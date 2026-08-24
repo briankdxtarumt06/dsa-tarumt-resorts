@@ -701,22 +701,5 @@
       }
     ],
     "taskAssignments": []
-  },
-  {
-    "taskId": "TSK0026",
-    "taskName": "Scratch Validation Task",
-    "taskType": "CLEANING",
-    "taskStatus": "PENDING",
-    "taskPriority": "LOW",
-    "startDateTime": "2026-08-21T21:54:14.690290800",
-    "roomId": "R009",
-    "isDeleted": false,
-    "statusHistory": [
-      {
-        "taskStatus": "PENDING",
-        "dateTime": "2026-08-21T21:54:14.696310"
-      }
-    ],
-    "taskAssignments": []
   }
 ]

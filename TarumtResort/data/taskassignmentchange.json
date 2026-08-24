@@ -740,24 +740,6 @@
     "changedAt": "2026-08-21T18:15:02"
   },
   {
-    "changeId": "CHG0104",
-    "status": "Pending",
-    "taskId": "TSK0026",
-    "changedAt": "2026-08-21T21:54:14.708157400"
-  },
-  {
-    "changeId": "CHG0105",
-    "status": "In Progress",
-    "taskId": "TSK0026",
-    "changedAt": "2026-08-21T21:54:14.762951200"
-  },
-  {
-    "changeId": "CHG0106",
-    "status": "Pending",
-    "taskId": "TSK0026",
-    "changedAt": "2026-08-21T21:54:14.878893500"
-  },
-  {
     "changeId": "CHG0107",
     "taskAssignmentId": "ASG0021",
     "status": "Pending",
