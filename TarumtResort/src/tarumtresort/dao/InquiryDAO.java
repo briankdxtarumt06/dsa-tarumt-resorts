@@ -2,59 +2,40 @@ package tarumtresort.dao;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Inquiry;
+import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.utility.JsonFileHandler;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class InquiryDAO {
 
-    private static final Path PENDING_FILE = Path.of("data/pendingInquiries.json");
-    private static final Path RESOLVED_FILE = Path.of("data/resolvedInquiries.json");
+    private static final Path INQUIRY_FILE = Path.of("data/inquiries.json");
 
-    public void savePendingInquiryList(LinkedListInterface<Inquiry> pendingInquiryList) {
+    public void saveInquiryList(ListInterface<Inquiry> inquiryList) {
         try {
-            JsonFileHandler.saveList(pendingInquiryList, PENDING_FILE);
+            JsonFileHandler.saveList(inquiryList, INQUIRY_FILE);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void saveResolvedInquiryList(LinkedListInterface<Inquiry> resolvedInquiryList) {
+    public DoublyLinkedList<Inquiry> retrieveInquiryList() {
         try {
-            JsonFileHandler.saveList(resolvedInquiryList, RESOLVED_FILE);
+            return JsonFileHandler.loadList(INQUIRY_FILE, Inquiry.class);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public LinkedList<Inquiry> retrievePendingInquiryList() {
-        try {
-            return JsonFileHandler.loadList(PENDING_FILE, Inquiry.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new LinkedList<>();
-        }
-    }
-
-    public LinkedList<Inquiry> retrieveResolvedInquiryList() {
-        try {
-            return JsonFileHandler.loadList(RESOLVED_FILE, Inquiry.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
     }
 
     public Inquiry getPendingInquiryById(String inquiryId) {
-        LinkedListInterface<Inquiry> pendingInquiryList = retrievePendingInquiryList();
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            if (pendingInquiryList.get(i).getInquiryId().equals(inquiryId)) {
-                return pendingInquiryList.get(i);
+        ListInterface<Inquiry> inquiryList = retrieveInquiryList();
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getStatus() == InquiryStatus.PENDING && inq.getInquiryId().equals(inquiryId)) {
+                return inq;
             }
         }
         return null;

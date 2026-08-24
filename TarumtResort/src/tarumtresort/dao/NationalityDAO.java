@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import tarumtresort.utility.JsonFileHandler;
 
+// Author: Chai Chee Tong
+
 public class NationalityDAO {
     private final String FILE_NAME = "data/customNationalityList.json";
 

@@ -1,9 +1,11 @@
 package tarumtresort.entity;
 
 import java.time.LocalDate;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.*;
+
+// Author: Chai Chee Tong
 
 public class Room implements Comparable<Room>{
     private String roomId;
@@ -11,7 +13,7 @@ public class Room implements Comparable<Room>{
     private RoomType roomType;
     private RoomStatus roomStatus;
     private double pricePerNight;
-    private LinkedListInterface <Reservation> reservations;
+    private transient ListInterface <Reservation> reservations;
 
     //constructor
     public Room(String roomId, String roomNumber, RoomType roomType, RoomStatus roomStatus, double pricePerNight) {
@@ -20,7 +22,7 @@ public class Room implements Comparable<Room>{
         this.roomType = roomType;
         this.roomStatus = roomStatus;
         this.pricePerNight = pricePerNight;
-        this.reservations = new LinkedList<>();
+        this.reservations = new DoublyLinkedList<>();
     }
 
     //getters 
@@ -29,7 +31,12 @@ public class Room implements Comparable<Room>{
     public RoomType getRoomType() { return roomType; }
     public RoomStatus getRoomStatus() { return roomStatus; }
     public double getPricePerNight() { return pricePerNight; }
-    public LinkedListInterface<Reservation> getReservations() { return reservations; }
+    public ListInterface<Reservation> getReservations() {
+        if (reservations == null) {
+            reservations = new DoublyLinkedList<>();
+        }
+        return reservations;
+    }
 
     //setters
     public void setRoomId(String roomId) { this.roomId = roomId; }

@@ -1,29 +1,46 @@
 package tarumtresort.entity;
 
+import tarumtresort.entity.enums.RoomType;
+import tarumtresort.entity.enums.Tier;
+
+// Author: Imam Mahdi Ali Ang Attuko
 public class Reward implements Comparable<Reward> {
     private String rewardId;
     private String name;
     private String description;
     private int pointCost;
-    /**
-     * Cash value in RM for voucher-type rewards (e.g. RM20 Dining Voucher = 20.0).
-     * Null means this reward is NOT a voucher (experience rewards etc.).
-     */
     private Double voucherValue;
+    private Tier minTier;
+    private RoomType roomType;
+    private Integer discountPercent;
+    private boolean isDeleted;
 
     public Reward() {
     }
 
     public Reward(String rewardId, String name, String description, int pointCost) {
-        this(rewardId, name, description, pointCost, null);
+        this(rewardId, name, description, pointCost, null, null, null, null);
     }
 
     public Reward(String rewardId, String name, String description, int pointCost, Double voucherValue) {
+        this(rewardId, name, description, pointCost, voucherValue, null, null, null);
+    }
+
+    public Reward(String rewardId, String name, String description, int pointCost,
+            Double voucherValue, Tier minTier, RoomType roomType) {
+        this(rewardId, name, description, pointCost, voucherValue, minTier, roomType, null);
+    }
+
+    public Reward(String rewardId, String name, String description, int pointCost,
+            Double voucherValue, Tier minTier, RoomType roomType, Integer discountPercent) {
         this.rewardId = rewardId;
         this.name = name;
         this.description = description;
         this.pointCost = pointCost;
         this.voucherValue = voucherValue;
+        this.minTier = minTier;
+        this.roomType = roomType;
+        this.discountPercent = discountPercent;
     }
 
     public String getRewardId() {
@@ -58,16 +75,44 @@ public class Reward implements Comparable<Reward> {
         this.pointCost = pointCost;
     }
 
-    /**
-     * @return the RM value of this reward if it is a voucher, or null if it is not.
-     */
     public Double getVoucherValue() {
         return voucherValue;
     }
 
-    /** Sets the RM value for voucher-type rewards; null means not a voucher. */
     public void setVoucherValue(Double voucherValue) {
         this.voucherValue = voucherValue;
+    }
+
+    public Tier getMinTier() {
+        return minTier;
+    }
+
+    public void setMinTier(Tier minTier) {
+        this.minTier = minTier;
+    }
+
+    public RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     @Override

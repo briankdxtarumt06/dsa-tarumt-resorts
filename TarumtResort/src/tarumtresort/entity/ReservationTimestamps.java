@@ -3,17 +3,15 @@ package tarumtresort.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// Author: Chai Chee Tong
+
 public class ReservationTimestamps {
 
-    private LocalDateTime registrationTimestamp; // The moment guest arrives at front desk to register (both Walk-in &
-                                                 // Advance Booking)
-    private LocalDate expectedCheckInDate; // The date guest plans to check in (Walk-in = today, Advance Booking =
-                                           // future date)
-    private LocalDate expectedCheckOutDate; // The date guest plans to check out (auto-calculated = expectedCheckInDate
-                                            // + numberOfNights)
+    private LocalDateTime registrationTimestamp; // The moment guest arrives at front desk to register (both Walk-in & Advance Booking)
+    private LocalDate expectedCheckInDate; // The date guest plans to check in (Walk-in = today, Advance Booking = future date)
+    private LocalDate expectedCheckOutDate; // The date guest plans to check out (auto-calculated = expectedCheckInDate + numberOfNights)
     private LocalDateTime assignedTime; // The moment a room is assigned to the guest (both Walk-in & Advance Booking)
-    private LocalDateTime actualCheckInTime; // The moment guest officially receives the room key (both Walk-in &
-                                             // Advance Booking)
+    private LocalDateTime actualCheckInTime; // The moment guest officially receives the room key (both Walk-in & Advance Booking)
     private LocalDateTime actualCheckOutTime; // The moment guest leaves the hotel (both Walk-in & Advance Booking)
 
     // Constructor

@@ -1,11 +1,6 @@
 package tarumtresort.utility;
 
-/**
- *
- * @author Brian
- *
- * Small ANSI escape code helper for colored console output.
- */
+// Author: Brian Kam Ding Xian
 public final class Ansi {
 
     public static final boolean ENABLED = true;
@@ -20,7 +15,6 @@ public final class Ansi {
     private Ansi() {
     }
 
-    // wraps text in a color code + reset; returns plain text when disabled
     public static String color(String code, String text) {
         if (!ENABLED || code == null || text == null) {
             return text;

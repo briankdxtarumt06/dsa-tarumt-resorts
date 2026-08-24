@@ -1,51 +1,34 @@
 package tarumtresort.report;
 
-import java.util.List;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 
-/**
- *
- * @author Brian
- *
- * Shared output holder for every report: a 2D table (row 0 = header), summary
- * lines (totals / averages) printed under the table, plus optional ASCII
- * charts and callout sections. The original table+summary constructor stays
- * valid; charts/callouts default to empty.
- */
+// Author: Brian Kam Ding Xian
 public class ReportResult {
 
     private final String[][] table;
     private final String[] summary;
-    private final LinkedListInterface<ReportChart> charts;
-    private final LinkedListInterface<String> callouts;
+    private final ListInterface<ReportChart> charts;
+    private final ListInterface<String> callouts;
+    private final String criteria;
 
     public ReportResult(String[][] table, String[] summary) {
-        this(table, summary, (LinkedListInterface<ReportChart>) null, null);
+        this(table, summary, (ListInterface<ReportChart>) null, null, null);
     }
 
     public ReportResult(String[][] table, String[] summary,
-            LinkedListInterface<ReportChart> charts, LinkedListInterface<String> callouts) {
+            ListInterface<ReportChart> charts, ListInterface<String> callouts) {
+        this(table, summary, charts, callouts, null);
+    }
+
+    public ReportResult(String[][] table, String[] summary,
+            ListInterface<ReportChart> charts, ListInterface<String> callouts,
+            String criteria) {
         this.table = table;
         this.summary = summary == null ? new String[0] : summary;
-        this.charts = charts == null ? new LinkedList<>() : charts;
-        this.callouts = callouts == null ? new LinkedList<>() : callouts;
-    }
-
-    // adapter: the inquiry module still supplies charts as java.util.List
-    public ReportResult(String[][] table, String[] summary,
-            List<ReportChart> charts, List<String> callouts) {
-        this(table, summary, toAdtList(charts), toAdtList(callouts));
-    }
-
-    private static <T extends Comparable<T>> LinkedListInterface<T> toAdtList(List<T> source) {
-        LinkedListInterface<T> result = new LinkedList<>();
-        if (source != null) {
-            for (T element : source) {
-                result.addBack(element);
-            }
-        }
-        return result;
+        this.charts = charts == null ? new DoublyLinkedList<>() : charts;
+        this.callouts = callouts == null ? new DoublyLinkedList<>() : callouts;
+        this.criteria = criteria;
     }
 
     public String[][] getTable() {
@@ -56,12 +39,16 @@ public class ReportResult {
         return summary;
     }
 
-    public LinkedListInterface<ReportChart> getCharts() {
+    public ListInterface<ReportChart> getCharts() {
         return charts;
     }
 
-    public LinkedListInterface<String> getCallouts() {
+    public ListInterface<String> getCallouts() {
         return callouts;
+    }
+
+    public String getCriteria() {
+        return criteria;
     }
 
     public boolean isEmpty() {

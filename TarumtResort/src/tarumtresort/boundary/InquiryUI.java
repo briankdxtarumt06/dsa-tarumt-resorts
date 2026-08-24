@@ -1,6 +1,7 @@
 package tarumtresort.boundary;
 
 import java.util.Scanner;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Guest;
 import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Payment;
@@ -10,15 +11,10 @@ import tarumtresort.entity.Task;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
-import tarumtresort.entity.enums.RoomType;
-import tarumtresort.report.ReportChart;
-import tarumtresort.report.ReportResult;
+import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class InquiryUI {
 
     private Scanner scanner = new Scanner(System.in);
@@ -43,7 +39,7 @@ public class InquiryUI {
         System.out.println("  0. Back to Main Menu");
         System.out.println("========================================");
         return readIntInRange("Enter choice (0-6): ", 0, 6);
-}
+    }
 
     public int getReportMenuChoice() {
         System.out.println("\n--- Reports ---");
@@ -73,17 +69,6 @@ public class InquiryUI {
         return types[choice - 1];
     }
 
-    public InquiryType inputInquiryTypeFilter() {
-        System.out.println("Filter by Query Type:");
-        InquiryType[] types = InquiryType.values();
-        for (int i = 0; i < types.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + types[i]);
-        }
-        System.out.println("  0. All Types");
-        int choice = readIntInRange("Enter choice (0-" + types.length + "): ", 0, types.length);
-        return choice == 0 ? null : types[choice - 1];
-    }
-
     public InquiryStatus inputInquiryStatusFilter() {
         System.out.println("Filter by Status:");
         InquiryStatus[] statuses = InquiryStatus.values();
@@ -95,13 +80,13 @@ public class InquiryUI {
         return choice == 0 ? null : statuses[choice - 1];
     }
 
-    public RoomType inputRoomTypeFilter() {
-        System.out.println("Filter by Room Type:");
-        RoomType[] types = RoomType.values();
+    public InquiryType inputInquiryTypeFilter() {
+        System.out.println("Filter by Query Type:");
+        InquiryType[] types = InquiryType.values();
         for (int i = 0; i < types.length; i++) {
             System.out.println("  " + (i + 1) + ". " + types[i]);
         }
-        System.out.println("  0. All Room Types");
+        System.out.println("  0. All Types");
         int choice = readIntInRange("Enter choice (0-" + types.length + "): ", 0, types.length);
         return choice == 0 ? null : types[choice - 1];
     }
@@ -176,7 +161,22 @@ public class InquiryUI {
         } else if (extra instanceof Payment) {
             Payment payment = (Payment) extra;
             System.out.println("Payment ID     : " + payment.getPaymentID());
-            System.out.println("Reservation ID : " + payment.getReservationID());
+            StringBuilder resIds = new StringBuilder();
+            ListInterface<String> paymentResIds = payment.getReservationIds();
+            if (paymentResIds != null) {
+                for (int j = 0; j < paymentResIds.size(); j++) {
+                    if (paymentResIds.get(j) != null) {
+                        if (resIds.length() > 0) {
+                            resIds.append(", ");
+                        }
+                        resIds.append(paymentResIds.get(j));
+                    }
+                }
+            }
+            if (resIds.length() == 0) {
+                resIds.append("-");
+            }
+            System.out.println("Reservation ID : " + resIds);
             System.out.println("Room Charge    : RM " + String.format("%.2f", payment.getRoomCharge()));
             System.out.println("Service Charge : RM " + String.format("%.2f", payment.getServiceCharge()));
             System.out.println("Tax            : RM " + String.format("%.2f", payment.getTax()));
@@ -193,7 +193,7 @@ public class InquiryUI {
             System.out.println("Housekeeping Task Created: " + task.getTaskId());
             System.out.println("Room: " + task.getRoomId());
             System.out.println("Status: " + task.getTaskStatus());
-            System.out.println("Scheduled Start: " + task.getStartDateTime());
+            System.out.println("Scheduled Start: " + tarumtresort.utility.DateTimeUtil.readable(task.getStartDateTime()));
         } else {
             System.out.println(extra.toString());
         }
@@ -208,45 +208,53 @@ public class InquiryUI {
         printTable(data);
     }
 
-    public void printReport(ReportResult report) {
-        if (report == null || report.isEmpty()) {
-            System.out.println("\nNo data available for this report.");
-            return;
+    // INQUIRY LIST (paginated)
+    public int printInquiryListMenu(ListInterface<Inquiry> pageList, int page, int pageCount, boolean hasFilter) {
+        ConsoleUtil.clearScreen();
+        System.out.println("\n==============================");
+        System.out.println("  INQUIRY MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
+        System.out.println("==============================");
+
+        if (pageList.isEmpty()) {
+            System.out.println("  (No inquiry records)");
+        } else {
+            String[] header = { "No.", "Inquiry ID", "Confirm No.", "Type", "Priority", "Status" };
+            String[][] rows = new String[pageList.size()][6];
+            for (int i = 0; i < pageList.size(); i++) {
+                Inquiry inq = pageList.get(i);
+                rows[i] = new String[] {
+                        String.valueOf(i + 1), inq.getInquiryId(), inq.getConfirmationNumber(),
+                        inq.getInquiryType().toString(), inq.getInquiryType().getPriority().toString(),
+                        inq.getStatus().toString()
+                };
+            }
+            TablePrinter.displayTable(header, rows);
         }
 
-        System.out.println();
-        printDelimitedTable(report.getTable());
-
-        for (String line : report.getSummary()) {
-            System.out.println(line);
+        System.out.println("==========Actions==========");
+        int action = 1;
+        System.out.println("  " + action++ + ". View Details");
+        System.out.println("  " + action++ + ". Filter by Inquiry Status");
+        System.out.println("  " + action++ + ". Filter by Inquiry Type");
+        System.out.println("  " + action++ + ". Search by Inquiry ID");
+        System.out.println("  " + action++ + ". Search by Confirmation Number");
+        if (page < pageCount - 1) {
+            System.out.println("  " + action++ + ". Next Page");
         }
-
-        for (ReportChart chart : report.getCharts()) {
-            printChart(chart);
+        if (page > 0) {
+            System.out.println("  " + action++ + ". Previous Page");
         }
-
-        for (String callout : report.getCallouts()) {
-            System.out.println("  ! " + callout);
+        if (hasFilter) {
+            System.out.println("  " + action++ + ". Clear Filter");
         }
+        System.out.println("  0. Back");
+
+        System.out.println("===========================");
+        return readIntInRange("Enter choice (0-" + (action - 1) + "): ", 0, action - 1);
     }
 
-    private void printChart(ReportChart chart) {
-        if (chart.isEmpty()) {
-            return;
-        }
-        System.out.println("\n" + chart.getTitle());
-        double max = 0;
-        for (ReportChart.Bar bar : chart.getBars()) {
-            max = Math.max(max, bar.getValue());
-        }
-        for (ReportChart.Bar bar : chart.getBars()) {
-            int barLength = max == 0 ? 0 : (int) Math.round((bar.getValue() / max) * 30);
-            StringBuilder bars = new StringBuilder();
-            for (int i = 0; i < barLength; i++) {
-                bars.append("█");
-            }
-            System.out.printf("  %-20s %-30s %s%n", bar.getLabel(), bars, bar.getDetail());
-        }
+    public int inputListIndex(String entityLabel, int max) {
+        return readIntInRange("Enter " + entityLabel + " number to select (0 = cancel) (0-" + max + "): ", 0, max);
     }
 
     private void printTable(String[][] data) {
@@ -257,16 +265,6 @@ public class InquiryUI {
         String[][] rows = new String[data.length - 1][];
         System.arraycopy(data, 1, rows, 0, data.length - 1);
         TablePrinter.displayTable(header, rows);
-    }
-
-    private void printDelimitedTable(String[][] data) {
-        if (data.length == 0) {
-            return;
-        }
-        String[] header = data[0];
-        String[][] rows = new String[data.length - 1][];
-        System.arraycopy(data, 1, rows, 0, data.length - 1);
-        TablePrinter.displayDelimitedTable(header, rows);
     }
 
     public void printMessage(String message) {

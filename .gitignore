@@ -2,8 +2,10 @@
 
 /TarumtResort/build/
 
+/TarumtResort/dist/
+
 /TarumtResort/data/
 
-/data/
+/TarumtResort/src/tarumtresort/test/
 
-/.zcode/
+/data/

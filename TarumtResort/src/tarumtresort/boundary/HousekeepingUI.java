@@ -6,28 +6,24 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.Staff;
 import tarumtresort.entity.Task;
 import tarumtresort.entity.TaskAssignment;
+import tarumtresort.entity.enums.Department;
+import tarumtresort.entity.enums.StaffRole;
 import tarumtresort.entity.enums.TaskPriority;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
 import tarumtresort.utility.Ansi;
 import tarumtresort.utility.ConsoleUtil;
+import tarumtresort.utility.DateTimeUtil;
 import tarumtresort.utility.TablePrinter;
 
-/**
- *
- * @author Brian Kam Ding Xian
- *
- */
+// Author: Brian Kam Ding Xian
 public class HousekeepingUI {
 
     private Scanner scanner = new Scanner(System.in);
-
-    public static final String[] DEPARTMENTS = {"Finance", "Housekeeping", "Maintenance", "Front Office"};
-    public static final String[] STAFF_ROLES = {"Manager", "Supervisor", "Cleaner", "Technician", "Receptionist", "Admin"};
 
     public static final LocalTime DEFAULT_SHIFT_START = LocalTime.of(8, 0);
 
@@ -86,13 +82,14 @@ public class HousekeepingUI {
         printBanner("HOUSEKEEPING MODULE");
         System.out.println("  1. Task Management");
         System.out.println("  2. Staff Management");
-        System.out.println("  3. Reports");
+        System.out.println("  3. Room Cleaning Performance Report");
+        System.out.println("  4. Staff Productivity Report");
         System.out.println("  0. Exit");
         printSeparator();
-        return inputIntChoice("Enter choice", 0, 3);
+        return inputIntChoice("Enter choice", 0, 4);
     }
 
-    public int printTaskListMenu(LinkedListInterface<Task> pageList, int page, int pageCount, TaskStatus statusFilter,
+    public int printTaskListMenu(ListInterface<Task> pageList, int page, int pageCount, TaskStatus statusFilter,
             TaskPriority priorityFilter, String searchTerm) {
         clearScreen();
         printBanner("TASK MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
@@ -150,8 +147,8 @@ public class HousekeepingUI {
         return inputIntChoice("Enter choice", 0, action - 1);
     }
 
-    public int printStaffListMenu(LinkedListInterface<Staff> pageList, int page, int pageCount,
-            String departmentFilter, String roleFilter, String searchTerm) {
+    public int printStaffListMenu(ListInterface<Staff> pageList, int page, int pageCount,
+            Department departmentFilter, StaffRole roleFilter, String searchTerm) {
         clearScreen();
         printBanner("STAFF MANAGEMENT (Page " + (page + 1) + " of " + pageCount + ")");
         if (departmentFilter != null) {
@@ -172,7 +169,8 @@ public class HousekeepingUI {
                 Staff staff = pageList.get(i);
                 rows[i] = new String[] {
                     String.valueOf(i + 1), staff.getStaffId(), staff.getStaffName(),
-                    staff.getDepartment(), staff.getStaffRole(),
+                    staff.getDepartment() == null ? "-" : staff.getDepartment().toString(),
+                    staff.getStaffRole() == null ? "-" : staff.getStaffRole().toString(),
                     staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()
                 };
             }
@@ -219,15 +217,27 @@ public class HousekeepingUI {
         return inputIntChoice("Enter choice", 0, 7);
     }
 
-    public int getStaffActionChoice() {
+public int getStaffActionChoice() {
         printSection("Staff Actions");
         System.out.println("  1. Edit Staff Details");
-        System.out.println("  2. View Assignment History");
-        System.out.println("  3. Resign Staff");
-        System.out.println("  4. View Change History");
-        System.out.println("  0. Back to List");
+        System.out.println("  2. Start First Task in Queue");
+        System.out.println("  3. View Assignment History");
+        System.out.println("  4. Resign Staff");
+        System.out.println("  5. View Change History");
+        System.out.println("  0. Back");
         printSeparator();
-        return inputIntChoice("Enter choice", 0, 4);
+        return inputIntChoice("Enter choice", 0, 5);
+    }
+
+    public int getAssignmentActionChoice(TaskAssignment assignment) {
+        printSection("Assignment Actions");
+        System.out.println("  Assignment: "
+                + (assignment == null || assignment.getTaskAssignmentId() == null ? "-" : assignment.getTaskAssignmentId()));
+        System.out.println("  1. View Change History");
+        System.out.println("  2. Update Status");
+        System.out.println("  0. Back");
+        printSeparator();
+        return inputIntChoice("Enter choice", 0, 2);
     }
 
     public int inputTaskFieldChoice() {
@@ -279,20 +289,32 @@ public class HousekeepingUI {
         return input.trim();
     }
 
-    public String inputDepartment() {
+    public Department inputDepartment() {
         System.out.println("\nSelect Department:");
-        for (int i = 0; i < DEPARTMENTS.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + DEPARTMENTS[i]);
+        Department[] departments = Department.values();
+        int count = 0;
+        for (Department department : departments) {
+            if (department == Department.UNKNOWN) {
+                continue;
+            }
+            count++;
+            System.out.println("  " + count + ". " + department);
         }
-        return DEPARTMENTS[inputIntChoice("Enter department", 1, DEPARTMENTS.length) - 1];
+        return departments[inputIntChoice("Enter department", 1, count) - 1];
     }
 
-    public String inputStaffRole() {
+    public StaffRole inputStaffRole() {
         System.out.println("Select Staff Role:");
-        for (int i = 0; i < STAFF_ROLES.length; i++) {
-            System.out.println("  " + (i + 1) + ". " + STAFF_ROLES[i]);
+        StaffRole[] roles = StaffRole.values();
+        int count = 0;
+        for (StaffRole role : roles) {
+            if (role == StaffRole.UNKNOWN) {
+                continue;
+            }
+            count++;
+            System.out.println("  " + count + ". " + role);
         }
-        return STAFF_ROLES[inputIntChoice("Enter staff role", 1, STAFF_ROLES.length) - 1];
+        return roles[inputIntChoice("Enter staff role", 1, count) - 1];
     }
 
     // INPUT METHODS (task)
@@ -309,13 +331,13 @@ public class HousekeepingUI {
 
     public TaskType inputTaskType() {
         System.out.println("\nSelect Task Type:");
-        System.out.println("  1. CHECKOUT_CLEAN");
-        System.out.println("  2. MAINTENANCE");
-        System.out.println("  3. INSPECTION");
-        System.out.println("  4. ROOM_SERVICE");
+        System.out.println("  1. Cleaning");
+        System.out.println("  2. Maintenance");
+        System.out.println("  3. Inspection");
+        System.out.println("  4. Room Service");
         int choice = inputIntChoice("Enter task type", 1, 4);
         return switch (choice) {
-            case 1 -> TaskType.CHECKOUT_CLEAN;
+            case 1 -> TaskType.CLEANING;
             case 2 -> TaskType.MAINTENANCE;
             case 3 -> TaskType.INSPECTION;
             default -> TaskType.ROOM_SERVICE;
@@ -324,19 +346,19 @@ public class HousekeepingUI {
 
     public TaskPriority inputTaskPriority() {
         System.out.println("\nSelect Task Priority:");
-        System.out.println("  1. HIGH");
-        System.out.println("  2. MEDIUM");
-        System.out.println("  3. LOW");
+        System.out.println("  1. High");
+        System.out.println("  2. Medium");
+        System.out.println("  3. Low");
         int choice = inputIntChoice("Enter task priority", 1, 3);
         return choice == 1 ? TaskPriority.HIGH : choice == 2 ? TaskPriority.MEDIUM : TaskPriority.LOW;
     }
 
     public TaskStatus inputTaskStatusFilter() {
         System.out.println("\nSelect Task Status:");
-        System.out.println("  1. PENDING");
-        System.out.println("  2. IN_PROGRESS");
-        System.out.println("  3. COMPLETED");
-        System.out.println("  4. CANCELLED");
+        System.out.println("  1. Pending");
+        System.out.println("  2. In Progress");
+        System.out.println("  3. Completed");
+        System.out.println("  4. Cancelled");
         int choice = inputIntChoice("Enter task status", 1, 4);
         return switch (choice) {
             case 1 -> TaskStatus.PENDING;
@@ -398,7 +420,7 @@ public class HousekeepingUI {
         return inputIntChoice("Enter choice", 0, 2);
     }
 
-    public int selectStaff(LinkedListInterface<Staff> staffList) {
+    public int selectStaff(ListInterface<Staff> staffList) {
         printSection("Select Staff to Assign");
         if (staffList.isEmpty()) {
             System.out.println("  (no eligible staff)");
@@ -409,7 +431,8 @@ public class HousekeepingUI {
                 Staff staff = staffList.get(i);
                 rows[i] = new String[] {
                     String.valueOf(i + 1), staff.getStaffId(), staff.getStaffName(),
-                    staff.getDepartment(), staff.getStaffRole(),
+                    staff.getDepartment() == null ? "-" : staff.getDepartment().toString(),
+                    staff.getStaffRole() == null ? "-" : staff.getStaffRole().toString(),
                     staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()
                 };
             }
@@ -517,7 +540,8 @@ public class HousekeepingUI {
             {"Task Type", task.getTaskType() == null ? "-" : task.getTaskType().name()},
             {"Current Status", task.getTaskStatus() == null ? "-" : task.getTaskStatus().name()},
             {"Priority", task.getTaskPriority() == null ? "-" : task.getTaskPriority().name()},
-            {"Start Date & Time", String.valueOf(task.getStartDateTime())},
+            {"Start Date & Time", DateTimeUtil.readable(task.getStartDateTime())},
+            {"End Date & Time", DateTimeUtil.readable(task.getEndDateTime())},
             {"Room ID", task.getRoomId() == null ? "-" : task.getRoomId()},
             {"Active Assignment", active == null ? "-"
                     : active.getTaskAssignmentId() + " (" + (active.getStatus() == null ? "-" : active.getStatus().name()) + ")"}
@@ -528,8 +552,8 @@ public class HousekeepingUI {
         printDetails(new String[][] {
             {"Staff ID", staff.getStaffId()},
             {"Staff Name", staff.getStaffName()},
-            {"Department", staff.getDepartment()},
-            {"Staff Role", staff.getStaffRole()},
+            {"Department", staff.getDepartment() == null ? "-" : staff.getDepartment().toString()},
+            {"Staff Role", staff.getStaffRole() == null ? "-" : staff.getStaffRole().toString()},
             {"Availability", staff.getAvailabilityStatus() == null ? "-" : staff.getAvailabilityStatus().name()},
             {"Active Assignment", active == null ? "-"
                     : active.getTaskAssignmentId() + " (" + (active.getStatus() == null ? "-" : active.getStatus().name()) + ")"}
@@ -543,7 +567,7 @@ public class HousekeepingUI {
             {"Task Type", taskType == null ? "-" : taskType.name()},
             {"Priority", taskPriority == null ? "-" : taskPriority.name()},
             {"Room ID", roomId == null ? "-" : roomId},
-            {"Start Date & Time", String.valueOf(startDateTime)}
+            {"Start Date & Time", DateTimeUtil.readable(startDateTime)}
         });
     }
 
@@ -552,15 +576,15 @@ public class HousekeepingUI {
         printTaskCreationSummary(taskName, taskType, taskPriority, roomId, startDateTime);
     }
 
-    public void printStaffCreationSummary(String staffName, String department, String staffRole) {
+    public void printStaffCreationSummary(String staffName, Department department, StaffRole staffRole) {
         printDetails(new String[][] {
             {"Staff Name", staffName},
-            {"Department", department},
-            {"Staff Role", staffRole}
+            {"Department", department == null ? "-" : department.toString()},
+            {"Staff Role", staffRole == null ? "-" : staffRole.toString()}
         });
     }
 
-    public void printStaffEditSummary(String staffName, String department, String staffRole) {
+    public void printStaffEditSummary(String staffName, Department department, StaffRole staffRole) {
         printStaffCreationSummary(staffName, department, staffRole);
     }
 
@@ -665,6 +689,18 @@ public class HousekeepingUI {
 
     public void printNoRecords() {
         ConsoleUtil.printError("No records to view!");
+    }
+
+    public void printTaskStarted(String taskName) {
+        ConsoleUtil.printSuccess("Task started: " + (taskName == null ? "-" : taskName));
+    }
+
+    public void printNoTasksInQueue() {
+        ConsoleUtil.printError("No pending task in this staff member's queue!");
+    }
+
+    public void printTaskAlreadyStarted() {
+        ConsoleUtil.printWarning("The first task in the queue is already in progress!");
     }
 
     public void printWarning(String message) {

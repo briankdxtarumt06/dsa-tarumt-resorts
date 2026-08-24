@@ -24,22 +24,29 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.AvailabilityStatus;
+import tarumtresort.entity.enums.Department;
+import tarumtresort.entity.enums.RoomStatus;
+import tarumtresort.entity.enums.StaffRole;
 import tarumtresort.entity.enums.TaskStatus;
 import tarumtresort.entity.enums.TaskType;
 
+// Author: Brian Kam Ding Xian, Imam Mahdi Ali Ang Attuko
 public class JsonFileHandler {
     // object to json, json to object builder
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .registerTypeHierarchyAdapter(LinkedListInterface.class, new LinkedListInterfaceAdapter())
+            .registerTypeHierarchyAdapter(ListInterface.class, new ListInterfaceAdapter())
             .registerTypeAdapter(TaskType.class, new EnumNormalizerAdapter<>(TaskType::fromString, TaskType.UNKNOWN))
             .registerTypeAdapter(AvailabilityStatus.class,
                     new EnumNormalizerAdapter<>(AvailabilityStatus::fromString, AvailabilityStatus.AVAILABLE))
             .registerTypeAdapter(TaskStatus.class, new EnumNormalizerAdapter<>(TaskStatus::fromString, null))
+            .registerTypeAdapter(RoomStatus.class, new EnumNormalizerAdapter<>(RoomStatus::fromString, null))
+            .registerTypeAdapter(StaffRole.class, new EnumNormalizerAdapter<>(StaffRole::fromString, StaffRole.UNKNOWN))
+            .registerTypeAdapter(Department.class, new EnumNormalizerAdapter<>(Department::fromString, Department.UNKNOWN))
             .create();
 
     private JsonFileHandler() { 
@@ -69,7 +76,7 @@ public class JsonFileHandler {
     }
 
     // save list of entities to json file
-    public static <T extends Comparable<T>> void saveList(LinkedListInterface<T> list, Path file) throws IOException {
+    public static <T extends Comparable<T>> void saveList(ListInterface<T> list, Path file) throws IOException {
         Object[] snapshot = new Object[list == null ? 0 : list.size()];
         for (int i = 0; i < snapshot.length; i++) {
             snapshot[i] = list.get(i);
@@ -78,8 +85,8 @@ public class JsonFileHandler {
     }
 
     // load list of entities from json file
-    public static <T extends Comparable<T>> LinkedList<T> loadList(Path file, Class<T> elementType) throws IOException {
-        LinkedList<T> result = new LinkedList<>();
+    public static <T extends Comparable<T>> DoublyLinkedList<T> loadList(Path file, Class<T> elementType) throws IOException {
+        DoublyLinkedList<T> result = new DoublyLinkedList<>();
         try {
             // exception handling
             if (!Files.exists(file)) {
@@ -101,27 +108,16 @@ public class JsonFileHandler {
                 result.addBack(GSON.fromJson(element, elementType));
             }
         } catch (IOError | RuntimeException e) {
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
         return result;
     }
 
-    /**
-     * Saves a list of entities where one nested field holds a list of other
-     * entities: only their ids are written to disk (no duplicate data).
-     * Shared by any entity type with a nested entity list.
-     *
-     * @param list        the entity list to save
-     * @param file        target json file
-     * @param fieldName   name of the nested field in the entity class
-     * @param listGetter  extracts the nested entity list from an entity
-     * @param idGetter    extracts the id from a nested entity
-     */
     public static <T extends Comparable<T>, E extends Comparable<E>> void saveListWithNestedIds(
-            LinkedListInterface<T> list, 
+            ListInterface<T> list, 
             Path file,
             String fieldName,
-            Function<T, LinkedListInterface<E>> listGetter,
+            Function<T, ListInterface<E>> listGetter,
             Function<E, String> idGetter) throws IOException {
 
         JsonArray objects = new JsonArray();
@@ -132,7 +128,7 @@ public class JsonFileHandler {
 
             // replace the nested entity list with its plain id list
             JsonArray ids = new JsonArray();
-            LinkedListInterface<E> nested = listGetter.apply(entity); // get the nested list of entity
+            ListInterface<E> nested = listGetter.apply(entity); // get the nested list of entity
             if (nested != null) {
                 // iterate through nested list of entity
                 for (int j = 0; j < nested.size(); j++) {
@@ -150,24 +146,14 @@ public class JsonFileHandler {
         save(objects, file);
     }
 
-    /**
-     * Loads a list of entities whose nested id list is resolved back into
-     * full entities, fetching each entity from its json file via the resolver.
-     *
-     * @param file         source json file
-     * @param entityType   the entity class
-     * @param fieldName    name of the nested field in the entity class
-     * @param idResolver   resolves an id to the full nested entity
-     * @param listSetter   attaches the resolved entity list back onto the entity
-     */
-    public static <T extends Comparable<T>, E extends Comparable<E>> LinkedList<T> loadListWithNestedIds(
+    public static <T extends Comparable<T>, E extends Comparable<E>> DoublyLinkedList<T> loadListWithNestedIds(
             Path file, 
             Class<T> entityType,
             String fieldName,
             Function<String, E> idResolver,
-            BiConsumer<T, LinkedListInterface<E>> listSetter) throws IOException {
+            BiConsumer<T, ListInterface<E>> listSetter) throws IOException {
 
-        LinkedList<T> result = new LinkedList<>();
+        DoublyLinkedList<T> result = new DoublyLinkedList<>();
         try {
             // exception handling
             if (!Files.exists(file)) {
@@ -188,7 +174,7 @@ public class JsonFileHandler {
                 JsonObject json = element.getAsJsonObject();
 
                 // extract the nested id list and resolve each id to a full entity
-                LinkedListInterface<E> nested = new LinkedList<>();
+                ListInterface<E> nested = new DoublyLinkedList<>();
                 JsonElement nestedElement = json.remove(fieldName);
                 if (nestedElement != null && nestedElement.isJsonArray()) {
                     for (JsonElement idElement : nestedElement.getAsJsonArray()) {
@@ -207,7 +193,7 @@ public class JsonFileHandler {
                 result.addBack(entity);
             }
         } catch (IOError | RuntimeException e) {
-            return new LinkedList<>();
+            return new DoublyLinkedList<>();
         }
         return result;
     }
@@ -234,12 +220,12 @@ public class JsonFileHandler {
         }
     }
 
-    // Gson adapter for LinkedListInterface
-    private static class LinkedListInterfaceAdapter
-            implements JsonSerializer<LinkedListInterface<?>>, JsonDeserializer<LinkedListInterface<?>> {
+    // Gson adapter for ListInterface
+    private static class ListInterfaceAdapter
+            implements JsonSerializer<ListInterface<?>>, JsonDeserializer<ListInterface<?>> {
 
         @Override
-        public JsonElement serialize(LinkedListInterface<?> src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(ListInterface<?> src, Type typeOfSrc, JsonSerializationContext context) {
             JsonArray array = new JsonArray();
             if (src != null) {
                 for (int i = 0; i < src.size(); i++) {
@@ -251,9 +237,9 @@ public class JsonFileHandler {
 
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
-        public LinkedListInterface<?> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+        public ListInterface<?> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                 throws JsonParseException {
-            LinkedList result = new LinkedList();
+            DoublyLinkedList result = new DoublyLinkedList();
             if (!json.isJsonArray()) {
                 return result;
             }
@@ -271,12 +257,6 @@ public class JsonFileHandler {
         }
     }
 
-    /**
-     * Enum adapter that reads legacy JSON strings through each enum's
-     * fromString normalizer (e.g. "In Progress" -> IN_PROGRESS,
-     * "Housekeeping" -> CHECKOUT_CLEAN) instead of requiring exact enum
-     * names. Writes the canonical enum name back to disk.
-     */
     private static class EnumNormalizerAdapter<T extends Enum<T>> extends TypeAdapter<T> {
 
         private final Function<String, T> parser;

@@ -1,15 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package tarumtresort.adt;
 
-/**
- *
- * @author Brian
- * @param <T>
- */
-public interface LinkedListInterface<T extends Comparable<T>> extends Iterable<T> {
+// Author: Brian Kam Ding Xian, Chai Chee Tong, Fong Wen Ling, Imam Mahdi Ali Ang Attuko, Lee Boon Yew
+public interface ListInterface<T extends Comparable<T>> extends Iterable<T> {
     // LIST
 
     void addFront(T element);
@@ -36,7 +28,7 @@ public interface LinkedListInterface<T extends Comparable<T>> extends Iterable<T
 
     T removeIndex(int index);
 
-    boolean merge(LinkedListInterface<T> other);
+    boolean merge(ListInterface<T> other);
 
     // HELPER
 

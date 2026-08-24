@@ -1,8 +1,8 @@
 package tarumtresort.dao;
 
 import java.nio.file.Path;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.RedemptionRecord;
 import tarumtresort.utility.ConsoleUtil;
 import tarumtresort.utility.JsonFileHandler;
@@ -10,7 +10,7 @@ import tarumtresort.utility.JsonFileHandler;
 public class RedemptionRecordDAO {
     private final String FILE_NAME = "data/redemptions.json";
 
-    public void saveToFile(LinkedListInterface<RedemptionRecord> list) {
+    public void saveToFile(ListInterface<RedemptionRecord> list) {
         try {
             JsonFileHandler.saveList(list, Path.of(FILE_NAME));
         } catch (java.io.IOException e) {
@@ -18,10 +18,10 @@ public class RedemptionRecordDAO {
         }
     }
 
-    public LinkedList<RedemptionRecord> retrieveFromFile() {
-        LinkedList<RedemptionRecord> result = new LinkedList<>();
+    public DoublyLinkedList<RedemptionRecord> retrieveFromFile() {
+        DoublyLinkedList<RedemptionRecord> result = new DoublyLinkedList<>();
         try {
-            LinkedList<RedemptionRecord> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), RedemptionRecord.class);
+            DoublyLinkedList<RedemptionRecord> loaded = JsonFileHandler.loadList(Path.of(FILE_NAME), RedemptionRecord.class);
             for (int i = 0; i < loaded.size(); i++) {
                 result.addBack(loaded.get(i));
             }

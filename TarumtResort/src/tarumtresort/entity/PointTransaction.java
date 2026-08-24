@@ -2,6 +2,7 @@ package tarumtresort.entity;
 
 import java.time.LocalDateTime;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class PointTransaction implements Comparable<PointTransaction> {
     private String transactionId;
     private LocalDateTime date;
@@ -83,21 +84,24 @@ public class PointTransaction implements Comparable<PointTransaction> {
 
     @Override
     public int compareTo(PointTransaction other) {
-        int byDate = this.expiryDate.compareTo(other.expiryDate);
-        if (byDate != 0) {
-            return byDate;
+        if (this.expiryDate == null && other.expiryDate == null) {
+            // both null, fall through to id
+        } else if (this.expiryDate == null) {
+            return -1;
+        } else if (other.expiryDate == null) {
+            return 1;
+        } else {
+            int byDate = this.expiryDate.compareTo(other.expiryDate);
+            if (byDate != 0) {
+                return byDate;
+            }
         }
-        return this.transactionId.compareTo(other.transactionId); 
+        if (this.transactionId == null && other.transactionId == null) return 0;
+        if (this.transactionId == null) return -1;
+        if (other.transactionId == null) return 1;
+        return this.transactionId.compareTo(other.transactionId);
     }
 
-    /**
-     * A transaction still holds unredeemed points past its expiry date.
-     * Once the expiry sweep zeroes remainingPoints, this returns false so the
-     * row is kept in history but no longer counts toward the balance.
-     *
-     * @param now the reference time to check against
-     * @return true if this transaction holds unredeemed points past expiry
-     */
     public boolean isExpired(LocalDateTime now) {
         return remainingPoints > 0 && expiryDate != null && !now.isBefore(expiryDate);
     }

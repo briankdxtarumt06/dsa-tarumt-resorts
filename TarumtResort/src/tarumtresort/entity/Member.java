@@ -1,29 +1,31 @@
 package tarumtresort.entity;
 
 import java.time.LocalDateTime;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.entity.enums.*;
 
+// Author: Imam Mahdi Ali Ang Attuko
 public class Member implements Comparable<Member> {
     private String memberId;
     private int points;
     private Tier tier;
     private LocalDateTime enrollmentDate;
     private String guestId;
-    private LinkedListInterface<PointTransaction> pointTransactionList = new LinkedList<>();
-    private LinkedListInterface<RedemptionRecord> redemptionRecordList = new LinkedList<>();
+    private boolean isDeleted;
+    private ListInterface<PointTransaction> pointTransactionList = new DoublyLinkedList<>();
+    private ListInterface<RedemptionRecord> redemptionRecordList = new DoublyLinkedList<>();
 
     public Member() {
     }
 
     public Member(String memberId, int points, Tier tier, LocalDateTime enrollmentDate, String guestId) {
-        this(memberId, points, tier, enrollmentDate, guestId, new LinkedList<>(), new LinkedList<>());
+        this(memberId, points, tier, enrollmentDate, guestId, new DoublyLinkedList<>(), new DoublyLinkedList<>());
     }
 
     public Member(String memberId, int points, Tier tier, LocalDateTime enrollmentDate, String guestId,
-            LinkedListInterface<PointTransaction> pointTransactionList,
-            LinkedListInterface<RedemptionRecord> redemptionRecordList) {
+            ListInterface<PointTransaction> pointTransactionList,
+            ListInterface<RedemptionRecord> redemptionRecordList) {
         this.memberId = memberId;
         this.points = points;
         this.tier = tier;
@@ -73,9 +75,17 @@ public class Member implements Comparable<Member> {
         this.guestId = guestId;
     }
 
-    public LinkedListInterface<PointTransaction> getPointTransactionList() {
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public ListInterface<PointTransaction> getPointTransactionList() {
         if (pointTransactionList == null) {
-            pointTransactionList = new LinkedList<>();
+            pointTransactionList = new DoublyLinkedList<>();
         }
         return pointTransactionList;
     }
@@ -84,9 +94,9 @@ public class Member implements Comparable<Member> {
         getPointTransactionList().addSorted(transaction);
     }
 
-    public LinkedListInterface<RedemptionRecord> getRedemptionRecordList() {
+    public ListInterface<RedemptionRecord> getRedemptionRecordList() {
         if (redemptionRecordList == null) {
-            redemptionRecordList = new LinkedList<>();
+            redemptionRecordList = new DoublyLinkedList<>();
         }
         return redemptionRecordList;
     }

@@ -1,11 +1,9 @@
 package tarumtresort.control;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import tarumtresort.adt.LinkedList;
-import tarumtresort.adt.LinkedListInterface;
+import java.util.Scanner;
+import tarumtresort.adt.DoublyLinkedList;
+import tarumtresort.adt.ListInterface;
 import tarumtresort.boundary.InquiryUI;
 import tarumtresort.boundary.ReservationUI;
 import tarumtresort.dao.GuestDAO;
@@ -17,28 +15,29 @@ import tarumtresort.entity.Inquiry;
 import tarumtresort.entity.Payment;
 import tarumtresort.entity.Reservation;
 import tarumtresort.entity.Room;
-import tarumtresort.entity.Task;
 import tarumtresort.entity.enums.InquiryStatus;
 import tarumtresort.entity.enums.InquiryType;
 import tarumtresort.entity.enums.ReservationStatus;
 import tarumtresort.entity.enums.RoomStatus;
 import tarumtresort.entity.enums.RoomType;
-import tarumtresort.report.ReportChart;
-import tarumtresort.report.ReportResult;
+import tarumtresort.report.InquiryReport.InquiryReportController;
 
-/**
- *
- * @author Wen Ling
- */
+// Author: Fong Wen Ling
 public class InquiryController {
+
+    private static final int PAGE_SIZE = 20;
 
     // controller (dependencies on other modules)
     private ReservationControl reservationControl = new ReservationControl();
     private HousekeepingController housekeepingController = new HousekeepingController();
 
-    // list declared
-    private LinkedListInterface<Inquiry> pendingInquiryList = new LinkedList<>();
-    private LinkedListInterface<Inquiry> resolvedInquiryList = new LinkedList<>();
+    // ui
+    private final Scanner scanner = new Scanner(System.in);
+    private InquiryUI ui = new InquiryUI(scanner);
+    private ReservationUI reservationUI = new ReservationUI();
+
+    // adt
+    private ListInterface<Inquiry> inquiryList = new DoublyLinkedList<>();
 
     // dao
     private static final InquiryDAO inquiryDAO = new InquiryDAO();
@@ -46,17 +45,15 @@ public class InquiryController {
     private static final GuestDAO guestDAO = new GuestDAO();
     private static final PaymentDAO paymentDAO = new PaymentDAO();
 
-    // ui
-    private InquiryUI ui = new InquiryUI();
-    private ReservationUI reservationUI = new ReservationUI();
+    // report generation
+    private InquiryReportController inquiryReportController = new InquiryReportController(scanner);
 
     private int inquiryCounter;
 
     // Constructor
     public InquiryController() {
-        pendingInquiryList = inquiryDAO.retrievePendingInquiryList();
-        resolvedInquiryList = inquiryDAO.retrieveResolvedInquiryList();
-        inquiryCounter = pendingInquiryList.size() + resolvedInquiryList.size();
+        inquiryList = inquiryDAO.retrieveInquiryList();
+        inquiryCounter = inquiryList.size();
     }
 
     // entry point for the inquiry module
@@ -128,8 +125,8 @@ public class InquiryController {
                 type, description);
 
         // addSorted = enqueue: inserts by priority rank, then by createdTime (FCFS)
-        pendingInquiryList.addSorted(newInquiry);
-        inquiryDAO.savePendingInquiryList(pendingInquiryList);
+        inquiryList.addSorted(newInquiry);
+        inquiryDAO.saveInquiryList(inquiryList);
 
         ui.printInquiryDetails(ui.buildInquiryDetails(newInquiry));
         ui.printSuccess();
@@ -137,14 +134,14 @@ public class InquiryController {
 
     // case 2
     public void processNextInquiry() {
-        if (pendingInquiryList.isEmpty()) {
+        Inquiry inquiry = getNextPendingInquiry();
+        if (inquiry == null) {
             ui.printMessage("No pending inquiries in queue.");
             return;
         }
 
-        Inquiry inquiry = pendingInquiryList.removeFront();
         inquiry.setStatus(InquiryStatus.IN_PROGRESS);
-        inquiryDAO.savePendingInquiryList(pendingInquiryList);
+        inquiryDAO.saveInquiryList(inquiryList);
 
         ui.printInquiryDetails(ui.buildInquiryDetails(inquiry));
 
@@ -168,26 +165,26 @@ public class InquiryController {
             ui.printSuccess();
         } else {
             inquiry.setStatus(InquiryStatus.PENDING);
-            pendingInquiryList.addSorted(inquiry);
-            inquiryDAO.savePendingInquiryList(pendingInquiryList);
+            inquiryDAO.saveInquiryList(inquiryList);
             ui.printMessage("Inquiry returned to the queue.");
         }
     }
 
     // case 3
     public void viewPendingQueue() {
-        ui.listAllInquiries(buildInquiryTableData(pendingInquiryList));
+        ui.listAllInquiries(buildInquiryTableData(getFilteredInquiries(InquiryStatus.PENDING, null)));
     }
 
     // case 4
     public void cancelInquiry() {
-        if (pendingInquiryList.isEmpty()) {
+        ListInterface<Inquiry> pendingOnly = getFilteredInquiries(InquiryStatus.PENDING, null);
+        if (pendingOnly.isEmpty()) {
             ui.printMessage("No pending inquiries to cancel.");
             return;
         }
 
-        ui.listAllInquiries(buildInquiryTableData(pendingInquiryList));
-        
+        ui.listAllInquiries(buildInquiryTableData(pendingOnly));
+
         String inquiryId = ui.inputInquiryId();
 
         Inquiry target = getPendingInquiryById(inquiryId);
@@ -200,27 +197,114 @@ public class InquiryController {
             return;
         }
 
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            if (pendingInquiryList.get(i).getInquiryId().equals(inquiryId)) {
-                pendingInquiryList.removeIndex(i);
-                break;
-            }
-        }
-
         target.setStatus(InquiryStatus.CANCELLED);
         target.setResolvedTime(LocalDateTime.now());
-        resolvedInquiryList.addBack(target);
 
-        inquiryDAO.savePendingInquiryList(pendingInquiryList);
-        inquiryDAO.saveResolvedInquiryList(resolvedInquiryList);
+        inquiryDAO.saveInquiryList(inquiryList);
 
         ui.printCancelled();
     }
 
     // case 5
     public void viewAllInquiries() {
-        InquiryStatus filter = ui.inputInquiryStatusFilter();
-        ui.listAllInquiries(buildInquiryTableData(getAllInquiries(filter)));
+        InquiryStatus statusFilter = null;
+        InquiryType typeFilter = null;
+        int page = 0;
+
+        while (true) {
+            ListInterface<Inquiry> display = getFilteredInquiries(statusFilter, typeFilter);
+
+            boolean hasFilter = statusFilter != null || typeFilter != null;
+            int pageCount = Math.max(1, (display.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+            if (page >= pageCount) {
+                page = pageCount - 1;
+            }
+            ListInterface<Inquiry> pageList = pageOfInquiries(display, page);
+            int choice = ui.printInquiryListMenu(pageList, page, pageCount, hasFilter);
+
+            if (choice == 0) {
+                break;
+            }
+
+            int action = 1;
+            if (choice == action++) { // 1. View Details
+                viewInquiryDetails(pageList);
+            } else if (choice == action++) { // 2. Filter by Inquiry Status
+                statusFilter = ui.inputInquiryStatusFilter();
+                page = 0;
+            } else if (choice == action++) { // 3. Filter by Inquiry Type
+                typeFilter = ui.inputInquiryTypeFilter();
+                page = 0;
+            } else if (choice == action++) { // 4. Search by Inquiry ID
+                searchByInquiryId();
+            } else if (choice == action++) { // 5. Search by Confirmation Number
+                searchByConfirmationNumber();
+            } else {
+                boolean matched = false;
+                if (page < pageCount - 1) {
+                    matched = choice == action;
+                    action++;
+                    if (matched)
+                        page++;
+                }
+                if (!matched && page > 0) {
+                    matched = choice == action;
+                    action++;
+                    if (matched)
+                        page--;
+                }
+                if (!matched && hasFilter) {
+                    matched = choice == action;
+                    action++;
+                    if (matched) {
+                        statusFilter = null;
+                        typeFilter = null;
+                        page = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    private void viewInquiryDetails(ListInterface<Inquiry> pageList) {
+        if (pageList.isEmpty()) {
+            ui.printNotFound();
+            ui.pressEnterToContinue();
+            return;
+        }
+        int num = ui.inputListIndex("inquiry", pageList.size());
+        if (num == 0) {
+            return;
+        }
+        Inquiry inquiry = pageList.get(num - 1);
+        ui.printInquiryDetails(ui.buildInquiryDetails(inquiry));
+        ui.pressEnterToContinue();
+    }
+
+    private void searchByInquiryId() {
+        String inquiryId = ui.inputInquiryId();
+        Inquiry found = searchInquiryById(inquiryId);
+        if (found == null) {
+            ui.printNotFound();
+            ui.pressEnterToContinue();
+            return;
+        }
+        ListInterface<Inquiry> result = new DoublyLinkedList<>();
+        result.addBack(found);
+        ui.listAllInquiries(buildInquiryTableData(result));
+        ui.pressEnterToContinue();
+    }
+
+    private void searchByConfirmationNumber() {
+        String confirmationNumber = ui.inputConfirmationNumber();
+        ListInterface<Inquiry> matches = searchInquiriesByConfirmationNumber(confirmationNumber);
+        if (matches.isEmpty()) {
+            ui.printNotFound();
+            ui.pressEnterToContinue();
+            return;
+        }
+        ui.listAllInquiries(buildInquiryTableData(matches));
+        ui.pressEnterToContinue();
     }
 
     // case 6
@@ -228,12 +312,10 @@ public class InquiryController {
         int choice = ui.getReportMenuChoice();
         switch (choice) {
             case 1:
-                InquiryType filter1 = ui.inputInquiryTypeFilter();
-                ui.printReport(generatePendingInquiryReport(filter1));
+                inquiryReportController.generatePendingInquiryReport();
                 break;
             case 2:
-                RoomType filter2 = ui.inputRoomTypeFilter();
-                ui.printReport(generateRoomTypeInquiryDistributionReport(filter2));
+                inquiryReportController.generateRoomTypeInquiryDistributionReport();
                 break;
             case 0:
             default:
@@ -241,13 +323,39 @@ public class InquiryController {
         }
     }
 
+    // matches any status (PENDING / IN_PROGRESS / RESOLVED / CANCELLED)
+    public Inquiry searchInquiryById(String inquiryId) {
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getInquiryId().equals(inquiryId)) {
+                return inq;
+            }
+        }
+        return null;
+    }
+
+    public ListInterface<Inquiry> searchInquiriesByConfirmationNumber(String confirmationNumber) {
+        ListInterface<Inquiry> matches = new DoublyLinkedList<>();
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getConfirmationNumber().equals(confirmationNumber)) {
+                matches.addSorted(inq);
+            }
+        }
+        return matches;
+    }
+
     // Searching
     public Reservation searchReservationByConfirmationNumber(String confirmationNumber) {
-        LinkedListInterface<Reservation> allReservations = new LinkedList<>();
+        ListInterface<Reservation> allReservations = new DoublyLinkedList<>();
         reservationDAO.loadAllReservations(allReservations);
 
         for (int i = 0; i < allReservations.size(); i++) {
             Reservation r = allReservations.get(i);
+            // skip soft-deleted reservations
+            if (r.isDeleted()) {
+                continue;
+            }
             if (r.getConfirmationNumber().equals(confirmationNumber)) {
                 return r;
             }
@@ -256,43 +364,61 @@ public class InquiryController {
     }
 
     public Guest searchGuestById(String guestId) {
-        LinkedListInterface<Guest> guestList = new LinkedList<>();
+        ListInterface<Guest> guestList = new DoublyLinkedList<>();
         guestDAO.loadFromFile(guestList);
 
+        Guest found = null;
         for (int i = 0; i < guestList.size(); i++) {
             Guest g = guestList.get(i);
             if (g.getGuestId().equals(guestId)) {
-                return g;
+                found = g;
+                break;
+            }
+        }
+        if (found != null) {
+            attachReservations(found);
+        }
+        return found;
+    }
+
+    private void attachReservations(Guest guest) {
+        ListInterface<Reservation> allReservations = new DoublyLinkedList<>();
+        reservationDAO.loadAllReservations(allReservations);
+
+        for (int i = 0; i < allReservations.size(); i++) {
+            Reservation r = allReservations.get(i);
+            if (r.getGuestId() != null && r.getGuestId().equals(guest.getGuestId())) {
+                guest.getReservations().addBack(r);
+            }
+        }
+    }
+
+    public Payment searchPaymentByConfirmationNumber(String confirmationNumber) {
+        ListInterface<Payment> paymentList = new DoublyLinkedList<>();
+        paymentDAO.loadFromFile(paymentList);
+
+        for (int i = 0; i < paymentList.size(); i++) {
+            Payment p = paymentList.get(i);
+            ListInterface<String> confirmationNumbers = p.getConfirmationNumbers();
+            if (confirmationNumbers == null) {
+                continue;
+            }
+
+            for (int j = 0; j < confirmationNumbers.size(); j++) {
+                if (confirmationNumbers.get(j).equals(confirmationNumber)) {
+                    return p;
+                }
             }
         }
         return null;
     }
 
-    public Payment searchPaymentByConfirmationNumber(String confirmationNumber) {
-    LinkedListInterface<Payment> paymentList = new LinkedList<>();
-    paymentDAO.loadFromFile(paymentList);
-
-    for (int i = 0; i < paymentList.size(); i++) {
-        Payment p = paymentList.get(i);
-        LinkedListInterface<String> confirmationNumbers = p.getConfirmationNumbers();
-        if (confirmationNumbers == null) {
-            continue;
-        }
-
-        for (int j = 0; j < confirmationNumbers.size(); j++) {
-            if (confirmationNumbers.get(j).equals(confirmationNumber)) {
-                return p;
-            }
-        }
-    }
-    return null;
-}
-
-    // check pending queue for an existing unresolved inquiry of the same type
+    // check for an existing PENDING inquiry of the same type
     public Inquiry searchInquiryByConfirmationNumber(String confirmationNumber, InquiryType type) {
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            Inquiry inq = pendingInquiryList.get(i);
-            if (inq.getConfirmationNumber().equals(confirmationNumber)
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getStatus() == InquiryStatus.PENDING
+                    && inq.getConfirmationNumber().equals(confirmationNumber)
                     && inq.getInquiryType() == type) {
                 return inq;
             }
@@ -301,32 +427,50 @@ public class InquiryController {
     }
 
     public Inquiry getPendingInquiryById(String inquiryId) {
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            Inquiry inq = pendingInquiryList.get(i);
-            if (inq.getInquiryId().equals(inquiryId)) {
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getStatus() == InquiryStatus.PENDING && inq.getInquiryId().equals(inquiryId)) {
                 return inq;
             }
         }
         return null;
     }
 
-    private LinkedListInterface<Inquiry> getAllInquiries(InquiryStatus filterStatus) {
-        LinkedListInterface<Inquiry> combined = new LinkedList<>();
-
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            Inquiry inq = pendingInquiryList.get(i);
-            if (filterStatus == null || inq.getStatus() == filterStatus) {
-                combined.addBack(inq);
+    // first PENDING inquiry in list order == earliest priority/createdTime,
+    private Inquiry getNextPendingInquiry() {
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (inq.getStatus() == InquiryStatus.PENDING) {
+                return inq;
             }
         }
-        for (int i = 0; i < resolvedInquiryList.size(); i++) {
-            Inquiry inq = resolvedInquiryList.get(i);
-            if (filterStatus == null || inq.getStatus() == filterStatus) {
-                combined.addBack(inq);
-            }
-        }
+        return null;
+    }
 
-        return combined;
+    // filterStatus == null / filterType == null means that dimension is unfiltered
+    private ListInterface<Inquiry> getFilteredInquiries(InquiryStatus filterStatus, InquiryType filterType) {
+        ListInterface<Inquiry> result = new DoublyLinkedList<>();
+        for (int i = 0; i < inquiryList.size(); i++) {
+            Inquiry inq = inquiryList.get(i);
+            if (filterStatus != null && inq.getStatus() != filterStatus) {
+                continue;
+            }
+            if (filterType != null && inq.getInquiryType() != filterType) {
+                continue;
+            }
+            result.addBack(inq);
+        }
+        return result;
+    }
+
+    private ListInterface<Inquiry> pageOfInquiries(ListInterface<Inquiry> source, int page) {
+        ListInterface<Inquiry> result = new DoublyLinkedList<>();
+        int startIndex = page * PAGE_SIZE;
+        int endIndex = Math.min(startIndex + PAGE_SIZE, source.size());
+        for (int i = startIndex; i < endIndex; i++) {
+            result.addBack(source.get(i));
+        }
+        return result;
     }
 
     // PROCESSING HELPERS
@@ -347,6 +491,7 @@ public class InquiryController {
                 return buildRoomAvailabilityInfo(reservation);
 
             case ROOMSERVICE:
+                // Author: Brian Kam Ding Xian
                 String taskId = housekeepingController.createRoomServiceTask(reservation.getRoomId());
                 if (taskId != null) {
                     resolveInquiry(inquiry);
@@ -360,9 +505,10 @@ public class InquiryController {
 
     // Inquiry -> Reservation -> Room dependency chain
     private String buildRoomAvailabilityInfo(Reservation reservation) {
-        if (reservation.getStatus() == ReservationStatus.WAITING) {
+        if (reservation.getStatus() == ReservationStatus.WAITING
+                || reservation.getStatus() == ReservationStatus.BOOKED) {
             RoomType type = reservation.getRoomTypeRequested();
-            LinkedListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
+            ListInterface<Room> roomsOfType = reservationControl.getRoomsByType(type);
             int availableCount = 0;
             for (int i = 0; i < roomsOfType.size(); i++) {
                 if (roomsOfType.get(i).getRoomStatus() == RoomStatus.AVAILABLE) {
@@ -383,12 +529,11 @@ public class InquiryController {
         }
         inquiry.setStatus(InquiryStatus.RESOLVED);
         inquiry.setResolvedTime(LocalDateTime.now());
-        resolvedInquiryList.addBack(inquiry);
-        inquiryDAO.saveResolvedInquiryList(resolvedInquiryList);
+        inquiryDAO.saveInquiryList(inquiryList);
     }
 
     // convert inquiry list to 2D table
-    private String[][] buildInquiryTableData(LinkedListInterface<Inquiry> list) {
+    private String[][] buildInquiryTableData(ListInterface<Inquiry> list) {
         String[][] data = new String[list.size() + 1][5]; // +1 row for the header; size() = record count
         data[0] = new String[]{"Inquiry ID", "Confirm No.", "Type", "Priority", "Status"};
         for (int i = 0; i < list.size(); i++) {
@@ -404,153 +549,11 @@ public class InquiryController {
         return data;
     }
 
-    // -------------------- reports --------------------
-
-    /**
-     * Pending Inquiry Overview Report (Inquiry + Reservation + Guest).
-     * Filter: query type.
-     */
-    public ReportResult generatePendingInquiryReport(InquiryType filterType) {
-
-        List<String[]> rows = new ArrayList<>();
-        rows.add(new String[]{"Inquiry ID", "Confirm No.", "Guest Name", "Type", "Priority", "Waiting"});
-
-        int[] countPerPriority = new int[tarumtresort.entity.enums.InquiryPriority.values().length];
-
-        for (int i = 0; i < pendingInquiryList.size(); i++) {
-            Inquiry inq = pendingInquiryList.get(i);
-            if (filterType != null && inq.getInquiryType() != filterType) {
-                continue;
-            }
-
-            Guest guest = searchGuestById(inq.getGuestId());
-            String guestName = guest == null ? "-" : guest.getName();
-
-            rows.add(new String[]{
-                    inq.getInquiryId(),
-                    inq.getConfirmationNumber(),
-                    guestName,
-                    inq.getInquiryType().toString(),
-                    inq.getInquiryType().getPriority().toString(),
-                    formatDuration(calculateWaitingTime(inq))
-            });
-
-            countPerPriority[inq.getInquiryType().getPriority().ordinal()]++;
-        }
-
-        String[][] table = rows.toArray(new String[0][]);
-        String[] summary = {"Total pending inquiries shown: " + (rows.size() - 1)};
-
-        ReportChart chart = new ReportChart("Pending Inquiries by Priority");
-        for (tarumtresort.entity.enums.InquiryPriority p : tarumtresort.entity.enums.InquiryPriority.values()) {
-            chart.addBar(p.name(), countPerPriority[p.ordinal()], countPerPriority[p.ordinal()] + " inquiries");
-        }
-        List<ReportChart> charts = new ArrayList<>();
-        charts.add(chart);
-
-        return new ReportResult(table, summary, charts, null);
-    }
-
-    /**
-     * Room Type Inquiry Distribution Report (Inquiry + Reservation + Room).
-     * Filter: room type. Only RESOLVED (not CANCELLED) inquiries are counted.
-     */
-    public ReportResult generateRoomTypeInquiryDistributionReport(RoomType filterType) {
-
-        RoomType[] types = RoomType.values();
-        int[] totalCount = new int[types.length];
-        int[] guestIdCount = new int[types.length];
-        int[] roomAvailCount = new int[types.length];
-        int[] billingCount = new int[types.length];
-        int[] roomServiceCount = new int[types.length];
-
-        for (int i = 0; i < resolvedInquiryList.size(); i++) {
-            Inquiry inq = resolvedInquiryList.get(i);
-            if (inq.getStatus() != InquiryStatus.RESOLVED) {
-                continue; // exclude CANCELLED
-            }
-            Reservation reservation = searchReservationByConfirmationNumber(inq.getConfirmationNumber());
-            if (reservation == null) {
-                continue;
-            }
-            RoomType type = reservation.getRoomTypeRequested();
-            if (filterType != null && type != filterType) {
-                continue;
-            }
-            int idx = indexOfRoomType(types, type);
-            totalCount[idx]++;
-            switch (inq.getInquiryType()) {
-                case GUESTIDENTIFICATION: guestIdCount[idx]++; break;
-                case ROOMAVAILABILITY: roomAvailCount[idx]++; break;
-                case BILLINGDETAILS: billingCount[idx]++; break;
-                case ROOMSERVICE: roomServiceCount[idx]++; break;
-            }
-        }
-
-        // sort room types by total inquiries descending (simple selection sort, small n)
-        Integer[] order = new Integer[types.length];
-        for (int i = 0; i < types.length; i++) order[i] = i;
-        for (int i = 0; i < order.length - 1; i++) {
-            int maxIdx = i;
-            for (int j = i + 1; j < order.length; j++) {
-                if (totalCount[order[j]] > totalCount[order[maxIdx]]) {
-                    maxIdx = j;
-                }
-            }
-            int temp = order[i]; order[i] = order[maxIdx]; order[maxIdx] = temp;
-        }
-
-        List<String[]> rows = new ArrayList<>();
-        rows.add(new String[]{"Room Type", "Total", "GuestID", "RoomAvail", "Billing", "RoomServ"});
-
-        ReportChart chart = new ReportChart("Total Inquiries by Room Type");
-        int grandTotal = 0;
-
-        for (int idx : order) {
-            if (totalCount[idx] == 0) continue;
-            rows.add(new String[]{
-                    types[idx].toString(),
-                    String.valueOf(totalCount[idx]),
-                    String.valueOf(guestIdCount[idx]),
-                    String.valueOf(roomAvailCount[idx]),
-                    String.valueOf(billingCount[idx]),
-                    String.valueOf(roomServiceCount[idx])
-            });
-            chart.addBar(types[idx].toString(), totalCount[idx], totalCount[idx] + " inquiries");
-            grandTotal += totalCount[idx];
-        }
-
-        String[][] table = rows.toArray(new String[0][]);
-        String[] summary = {"Total resolved inquiries counted: " + grandTotal};
-
-        List<ReportChart> charts = new ArrayList<>();
-        charts.add(chart);
-
-        return new ReportResult(table, summary, charts, null);
-    }
-
-    private int indexOfRoomType(RoomType[] types, RoomType target) {
-        for (int i = 0; i < types.length; i++) {
-            if (types[i] == target) return i;
-        }
-        return -1;
-    }
-
     // -------------------- private helpers --------------------
 
     private String generateInquiryId() {
         inquiryCounter++;
         return "INQ" + String.format("%03d", inquiryCounter);
-    }
-
-    private Duration calculateWaitingTime(Inquiry inquiry) {
-        return Duration.between(inquiry.getCreatedTime(), LocalDateTime.now());
-    }
-
-    private String formatDuration(Duration d) {
-        long minutes = d.toMinutes();
-        long seconds = d.minusMinutes(minutes).getSeconds();
-        return minutes + "m " + seconds + "s";
     }
 
     // public static void main(String[] args) {
