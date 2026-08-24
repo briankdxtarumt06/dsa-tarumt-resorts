@@ -139,14 +139,5 @@
     "availabilityStatus": "AVAILABLE",
     "isDeleted": false,
     "taskAssignments": []
-  },
-  {
-    "staffId": "STF0013",
-    "staffName": "Boon Yew",
-    "department": "FRONT_OFFICE",
-    "staffRole": "RECEPTIONIST",
-    "availabilityStatus": "AVAILABLE",
-    "isDeleted": false,
-    "taskAssignments": []
   }
 ]
