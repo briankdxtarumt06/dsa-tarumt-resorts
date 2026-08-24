@@ -961,8 +961,8 @@ public class ReservationControl {
 
         if (!reservationUI.askConfirmation(
                 "Confirm check in?",
-                "- Guest will be checked in",
-                "- Cancel check in")) {
+                "Guest will be checked in",
+                "Cancel check in")) {
             reservationUI.pressEnterToContinue();
             return;
         }
@@ -1042,8 +1042,8 @@ public class ReservationControl {
             while (!confirmed) {
                 if (!reservationUI.askConfirmation(
                         "Proceed to select rooms for check-out?",
-                        "- Yes, continue selecting",
-                        "- No, cancel check-out")) {
+                        "Yes, continue selecting",
+                        "No, cancel check-out")) {
                     return;
                 }
                 ListInterface<Reservation> selected = new DoublyLinkedList<>();
@@ -1052,8 +1052,8 @@ public class ReservationControl {
                     boolean wantsToCheckOut = reservationUI.askConfirmation(
                             "Check out room " + (i + 1) + " (" + r.getConfirmationNumber() + " - "
                                     + r.getRoomTypeRequested() + ")?",
-                            "- Yes, check out this room",
-                            "- No, keep this room");
+                            "Yes, check out this room",
+                            "No, keep this room");
                     if (wantsToCheckOut) {
                         selected.addBack(r);
                     }
@@ -1083,8 +1083,8 @@ public class ReservationControl {
         }
         if (!reservationUI.askConfirmation(
                 "Confirm check out for " + toCheckOut.size() + " room(s)?",
-                "- Selected room(s) will be checked out",
-                "- Cancel check out")) {
+                "Selected room(s) will be checked out",
+                "Cancel check out")) {
             reservationUI.pressEnterToContinue();
             return;
         }
@@ -1239,8 +1239,8 @@ public class ReservationControl {
 
         if (!reservationUI.askConfirmation(
                 "Cancel this reservation?",
-                "- Confirm cancellation",
-                "- Keep reservation")) {
+                "Confirm cancellation",
+                "Keep reservation")) {
             reservationUI.pressEnterToContinue();
             return;
         }
@@ -1330,8 +1330,8 @@ public class ReservationControl {
 
                 if (!reservationUI.askConfirmation(
                         "Delete this reservation from the list?",
-                        "- Confirm delete (kept in file, hidden from views)",
-                        "- Keep reservation")) {
+                        "Confirm delete (kept in file, hidden from views)",
+                        "Keep reservation")) {
                     reservationUI.pressEnterToContinue();
                     return;
                 }
