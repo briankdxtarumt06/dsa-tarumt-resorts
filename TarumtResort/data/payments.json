@@ -1,0 +1,104 @@
+[
+  {
+    "paymentID": "PAY001",
+    "roomCharge": 240.0,
+    "serviceCharge": 24.0,
+    "tax": 15.84,
+    "totalAmount": 279.84,
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "paymentDateTime": "2026-08-21T12:30:58.123250300",
+    "reservationID": "67935761",
+    "confirmationNumbers": [
+      "67935761",
+      "16750637"
+    ],
+    "refundedAmount": 0.0
+  },
+  {
+    "paymentID": "PAY002",
+    "roomCharge": 240.0,
+    "serviceCharge": 24.0,
+    "tax": 15.84,
+    "totalAmount": 279.84,
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "paymentDateTime": "2026-08-21T12:32:02.549113500",
+    "reservationID": "74600753",
+    "confirmationNumbers": [
+      "74600753",
+      "97269365"
+    ],
+    "refundedAmount": 0.0
+  },
+  {
+    "paymentID": "PAY003",
+    "roomCharge": 120.0,
+    "serviceCharge": 12.0,
+    "tax": 7.92,
+    "totalAmount": 139.92,
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "paymentDateTime": "2026-08-21T12:34:52.987889700",
+    "reservationID": "86271204",
+    "confirmationNumbers": [
+      "86271204"
+    ],
+    "refundedAmount": 0.0
+  },
+  {
+    "paymentID": "PAY004",
+    "roomCharge": 300.0,
+    "serviceCharge": 30.0,
+    "tax": 19.8,
+    "totalAmount": 349.8,
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "paymentDateTime": "2026-08-21T16:36:13.408094900",
+    "reservationID": "64773181",
+    "confirmationNumbers": [
+      "64773181",
+      "28655322"
+    ],
+    "refundedAmount": 0.0
+  },
+  {
+    "paymentID": "PAY005",
+    "roomCharge": 600.0,
+    "serviceCharge": 60.0,
+    "tax": 39.6,
+    "totalAmount": 699.6,
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "paymentDateTime": "2026-08-21T16:38:40.428547600",
+    "reservationID": "41090704",
+    "confirmationNumbers": [
+      "41090704",
+      "99490324",
+      "59498683",
+      "62968768"
+    ],
+    "refundedAmount": 699.6,
+    "refundDateTime": "2026-08-21T16:43:01.352426300"
+  },
+  {
+    "paymentID": "PAY006",
+    "roomCharge": 712.5,
+    "serviceCharge": 71.25,
+    "tax": 47.025,
+    "totalAmount": 830.775,
+    "paymentMethod": "ONLINE_BANKING",
+    "paymentStatus": "PAID",
+    "paymentDateTime": "2026-08-21T23:30:17.118249100",
+    "reservationID": "RES017",
+    "confirmationNumbers": [
+      "05580525",
+      "14417689"
+    ],
+    "reservationIds": [
+      "RES017",
+      "RES018"
+    ],
+    "refundedAmount": 0.0
+  }
+]

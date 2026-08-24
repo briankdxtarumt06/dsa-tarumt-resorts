@@ -1,0 +1,21 @@
+[
+  {
+    "reservationId": "RES018",
+    "priorityLevel": "DIAMOND",
+    "overriddenBy": "STF000000000001",
+    "overrideReason": "test update prioriry level",
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES019",
+    "priorityLevel": "SLIVER",
+    "isDeleted": false
+  },
+  {
+    "reservationId": "RES002",
+    "priorityLevel": "EMERGENCY",
+    "overriddenBy": "STF000000000001",
+    "overrideReason": "emergency assign room",
+    "isDeleted": false
+  }
+]

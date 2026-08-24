@@ -1,0 +1,65 @@
+[
+  {
+    "guestId": "GST001",
+    "name": "Chai",
+    "icOrPassport": "121212121212",
+    "contactNumber": "1234567890",
+    "nationality": "Malaysian",
+    "address": "0987654321",
+    "notificationList": []
+  },
+  {
+    "guestId": "GST002",
+    "name": "Chee",
+    "icOrPassport": "987654321",
+    "contactNumber": "1234567890",
+    "nationality": "Singaporean",
+    "address": "0987654321",
+    "notificationList": []
+  },
+  {
+    "guestId": "GST003",
+    "name": "Ah Beng",
+    "icOrPassport": "123456789",
+    "contactNumber": "987654321",
+    "nationality": "Singaporean",
+    "address": "23456789",
+    "notificationList": []
+  },
+  {
+    "guestId": "GST004",
+    "name": "Bobby",
+    "icOrPassport": "121212121212",
+    "contactNumber": "123456789",
+    "nationality": "Malaysian",
+    "address": "23456789",
+    "notificationList": []
+  },
+  {
+    "guestId": "GST005",
+    "name": "Cht",
+    "icOrPassport": "030212000000",
+    "contactNumber": "1234567890",
+    "nationality": "Malaysian",
+    "address": "0987654321",
+    "notificationList": []
+  },
+  {
+    "guestId": "GST006",
+    "name": "Ah Gao",
+    "icOrPassport": "1232123",
+    "contactNumber": "1234567890",
+    "nationality": "Singaporean",
+    "address": "0987654321",
+    "notificationList": []
+  },
+  {
+    "guestId": "GST007",
+    "name": "Brian Kam",
+    "icOrPassport": "050303120982",
+    "contactNumber": "0123456789",
+    "nationality": "Malaysian",
+    "address": "123 Jalan 321",
+    "notificationList": []
+  }
+]

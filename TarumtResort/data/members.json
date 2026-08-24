@@ -1,0 +1,245 @@
+[
+  {
+    "memberId": "M001",
+    "points": 950,
+    "tier": "SILVER",
+    "enrollmentDate": "2025-01-10T09:00:00",
+    "guestId": "GST001",
+    "isDeleted": false,
+    "pointTransactionList": [
+      {
+        "transactionId": "PT0001",
+        "date": "2026-01-15T10:00:00",
+        "description": "Welcome bonus - 800 pts",
+        "pointChange": 800,
+        "expiryDate": "2027-01-15T10:00:00",
+        "remainingPoints": 800,
+        "memberId": "M001"
+      },
+      {
+        "transactionId": "PT0002",
+        "date": "2026-08-20T08:00:00",
+        "description": "Bonus points - 150 pts",
+        "pointChange": 150,
+        "expiryDate": "2026-08-27T08:00:00",
+        "remainingPoints": 150,
+        "memberId": "M001"
+      }
+    ],
+    "redemptionRecordList": [
+      {
+        "redemptionId": "RR0001",
+        "redeemedDate": "2026-07-01T10:00:00",
+        "memberId": "M001",
+        "rewardId": "R009",
+        "status": "REJECTED",
+        "voucherCode": null,
+        "voucherValue": null,
+        "roomType": null,
+        "discountPercent": null,
+        "used": false
+      }
+    ]
+  },
+  {
+    "memberId": "M002",
+    "points": 1500,
+    "tier": "GOLD",
+    "enrollmentDate": "2025-03-01T09:00:00",
+    "guestId": "GST002",
+    "isDeleted": false,
+    "pointTransactionList": [
+      {
+        "transactionId": "PT0003",
+        "date": "2026-02-01T12:00:00",
+        "description": "Stay points - 1000 pts",
+        "pointChange": 1000,
+        "expiryDate": "2027-02-01T12:00:00",
+        "remainingPoints": 1000,
+        "memberId": "M002"
+      },
+      {
+        "transactionId": "PT0004",
+        "date": "2026-05-01T12:00:00",
+        "description": "Dining points - 500 pts",
+        "pointChange": 500,
+        "expiryDate": "2027-05-01T12:00:00",
+        "remainingPoints": 500,
+        "memberId": "M002"
+      }
+    ],
+    "redemptionRecordList": [
+      {
+        "redemptionId": "RR0002",
+        "redeemedDate": "2026-05-10T14:00:00",
+        "memberId": "M002",
+        "rewardId": "R009",
+        "status": "APPROVED",
+        "voucherCode": "VCH-RR0002-AB12",
+        "voucherValue": null,
+        "roomType": "STANDARD_DOUBLE",
+        "discountPercent": 20,
+        "used": false
+      }
+    ]
+  },
+  {
+    "memberId": "M003",
+    "points": 3500,
+    "tier": "PLATINUM",
+    "enrollmentDate": "2024-11-20T09:00:00",
+    "guestId": "GST003",
+    "isDeleted": false,
+    "pointTransactionList": [
+      {
+        "transactionId": "PT0005",
+        "date": "2025-12-01T10:00:00",
+        "description": "Stay points - 2000 pts",
+        "pointChange": 2000,
+        "expiryDate": "2026-12-01T10:00:00",
+        "remainingPoints": 2000,
+        "memberId": "M003"
+      },
+      {
+        "transactionId": "PT0006",
+        "date": "2026-04-01T10:00:00",
+        "description": "Stay + dining - 1500 pts",
+        "pointChange": 1500,
+        "expiryDate": "2027-04-01T10:00:00",
+        "remainingPoints": 1500,
+        "memberId": "M003"
+      }
+    ],
+    "redemptionRecordList": [
+      {
+        "redemptionId": "RR0003",
+        "redeemedDate": "2026-06-20T11:00:00",
+        "memberId": "M003",
+        "rewardId": "R006",
+        "status": "PENDING",
+        "voucherCode": null,
+        "voucherValue": null,
+        "roomType": null,
+        "discountPercent": null,
+        "used": false
+      }
+    ]
+  },
+  {
+    "memberId": "M004",
+    "points": 6500,
+    "tier": "DIAMOND",
+    "enrollmentDate": "2024-06-10T09:00:00",
+    "guestId": "GST004",
+    "isDeleted": false,
+    "pointTransactionList": [
+      {
+        "transactionId": "PT0007",
+        "date": "2025-10-01T10:00:00",
+        "description": "Loyalty milestone - 4000 pts",
+        "pointChange": 4000,
+        "expiryDate": "2026-10-01T10:00:00",
+        "remainingPoints": 4000,
+        "memberId": "M004"
+      },
+      {
+        "transactionId": "PT0008",
+        "date": "2026-02-01T10:00:00",
+        "description": "Stay points - 2500 pts",
+        "pointChange": 2500,
+        "expiryDate": "2027-02-01T10:00:00",
+        "remainingPoints": 2500,
+        "memberId": "M004"
+      }
+    ],
+    "redemptionRecordList": [
+      {
+        "redemptionId": "RR0004",
+        "redeemedDate": "2026-06-15T11:00:00",
+        "memberId": "M004",
+        "rewardId": "R017",
+        "status": "APPROVED",
+        "voucherCode": "VCH-RR0004-CD34",
+        "voucherValue": null,
+        "roomType": "SUITE",
+        "discountPercent": 50,
+        "used": false
+      }
+    ]
+  },
+  {
+    "memberId": "M005",
+    "points": 300,
+    "tier": "SILVER",
+    "enrollmentDate": "2026-03-15T09:00:00",
+    "guestId": "GST005",
+    "isDeleted": false,
+    "pointTransactionList": [
+      {
+        "transactionId": "PT0009",
+        "date": "2026-03-15T09:00:00",
+        "description": "Welcome bonus - 500 pts",
+        "pointChange": 500,
+        "expiryDate": "2027-03-15T09:00:00",
+        "remainingPoints": 500,
+        "memberId": "M005"
+      },
+      {
+        "transactionId": "PT0010",
+        "date": "2026-06-01T09:00:00",
+        "description": "Points deducted (refund claw-back)",
+        "pointChange": -200,
+        "expiryDate": "2026-06-01T09:00:00",
+        "remainingPoints": -200,
+        "memberId": "M005"
+      }
+    ],
+    "redemptionRecordList": [
+      {
+        "redemptionId": "RR0005",
+        "redeemedDate": "2026-07-10T10:00:00",
+        "memberId": "M005",
+        "rewardId": "R008",
+        "status": "PENDING",
+        "voucherCode": null,
+        "voucherValue": null,
+        "roomType": null,
+        "discountPercent": null,
+        "used": false
+      }
+    ]
+  },
+  {
+    "memberId": "M006",
+    "points": 2000,
+    "tier": "GOLD",
+    "enrollmentDate": "2025-08-01T09:00:00",
+    "guestId": "GST006",
+    "isDeleted": false,
+    "pointTransactionList": [
+      {
+        "transactionId": "PT0011",
+        "date": "2025-12-01T10:00:00",
+        "description": "Stay points - 2000 pts",
+        "pointChange": 2000,
+        "expiryDate": "2026-12-01T10:00:00",
+        "remainingPoints": 2000,
+        "memberId": "M006"
+      }
+    ],
+    "redemptionRecordList": [
+      {
+        "redemptionId": "RR0006",
+        "redeemedDate": "2026-07-05T15:00:00",
+        "memberId": "M006",
+        "rewardId": "R001",
+        "status": "APPROVED",
+        "voucherCode": "VCH-RR0006-EF56",
+        "voucherValue": 120.0,
+        "roomType": "STANDARD_SINGLE",
+        "discountPercent": null,
+        "used": false
+      }
+    ]
+  }
+]

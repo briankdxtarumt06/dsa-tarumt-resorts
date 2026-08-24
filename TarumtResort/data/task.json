@@ -1,0 +1,722 @@
+[
+  {
+    "taskId": "TSK0030",
+    "taskName": "Room Service R032",
+    "taskType": "ROOM_SERVICE",
+    "taskStatus": "PENDING",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-21T23:45:20.346181900",
+    "roomId": "R032",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T23:45:20.346181900"
+      }
+    ],
+    "taskAssignments": []
+  },
+  {
+    "taskId": "TSK0001",
+    "taskName": "Clean R010",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-14T09:05",
+    "endDateTime": "2026-08-14T10:30",
+    "roomId": "R010",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-14T10:30"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-14T09:10"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-14T09:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0001"
+    ]
+  },
+  {
+    "taskId": "TSK0002",
+    "taskName": "Inspect R010",
+    "taskType": "INSPECTION",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-14T10:50",
+    "endDateTime": "2026-08-14T11:15",
+    "roomId": "R010",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-14T11:15"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-14T10:50"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-14T10:45"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0002"
+    ]
+  },
+  {
+    "taskId": "TSK0003",
+    "taskName": "Room Service R003",
+    "taskType": "ROOM_SERVICE",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-14T12:05",
+    "endDateTime": "2026-08-14T12:40",
+    "roomId": "R003",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-14T12:40"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-14T12:05"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-14T12:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0003"
+    ]
+  },
+  {
+    "taskId": "TSK0027",
+    "taskName": "Routine Clean Room 035",
+    "taskType": "CLEANING",
+    "taskStatus": "PENDING",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T23:03:33.930187500",
+    "roomId": "R035",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T23:04:02.968954500"
+      }
+    ],
+    "taskAssignments": []
+  },
+  {
+    "taskId": "TSK0028",
+    "taskName": "Clean R032",
+    "taskType": "CLEANING",
+    "taskStatus": "IN_PROGRESS",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T23:39:25.512555500",
+    "roomId": "R032",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-21T23:40:55.859772600"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T23:39:25.512555500"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0025"
+    ]
+  },
+  {
+    "taskId": "TSK0029",
+    "taskName": "Clean R026",
+    "taskType": "CLEANING",
+    "taskStatus": "PENDING",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T23:39:25.623943200",
+    "roomId": "R026",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T23:39:25.625105700"
+      }
+    ],
+    "taskAssignments": []
+  },
+  {
+    "taskId": "TSK0004",
+    "taskName": "Clean R016",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-15T09:05",
+    "endDateTime": "2026-08-15T10:00",
+    "roomId": "R016",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-15T10:00"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-15T09:05"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-15T09:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0004"
+    ]
+  },
+  {
+    "taskId": "TSK0005",
+    "taskName": "Fix Aircon R004",
+    "taskType": "MAINTENANCE",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-15T11:05",
+    "endDateTime": "2026-08-15T13:30",
+    "roomId": "R004",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-15T13:30"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-15T11:10"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-15T11:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0005"
+    ]
+  },
+  {
+    "taskId": "TSK0006",
+    "taskName": "Clean R011",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-16T09:05",
+    "endDateTime": "2026-08-16T10:15",
+    "roomId": "R011",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-16T10:15"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-16T09:08"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-16T09:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0006"
+    ]
+  },
+  {
+    "taskId": "TSK0007",
+    "taskName": "Inspect R011",
+    "taskType": "INSPECTION",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-16T15:05",
+    "endDateTime": "2026-08-16T15:25",
+    "roomId": "R011",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-16T15:25"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-16T15:05"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-16T15:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0007"
+    ]
+  },
+  {
+    "taskId": "TSK0008",
+    "taskName": "Clean R017",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-17T09:05",
+    "endDateTime": "2026-08-17T09:55",
+    "roomId": "R017",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-17T09:55"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-17T09:06"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-17T09:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0008"
+    ]
+  },
+  {
+    "taskId": "TSK0009",
+    "taskName": "Clean R018",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-18T09:35",
+    "endDateTime": "2026-08-18T10:20",
+    "roomId": "R018",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-18T10:20"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-18T09:35"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-18T09:30"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0009"
+    ]
+  },
+  {
+    "taskId": "TSK0010",
+    "taskName": "Clean R020",
+    "taskType": "CLEANING",
+    "taskStatus": "CANCELLED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-19T16:05",
+    "roomId": "R020",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "CANCELLED",
+        "reason": "Duplicate cleaning request",
+        "dateTime": "2026-08-19T16:45"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-19T16:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0010"
+    ]
+  },
+  {
+    "taskId": "TSK0011",
+    "taskName": "Room Service R008",
+    "taskType": "ROOM_SERVICE",
+    "taskStatus": "CANCELLED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-20T08:35",
+    "roomId": "R008",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "CANCELLED",
+        "reason": "Guest checked out early",
+        "dateTime": "2026-08-20T08:50"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-20T08:30"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0011"
+    ]
+  },
+  {
+    "taskId": "TSK0012",
+    "taskName": "Deep Clean R021",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-20T09:05",
+    "endDateTime": "2026-08-20T12:00",
+    "roomId": "R021",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-20T12:00"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-20T10:00"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-20T09:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0012",
+      "ASG0013"
+    ]
+  },
+  {
+    "taskId": "TSK0013",
+    "taskName": "Inspect R021",
+    "taskType": "INSPECTION",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-20T13:05",
+    "endDateTime": "2026-08-20T13:20",
+    "roomId": "R021",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-20T13:20"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-20T13:05"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-20T13:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0014"
+    ]
+  },
+  {
+    "taskId": "TSK0014",
+    "taskName": "Clean R022",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-20T14:05",
+    "endDateTime": "2026-08-20T14:50",
+    "roomId": "R022",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-20T14:50"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-20T14:06"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-20T14:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0015"
+    ]
+  },
+  {
+    "taskId": "TSK0015",
+    "taskName": "Fix Light R013",
+    "taskType": "MAINTENANCE",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-20T16:05",
+    "endDateTime": "2026-08-20T16:40",
+    "roomId": "R013",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-20T16:40"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-20T16:06"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-20T16:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0016"
+    ]
+  },
+  {
+    "taskId": "TSK0016",
+    "taskName": "Clean R001",
+    "taskType": "CLEANING",
+    "taskStatus": "IN_PROGRESS",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-21T08:05",
+    "roomId": "R001",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-21T08:15"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T08:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0017"
+    ]
+  },
+  {
+    "taskId": "TSK0017",
+    "taskName": "Clean R023",
+    "taskType": "CLEANING",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-21T09:05",
+    "endDateTime": "2026-08-21T09:15",
+    "roomId": "R023",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-21T09:15"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-21T09:06"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T09:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0018"
+    ]
+  },
+  {
+    "taskId": "TSK0018",
+    "taskName": "Clean R031",
+    "taskType": "CLEANING",
+    "taskStatus": "IN_PROGRESS",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T09:25",
+    "roomId": "R031",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-21T09:30"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T09:20"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0019"
+    ]
+  },
+  {
+    "taskId": "TSK0019",
+    "taskName": "Room Service R004",
+    "taskType": "ROOM_SERVICE",
+    "taskStatus": "COMPLETED",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T10:05",
+    "endDateTime": "2026-08-21T10:30",
+    "roomId": "R004",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "COMPLETED",
+        "dateTime": "2026-08-21T10:30"
+      },
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-21T10:06"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T10:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0020"
+    ]
+  },
+  {
+    "taskId": "TSK0020",
+    "taskName": "Deep Clean R002",
+    "taskType": "CLEANING",
+    "taskStatus": "PENDING",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-21T12:50",
+    "roomId": "R002",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T12:45"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0021"
+    ]
+  },
+  {
+    "taskId": "TSK0021",
+    "taskName": "Room Service R006",
+    "taskType": "ROOM_SERVICE",
+    "taskStatus": "IN_PROGRESS",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T17:35",
+    "roomId": "R006",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "IN_PROGRESS",
+        "dateTime": "2026-08-21T17:35"
+      },
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T17:30"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0022"
+    ]
+  },
+  {
+    "taskId": "TSK0022",
+    "taskName": "Room Service R007",
+    "taskType": "ROOM_SERVICE",
+    "taskStatus": "PENDING",
+    "taskPriority": "HIGH",
+    "startDateTime": "2026-08-21T18:05",
+    "roomId": "R007",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T18:00"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0023"
+    ]
+  },
+  {
+    "taskId": "TSK0023",
+    "taskName": "Inspect R023",
+    "taskType": "INSPECTION",
+    "taskStatus": "PENDING",
+    "taskPriority": "MEDIUM",
+    "startDateTime": "2026-08-21T18:10",
+    "roomId": "R023",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T18:05"
+      }
+    ],
+    "taskAssignments": [
+      "ASG0024"
+    ]
+  },
+  {
+    "taskId": "TSK0024",
+    "taskName": "Fix Tap R009",
+    "taskType": "MAINTENANCE",
+    "taskStatus": "PENDING",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-21T18:15",
+    "roomId": "R009",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T18:10"
+      }
+    ],
+    "taskAssignments": []
+  },
+  {
+    "taskId": "TSK0025",
+    "taskName": "Inspect R022",
+    "taskType": "INSPECTION",
+    "taskStatus": "PENDING",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-21T18:20",
+    "roomId": "R022",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T18:15"
+      }
+    ],
+    "taskAssignments": []
+  },
+  {
+    "taskId": "TSK0026",
+    "taskName": "Scratch Validation Task",
+    "taskType": "CLEANING",
+    "taskStatus": "PENDING",
+    "taskPriority": "LOW",
+    "startDateTime": "2026-08-21T21:54:14.690290800",
+    "roomId": "R009",
+    "isDeleted": false,
+    "statusHistory": [
+      {
+        "taskStatus": "PENDING",
+        "dateTime": "2026-08-21T21:54:14.696310"
+      }
+    ],
+    "taskAssignments": []
+  }
+]

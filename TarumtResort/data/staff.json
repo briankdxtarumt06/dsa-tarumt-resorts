@@ -1,0 +1,152 @@
+[
+  {
+    "staffId": "STF0001",
+    "staffName": "Nurul Aisyah",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0003",
+      "ASG0008",
+      "ASG0011",
+      "ASG0017",
+      "ASG0018"
+    ]
+  },
+  {
+    "staffId": "STF0002",
+    "staffName": "Lim Wei Jie",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0005",
+      "ASG0020",
+      "ASG0021"
+    ]
+  },
+  {
+    "staffId": "STF0003",
+    "staffName": "Tan Mei Ling",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0001",
+      "ASG0006",
+      "ASG0013",
+      "ASG0023"
+    ]
+  },
+  {
+    "staffId": "STF0004",
+    "staffName": "Arif Hidayat",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0016",
+      "ASG0019"
+    ]
+  },
+  {
+    "staffId": "STF0005",
+    "staffName": "Siti Halimah",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0010",
+      "ASG0015",
+      "ASG0022"
+    ]
+  },
+  {
+    "staffId": "STF0006",
+    "staffName": "Priya Raman",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "ON_LEAVE",
+    "isDeleted": false,
+    "taskAssignments": []
+  },
+  {
+    "staffId": "STF0007",
+    "staffName": "Farah Nadia",
+    "department": "HOUSEKEEPING",
+    "staffRole": "SUPERVISOR",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0007",
+      "ASG0014",
+      "ASG0024"
+    ]
+  },
+  {
+    "staffId": "STF0008",
+    "staffName": "Brian Kam",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "BUSY",
+    "isDeleted": false,
+    "taskAssignments": [
+      "ASG0002",
+      "ASG0025"
+    ]
+  },
+  {
+    "staffId": "STF0009",
+    "staffName": "Michelle Teo",
+    "department": "FRONT_OFFICE",
+    "staffRole": "RECEPTIONIST",
+    "availabilityStatus": "AVAILABLE",
+    "isDeleted": false,
+    "taskAssignments": []
+  },
+  {
+    "staffId": "STF0010",
+    "staffName": "Ryan Khor",
+    "department": "FRONT_OFFICE",
+    "staffRole": "RECEPTIONIST",
+    "availabilityStatus": "AVAILABLE",
+    "isDeleted": false,
+    "taskAssignments": []
+  },
+  {
+    "staffId": "STF0011",
+    "staffName": "Gopal Krishnan",
+    "department": "HOUSEKEEPING",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "RESIGNED",
+    "isDeleted": true,
+    "taskAssignments": [
+      "ASG0004",
+      "ASG0009",
+      "ASG0012"
+    ]
+  },
+  {
+    "staffId": "STF0012",
+    "staffName": "Hafiz Rahman",
+    "department": "MAINTENANCE",
+    "staffRole": "CLEANER",
+    "availabilityStatus": "AVAILABLE",
+    "isDeleted": false,
+    "taskAssignments": []
+  },
+  {
+    "staffId": "STF0013",
+    "staffName": "Boon Yew",
+    "department": "FRONT_OFFICE",
+    "staffRole": "RECEPTIONIST",
+    "availabilityStatus": "AVAILABLE",
+    "isDeleted": false,
+    "taskAssignments": []
+  }
+]
