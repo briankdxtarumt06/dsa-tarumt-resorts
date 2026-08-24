@@ -27,18 +27,15 @@ public class RedemptionVoucherReport {
         ListInterface<RedemptionRecord> filtered = new DoublyLinkedList<>();
         for (int i = 0; i < memberList.size(); i++) {
             Member m = memberList.get(i);
-            // consistent soft-delete policy: skip removed members' records
             if (m.isDeleted()) continue;
             var recs = m.getRedemptionRecordList();
             for (int j = 0; j < recs.size(); j++) {
                 RedemptionRecord r = recs.get(j);
-                // multiple criteria: date range AND redemption status
                 if (!inRange(r.getRedeemedDate(), from, to)) continue;
                 if (statusFilter != null && !statusFilter.equals(r.getStatus())) continue;
                 filtered.addBack(r);
             }
         }
-        // sort by redeemedDate via addSorted (RedemptionRecord implements Comparable by date)
         ListInterface<RedemptionRecord> sorted = new DoublyLinkedList<>();
         for (int i = 0; i < filtered.size(); i++) sorted.addSorted(filtered.get(i));
 

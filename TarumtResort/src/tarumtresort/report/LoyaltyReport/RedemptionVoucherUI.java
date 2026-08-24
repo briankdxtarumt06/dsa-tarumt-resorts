@@ -1,7 +1,6 @@
 package tarumtresort.report.LoyaltyReport;
 
-// Renders the Redemption & Voucher Report using the shared loyalty report UI,
-// mirroring HousekeepingReport/RoomCleaningPerformanceUI.
+// Author: Imam Mahdi Ali Ang Attuko
 public class RedemptionVoucherUI {
 
     private static final String TITLE = "REDEMPTION & VOUCHER REPORT";

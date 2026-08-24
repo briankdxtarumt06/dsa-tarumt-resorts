@@ -1,7 +1,6 @@
 package tarumtresort.report.LoyaltyReport;
 
-// Renders the Membership & Tier Performance Report using the shared loyalty report UI,
-// mirroring HousekeepingReport/RoomCleaningPerformanceUI.
+// Author: Imam Mahdi Ali Ang Attuko
 public class MembershipPerformanceUI {
 
     private static final String TITLE = "MEMBERSHIP & TIER PERFORMANCE REPORT";
