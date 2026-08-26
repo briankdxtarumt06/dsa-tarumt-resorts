@@ -36,11 +36,14 @@ public class VipQueueGovernanceReport {
         ListInterface<PriorityReportSupport.QueueEntry> queue = new DoublyLinkedList<>();
         for (int i = 0; i < priorityList.size(); i++) {
             PriorityReservation priority = priorityList.get(i);
-            if (priority == null || priority.isDeleted()) {
+            if (priority == null) {
                 continue;
             }
             Reservation reservation = reservationIndex.find(priority.getReservationId());
             if (reservation == null || reservation.isDeleted()) {
+                continue;
+            }
+            if (priority.isDeleted() && !PriorityReportSupport.isServed(reservation.getStatus())) {
                 continue;
             }
             queue.addSorted(new PriorityReportSupport.QueueEntry(priority, reservation));
